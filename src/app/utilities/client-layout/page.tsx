@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import LoadingAnimation from '../Loading/page';
+import LoadingAnimation from '../loading/page';
 import Navbar from '../navbar/page';
 
 interface ClientLayoutProps {
