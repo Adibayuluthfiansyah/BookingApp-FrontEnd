@@ -1,39 +1,56 @@
+Platform booking lapangan futsal/mini soccer. Solusi digital untuk mengelola booking lapangan olahraga secara efisien.
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Tentang Project
+Futsal Booking Platform adalah sistem manajemen booking lapangan futsal yang memudahkan:
 
-## Getting Started
+Pemilik Lapangan: Mengelola jadwal, harga, dan booking dengan mudah
+Customer: Booking lapangan secara online, real-time availability
+Admin: Dashboard analytics dan reporting lengkap
 
-First, run the development server:
+Problem yang Diselesaikan
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Sebelum: Booking via WhatsApp, sering bentrok, pembayaran ribet
+Sesudah: System otomatis, real-time, payment gateway terintegrasi
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Fitur Utama
+Customer App
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+  Browse lapangan dengan foto & fasilitas
+  Real-time availability calendar
+  Booking online dengan split payment
+  WhatsApp notification otomatis
+  History booking & rating
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Admin Dashboard
 
-## Learn More
+  Dashboard analytics real-time
+  Manajemen venue & field
+  Set pricing per time slot
+  Revenue reporting
+  Customer management
 
-To learn more about Next.js, take a look at the following resources:
+Upcoming Features
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+  Tournament management
+  Equipment rental
+  Team formation
+  GPS integration
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+ Tech Stack
+Backend
 
-## Deploy on Vercel
+Laravel 
+MySQL 
+JWT Auth  
+Midtrans 
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Frontend
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# BookingApp
+Next.js 
+Tailwind CSS 
+React Hook Form 
 
+DevOps
+
+Git - Version control
+Vercel - Frontend deployment
