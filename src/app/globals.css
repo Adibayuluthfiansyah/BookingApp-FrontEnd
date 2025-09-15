@@ -120,3 +120,20 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes soccerBall {
+          0%, 100% { 
+            left: 10%; 
+            transform: translateY(-50%) rotate(0deg);
+          }
+          50% { 
+            left: 75%; 
+            transform: translateY(-50%) rotate(180deg);
+          }
+        }
+        
+        @keyframes progressBar {
+          0% { width: 0%; }
+          50% { width: 70%; }
+          100% { width: 100%; }
+        }
