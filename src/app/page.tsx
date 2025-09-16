@@ -3,6 +3,9 @@
 import React from "react";
 import VenueCard from "@/components/customer/VenueCard";
 import { Venue } from "@/types";
+import Footer from "./utilities/footer/page";
+import Beranda from "./beranda/page";
+import CustomerHomePage from "./(customer)/homepage-cus/page";
 
 const mockVenues: Venue[] = [
   {
@@ -42,14 +45,19 @@ const mockVenues: Venue[] = [
 
 export default function Home() {
   return (
-    <div className="pt-22 max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
-      <h1 className="text-2xl font-bold mb-6">Daftar Venue</h1>
+    // < className="pt-22 max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
+    //   <h1 className="text-2xl font-bold mb-6">Daftar Venue</h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {mockVenues.map((venue) => (
-          <VenueCard key={venue.id} venue={venue} />
-        ))}
-      </div>
+    //   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    //     {mockVenues.map((venue) => (
+    //       <VenueCard key={venue.id} venue={venue} />
+    //     ))}
+    //   </div>
+    <div>
+      <Beranda/>
+      <CustomerHomePage/>
+      <Footer/>
     </div>
+ 
   );
 }

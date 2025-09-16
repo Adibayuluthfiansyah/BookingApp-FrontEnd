@@ -14,7 +14,7 @@ export default function CustomerHomePage() {
   const [venues] = useState(mockVenues);
 
   return (
-    <div className="py-6 max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
+    <div className="pt-22 py-15 max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
       <h1 className="text-2xl font-bold mb-6">Available Venues</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {venues.map(venue => (

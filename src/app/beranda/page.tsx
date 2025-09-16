@@ -21,14 +21,16 @@ export default function Beranda() {
               Temukan dan booking lapangan olahraga terbaik di sekitar Anda dengan mudah dan cepat
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/venues">
+              <Link href="/homepage-cus">
                 <Button size="lg" className="w-full sm:w-auto cursor-pointer hover:bg-white hover:text-black">
                   Cari Lapangan
                 </Button>
               </Link>
-              <Button variant="outline" size="lg" className="w-full sm:w-auto border-white text-black hover:bg-white hover:text-blue-600 cursor-pointer">
-                Pelajari Lebih Lanjut
-              </Button>
+              <Link href="/CustomerHomePage">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto border-white text-black hover:bg-white hover:text-blue-600 cursor-pointer">
+                  Pelajari Lebih Lanjut
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
