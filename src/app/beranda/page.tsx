@@ -18,7 +18,7 @@ export default function Beranda() {
               <span className="text-blue-300">Mini Soccer & Futsal</span>
             </h1>
             <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-              Temukan dan booking lapangan olahraga terbaik di sekitar Anda dengan mudah dan cepat
+              Temukan dan booking lapangan olahraga terbaik di sekitar Anda
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/homepage-cus">
