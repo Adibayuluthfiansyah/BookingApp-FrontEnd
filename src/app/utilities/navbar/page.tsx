@@ -8,7 +8,7 @@ import { Menu, X } from 'lucide-react'
 const navItems = [
   { label: 'Beranda', href: '/' },
   { label: 'Tentang Kami', href: '/tentang' },
-  { label: 'Lapangan', href: '/venues' },
+  { label: 'Lapangan', href: '/homepage-cus' },
   { label: 'Kontak', href: '/kontak' },
 ]
 
@@ -132,20 +132,6 @@ const Navbar: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Custom animations */}
-      <style jsx>{`
-        @keyframes slideInFromRight {
-          from {
-            opacity: 0;
-            transform: translateX(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-      `}</style>
     </nav>
   )
 }
