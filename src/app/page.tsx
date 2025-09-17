@@ -4,7 +4,7 @@ import React from "react";
 import VenueCard from "@/components/customer/VenueCard";
 import { Venue } from "@/types";
 import Footer from "./utilities/footer/page";
-import Beranda from "./beranda/page";
+import Hero from "./hero/page";
 import CustomerHomePage from "./(customer)/homepage-cus/page";
 
 const mockVenues: Venue[] = [
@@ -54,7 +54,7 @@ export default function Home() {
     //     ))}
     //   </div>
     <div>
-      <Beranda/>
+      <Hero/>
       <CustomerHomePage/>
       <Footer/>
     </div>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X, } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 
 const navItems = [
   { label: 'Beranda', href: '/' },
@@ -18,109 +18,134 @@ const Navbar: React.FC = () => {
   const pathname = usePathname()
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 10)
+    const handleScroll = () => setIsScrolled(window.scrollY > 50)
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
   return (
     <nav
-      className={`fixed top-0 w-full z-50 transition-all duration-500 ${
+      className={`fixed top-0 w-full z-50 transition-all duration-700 ease-in-out ${
         isScrolled
-          ? 'bg-white/90 backdrop-blur-md shadow-xl border-b border-[#4a5c4d]/10'
-          : 'bg-black/80'
+          ? 'bg-white/95 backdrop-blur-xl shadow-2xl border-b border-black/5'
+          : 'bg-black/20 backdrop-blur-sm'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-18 py-3">
+        <div className="flex items-center justify-between h-17">
           {/* Logo */}
           <Link
             href="/"
-            className={`flex items-center gap-3 text-xl font-bold tracking-wide transition-all duration-300 hover:scale-101 ${
-              isScrolled ? 'text-[#2d3b2f]' : 'text-white'
+            className={`flex items-center gap-3 transition-all duration-500 hover:scale-105 ${
+              isScrolled ? 'text-black' : 'text-white'
             }`}
           >
-            {/* <div className={`p-2 rounded-xl transition-all duration-300 ${
-              isScrolled 
-                ? 'bg-gradient-to-br from-[#2d3b2f] to-[#4a5c4d]' 
-                : 'bg-white/20 backdrop-blur-sm'
-            }`}>
-            </div> */}
-            <span className="hidden sm:block">070NG BOOKING</span>
-            <span className="sm:hidden">070NG</span>
+            <div className="flex flex-col">
+              <span className="font-black text-xl tracking-tight leading-none">
+                070NG
+              </span>
+              <span className={`text-xl font-medium tracking-widest uppercase ${
+                isScrolled ? 'text-gray-600' : 'text-white/80'
+              }`}>
+                BOOKING
+              </span>
+            </div>
           </Link>
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-2">
+          <div className="hidden md:flex items-center space-x-1">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`px-4 py-2 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 relative group ${
+                className={`relative px-6 py-3 rounded-full font-medium transition-all duration-300 transform hover:scale-105 overflow-hidden group ${
                   pathname === item.href
                     ? isScrolled
-                      ? 'text-white bg-gradient-to-r from-[#2d3b2f] to-[#4a5c4d] shadow-lg'
-                      : 'text-[#2d3b2f] bg-white/90 backdrop-blur-sm shadow-lg'
+                      ? 'text-white bg-black shadow-lg shadow-black/20'
+                      : 'text-black bg-white/95 backdrop-blur-sm shadow-lg shadow-white/10'
                     : isScrolled
-                    ? 'text-[#6b7069] hover:text-[#2d3b2f] hover:bg-[#4a5c4d]/5'
-                    : 'text-white/90 hover:text-white hover:bg-white/10 backdrop-blur-sm'
+                    ? 'text-gray-700 hover:text-black hover:bg-gray-100'
+                    : 'text-white/90 hover:text-white hover:bg-white/10'
                 }`}
               >
-                {item.label}
-                {pathname === item.href && (
-                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-current rounded-full opacity-60"></div>
+                <span className="relative z-10">{item.label}</span>
+                {pathname !== item.href && (
+                  <div className={`absolute inset-0 scale-0 group-hover:scale-100 transition-transform duration-300 rounded-full ${
+                    isScrolled 
+                      ? 'bg-gray-50' 
+                      : 'bg-white/5 backdrop-blur-sm'
+                  }`}></div>
                 )}
               </Link>
             ))}
           </div>
 
-
           {/* Mobile Toggle */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className={`md:hidden focus:outline-none p-2 rounded-xl transition-all duration-300 ${
+            className={`md:hidden focus:outline-none p-3 rounded-xl cursor-pointer transition-all duration-300 ${
               isScrolled 
-                ? 'hover:bg-[#4a5c4d]/10 text-[#2d3b2f]' 
+                ? 'hover:bg-gray-100 text-black' 
                 : 'hover:bg-white/10 text-white'
             }`}
           >
-            {isMobileMenuOpen ? (
-              <X size={24} />
-            ) : (
-              <Menu size={24} />
-            )}
+            <div className="relative w-6 h-6">
+              <span className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 opacity-0' : 'rotate-0 opacity-100'}`}>
+                <Menu size={24} />
+              </span>
+              <span className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ${isMobileMenuOpen ? 'rotate-0 opacity-100' : '-rotate-45 opacity-0'}`}>
+                <X size={24} />
+              </span>
+            </div>
           </button>
         </div>
       </div>
 
       {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden bg-white/95 backdrop-blur-md shadow-xl border-t border-[#4a5c4d]/10">
-          <div className="px-4 py-6 space-y-3">
-            {navItems.map((item) => (
+      <div className={`md:hidden transition-all duration-500 ease-in-out ${
+        isMobileMenuOpen 
+          ? 'max-h-screen opacity-100' 
+          : 'max-h-0 opacity-0'
+      } overflow-hidden`}>
+        <div className="bg-white/98 backdrop-blur-xl shadow-2xl border-t border-black/5">
+          <div className="px-6 py-8 space-y-2">
+            {navItems.map((item, index) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`block px-4 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 ${
+                className={`block px-6 py-4 rounded-2xl font-medium transition-all duration-300 transform hover:scale-[1.02] hover:translate-x-2 ${
                   pathname === item.href
-                    ? 'text-white bg-gradient-to-r from-[#2d3b2f] to-[#4a5c4d] shadow-lg'
-                    : 'text-[#6b7069] hover:text-[#2d3b2f] hover:bg-[#4a5c4d]/5'
+                    ? 'text-white bg-black shadow-lg shadow-black/10'
+                    : 'text-gray-700 hover:text-black hover:bg-gray-50'
                 }`}
+                style={{ 
+                  animationDelay: `${index * 100}ms`,
+                  animation: isMobileMenuOpen ? 'slideInFromRight 0.5s ease-out forwards' : 'none'
+                }}
               >
                 {item.label}
               </Link>
             ))}
-            <Link
-              href="/kontak"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="block mt-4 px-4 py-3 rounded-xl bg-gradient-to-r from-[#2d3b2f] to-[#4a5c4d] text-white font-bold text-center transition-all duration-300 hover:shadow-lg"
-            >
-              Hubungi Kami
-            </Link>
+            
+
           </div>
         </div>
-      )}
+      </div>
+
+      {/* Custom animations */}
+      <style jsx>{`
+        @keyframes slideInFromRight {
+          from {
+            opacity: 0;
+            transform: translateX(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+      `}</style>
     </nav>
   )
 }
