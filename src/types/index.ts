@@ -7,15 +7,20 @@ export interface User {
 }
 
 export interface Venue {
-  id: string;
+  id: number;
   name: string;
-  description: string;
   address: string;
-  image: string;
   price_per_hour: number;
+  type: string;
+  image: string;
   facilities: string[];
-  rating: number;
-  fields: Field[];
+  description: string;
+  fields: {
+    id: number;
+    name: string;
+    price: number;
+    image: string;
+  }[];
 }
 
 export interface Field {
