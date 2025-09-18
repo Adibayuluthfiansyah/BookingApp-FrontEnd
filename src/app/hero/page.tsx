@@ -13,7 +13,7 @@ export default function Hero() {
           <Image src="/hero.jpg" alt="hero-image" fill className="object-cover object-center w-full h-full"/>
           <div className='absolute inset-0 bg-black opacity-50'></div>
           <div className='relative flex flex-col justify-center items-center h-full text-center'>
-            <h1 className='font-bold text-5xl capitalize mb-10'>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quidem, officia.</h1>
+            <h1 className='font-bold text-5xl capitalize mb-10'>Booking Lapangan Minisoccer Dan Futsal Mudah Dan Cepat</h1>
             <div className='flex gap-5'>
             <Link href="/homepage-cus">
                 <Button size="lg" className="w-full sm:w-auto cursor-pointer hover:bg-white hover:text-black">
