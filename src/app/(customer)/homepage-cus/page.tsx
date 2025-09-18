@@ -1,12 +1,11 @@
 'use client';
 import Link from 'next/link';
-import { MapPin} from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 
 export default function CustomerHomePage() {
-  const [currentView, setCurrentView] = useState('venues');
-  const [selectedVenueId, setSelectedVenueId] = useState(null);
+  const [currentView] = useState('venues');
 
   // Mock data venues
   const venues = [
@@ -45,7 +44,7 @@ export default function CustomerHomePage() {
     }
   ];
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
@@ -53,17 +52,16 @@ export default function CustomerHomePage() {
     }).format(amount);
   };
 
-  const VenueCard = ({ venue }) => (
+  const VenueCard = ({ venue }: { venue: any }) => (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform">
       <div className="relative h-48 bg-gray-200">
         <Image
           src={venue.image}
           alt={venue.name}
-          width={500}     
-          height={300}    
+          width={500}
+          height={300}
           className="w-full h-full object-cover"
         />
-
       </div>
       <div className="p-6">
         <h3 className="text-xl font-bold mb-2">{venue.name}</h3>
@@ -82,8 +80,8 @@ export default function CustomerHomePage() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2 mb-4">
-          {venue.facilities.map((facility, index) => (
-            <span 
+          {venue.facilities.map((facility: string, index: number) => (
+            <span
               key={index}
               className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
             >
@@ -91,14 +89,13 @@ export default function CustomerHomePage() {
             </span>
           ))}
         </div>
-        <button 
-          className="w-full bg-black hover:-translate-y-0.5 cursor-pointer text-white font-semibold py-3 px-6 rounded-lg  transition-all duration-300 transform"
-          onClick={() => {
-            <Link href={`/venues/${venue.id}`}></Link>
-          }}
-        >
-          Lihat Selengkapnya
-        </button>
+
+        {/* Tombol dengan Link */}
+        <Link href={`/venues/${venue.id}`} className="w-full block">
+          <button className="w-full bg-black hover:-translate-y-0.5 cursor-pointer text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform">
+            Lihat Selengkapnya
+          </button>
+        </Link>
       </div>
     </div>
   );
@@ -117,12 +114,6 @@ export default function CustomerHomePage() {
   return (
     <div>
       {currentView === 'venues' && <VenuesList />}
-      {currentView === 'lapangan' && (
-        <LapanganPage 
-          venueId={selectedVenueId}
-          onBack={() => setCurrentView('venues')}
-        />
-      )}
     </div>
   );
-} 
+}
