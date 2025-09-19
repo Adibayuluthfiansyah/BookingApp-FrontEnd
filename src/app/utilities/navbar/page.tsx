@@ -7,7 +7,7 @@ import { Menu, X } from 'lucide-react'
 
 const navItems = [
   { label: 'Beranda', href: '/' },
-  { label: 'Tentang Kami', href: '/tentang' },
+  { label: 'Tentang Kami', href: '/about' },
   { label: 'Lapangan', href: '/venues' },
   { label: 'Kontak', href: '/kontak' },
 ]
