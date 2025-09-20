@@ -5,12 +5,13 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { MOCK_VENUES } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
+import { Venue } from '@/types';
 
 export default function CustomerHomePage() {
   const [currentView] = useState('venues');
 
 
-  const VenueCard = ({ venue }: { venue: any }) => (
+  const VenueCard = ({ venue }: { venue: Venue }) => (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform">
       <div className="relative h-48 bg-gray-200">
         <Image
