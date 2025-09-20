@@ -42,7 +42,7 @@ const Navbar: React.FC = () => {
           >
             <div className="flex flex-col">
               <span className="font-black text-xl tracking-tight leading-none">
-                070NG
+                KASHMIR
               </span>
               <span className={`text-xl font-medium tracking-widest uppercase ${
                 isScrolled ? 'text-gray-600' : 'text-white/80'

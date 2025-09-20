@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "70NG BOOKING APP",
+  title: "KASHMIR",
   description: "BOOKING APPLICATION FOR MINISOCCER AND FUTSAL",
 };
 
