@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { MapPin, Clock, Users, Search, Grid3X3, List } from 'lucide-react'
 import Image from 'next/image'
 import { MOCK_VENUES } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 
 
 const PRICE_RANGES = [
@@ -12,9 +13,6 @@ const PRICE_RANGES = [
   { label: "Rp 150.000 - Rp 250.000", min: 150000, max: 250000 },
   { label: "> Rp 250.000", min: 250000, max: Infinity }
 ]
-
-const formatCurrency = (value) =>
-  new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value)
 
 const VenueCard = ({ venue, viewMode, onVenueClick }) => {
   const isGrid = viewMode === 'grid'
@@ -103,11 +101,24 @@ export default function VenuesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b sticky top-0 z-40 pt-20">
+        <div className=' relative h-80 md:h-96 overflow-hidden'>
+              <div className='absolute inset-0'>
+                  <Image src='/lapanganpage.jpg' width={650} height={579} alt="about image"
+                  className='object-cover w-full h-full'/>
+              </div>
+            <div className='absolute inset-0 bg-black/50'></div>
+            <div className='relative z-10 flex items-center justify-center h-full text-center text-white'>
+            <div>
+                <h1 className='text-4xl md:text-6xl font-bold mb-4'>Cari Lapangan</h1>
+                <p className='text-lg md:text-xl'>Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus, aliquid!</p>
+            </div>
+        </div>
+      </div>
+      <header className="bg-white shadow-sm border-b sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Daftar Lapangan</h1>
-            <p className="text-gray-600">Temukan lapangan olahraga terbaik di sekitar Anda</p>
+            <p className="text-gray-600">Temukan lapangan minisoccer atau futsal</p>
           </div>
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
