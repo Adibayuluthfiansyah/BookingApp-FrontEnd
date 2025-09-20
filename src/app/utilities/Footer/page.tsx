@@ -10,7 +10,7 @@ export default function Footer() {
           {/* Company Info */}
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
-              <span className="text-xl font-bold">070NG BookingField</span>
+              <span className="text-xl font-bold">KASHMIR BookingField</span>
             </div>
             <p className="text-gray-300 mb-4 max-w-md">
               Platform booking lapangan mini soccer dan futsal terpercaya di Indonesia. 
@@ -37,7 +37,7 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+            <h3 className="text-lg font-semibold mb-4">Lainnya</h3>
             <ul className="space-y-2">
               <li><Link href="/" className="text-gray-300 hover:text-white transition-colors">Beranda</Link></li>
               <li><Link href="/venues" className="text-gray-300 hover:text-white transition-colors">Semua Venues</Link></li>
@@ -60,7 +60,7 @@ export default function Footer() {
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center">
           <p className="text-gray-300">
-            © 2025 070NG BOOKING FIELD. All rights reserved.
+            © 2025 KASHMIR BOOKING FIELD. All rights reserved.
           </p>
         </div>
       </div>

@@ -3,54 +3,12 @@ import Link from 'next/link';
 import { MapPin } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
+import { MOCK_VENUES } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 
 export default function CustomerHomePage() {
   const [currentView] = useState('venues');
 
-  // Mock data venues
-  const venues = [
-    {
-      id: "1",
-      name: 'GOR Pangsuma',
-      address: 'Pontianak',
-      price_per_hour: 200000,
-      type: 'Futsal',
-      image: '/pangsuma.jpg',
-      facilities: ['Parkir', 'Kantin', 'Toilet', 'Shower'],
-      description: 'Lapangan futsal modern dengan fasilitas lengkap',
-      fields: []
-    },
-    {
-      id: "2",
-      name: 'Gladiator Futsal',
-      address: 'Pontianak',
-      price_per_hour: 150000,
-      type: 'Futsal',
-      image: '/gladiator.jpg',
-      facilities: ['Parkir', 'Kantin'],
-      description: 'Lapangan futsal dengan fasilitas modern',
-      fields: []
-    },
-    {
-      id: "3",
-      name: 'JS Mini Soccer',
-      address: 'Pontianak',
-      price_per_hour: 600000,
-      type: 'Mini Soccer',
-      image: '/jsminso.jpg',
-      facilities: ['Parkir', 'Kantin', 'Toilet'],
-      description: 'Lapangan mini soccer indoor yang nyaman',
-      fields: []
-    }
-  ];
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
 
   const VenueCard = ({ venue }: { venue: any }) => (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform">
@@ -104,7 +62,7 @@ export default function CustomerHomePage() {
     <div className="pt-22 py-15 max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
       <h1 className="text-2xl font-bold mb-6">Lapangan</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {venues.map((venue) => (
+        {MOCK_VENUES.map((venue) => (
           <VenueCard key={venue.id} venue={venue} />
         ))}
       </div>
