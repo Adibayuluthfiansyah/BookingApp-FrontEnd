@@ -9,7 +9,7 @@ const navItems = [
   { label: 'Beranda', href: '/' },
   { label: 'Tentang Kami', href: '/about' },
   { label: 'Lapangan', href: '/venues' },
-  { label: 'Kontak', href: '/kontak' },
+  { label: 'Kontak', href: '/contact' },
 ]
 
 const Navbar: React.FC = () => {
