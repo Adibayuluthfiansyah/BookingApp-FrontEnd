@@ -20,7 +20,7 @@ export default function Hero() {
                     Cari Lapangan
                 </Button>
             </Link>
-            <Link href="/#">
+            <Link href="/about">
                 <Button  size="lg" className="w-full sm:w-auto border-1 text-white bg-transparent hover:bg-white hover:text-black hover:shadow-lg cursor-pointer">
                     Pelajari Lebih Lanjut
                 </Button>
