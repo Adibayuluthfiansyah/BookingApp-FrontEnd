@@ -56,8 +56,3 @@ export interface Booking {
   field_name: string;
 }
 
-interface VenueCardProps {
-  venue: Venue;
-  viewMode: 'grid' | 'list';
-  onVenueClick: (venue: Venue) => void;
-}

@@ -6,7 +6,6 @@ import Image from 'next/image'
 import { MOCK_VENUES } from '@/lib/utils'
 import { formatCurrency } from '@/lib/utils'
 
-
 const PRICE_RANGES = [
   { label: "Semua Harga", min: 0, max: Infinity },
   { label: "< Rp 150.000", min: 0, max: 150000 },
@@ -25,7 +24,6 @@ const VenueCard = ({ venue, viewMode, onVenueClick }) => {
       <div className={`relative ${isGrid ? "h-48 w-full" : "h-32 w-48 flex-shrink-0"}`}>
         <Image src={venue.image} alt={venue.name} fill className="object-cover" />
         {!venue.is_open && <div className="absolute top-3 right-3 bg-red-500 text-white text-xs px-2 py-1 rounded-lg">Tutup</div>}
-        <div className="absolute bottom-3 right-3 bg-white/90 text-gray-900 text-xs px-2 py-1 rounded-lg">{venue.distance}</div>
       </div>
 
       {/* Content */}
@@ -139,7 +137,7 @@ export default function VenuesPage() {
           <div className="flex flex-wrap items-center gap-3 flex-1">
             <select
               value={selectedPriceRange.label}
-              onChange={(e) => setSelectedPriceRange(PRICE_RANGES.find(r => r.label === e.target.value))}
+             onChange={(e) => setSelectedPriceRange(PRICE_RANGES.find(r => r.label === e.target.value) ?? PRICE_RANGES[0])}
               className="px-3 py-2 border rounded-lg text-sm"
             >
               {PRICE_RANGES.map((r) => <option key={r.label}>{r.label}</option>)}
