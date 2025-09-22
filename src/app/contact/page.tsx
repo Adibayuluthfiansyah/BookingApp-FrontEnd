@@ -120,7 +120,7 @@ const ContactPage = () => {
             <div className="space-y-6">
               <div>
                 <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6 flex items-center gap-3">
-                  <Building2 className="w-8 h-8 text-blue-600" />
+                  <Building2 className="w-8 h-8" />
                   Bisnis & Kerja Sama
                 </h2>
                 <p className="text-gray-600 leading-relaxed mb-6">
