@@ -6,13 +6,7 @@ import Image from 'next/image'
 import { ArrowLeft, MapPin, Star, Share2, Instagram, Facebook, Clock, Check, X } from 'lucide-react'
 import { MOCK_VENUES, MOCK_TIME_SLOTS, formatCurrency, formatTime } from '@/lib/utils'
 import { Venue, TimeSlot } from '@/types'
-
-interface BookingSlot {
-  date: string
-  timeSlot: TimeSlot
-  fieldId: number
-  fieldName: string
-}
+import { BookingSlot } from '@/types'
 
 export default function VenueDetailPage() {
   const params = useParams()
