@@ -50,7 +50,7 @@ export default function CustomerHomePage() {
         </div>
 
         {/* Tombol dengan Link */}
-        <Link href={`/venues/${venue.id}`} className="w-full block">
+        <Link href="/venues" className="w-full block">
           <button className="w-full bg-black hover:-translate-y-0.5 cursor-pointer text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform">
             Lihat Selengkapnya
           </button>
