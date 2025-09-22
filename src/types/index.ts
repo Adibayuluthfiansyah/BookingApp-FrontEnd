@@ -15,12 +15,8 @@ export interface Venue {
   image: string;
   facilities: string[];
   description: string;
-  fields: {
-    id: number;
-    name: string;
-    price: number;
-    image: string;
-  }[];
+  rating: number; // Added rating field
+  fields: Field[]; // Changed from inline to Field interface
 }
 
 export interface Field {
@@ -59,5 +55,34 @@ export interface Booking {
 export interface VenuesCardProps {
   venue: Venue
   viewMode: 'grid' | 'list'
-  onVenueClick: (venue: Venue) => void
+  onVenueClick?: (venue: Venue) => void // Made optional since we handle routing internally
+}
+
+// New interfaces for booking flow
+export interface BookingSlot {
+  date: string
+  timeSlot: TimeSlot
+  fieldId: number
+  fieldName: string
+}
+
+export interface BookingFormData {
+  customerName: string
+  customerEmail: string
+  customerPhone: string
+  notes: string
+  paymentMethod: 'transfer' | 'ewallet' | 'cash'
+}
+
+export interface BookingRequest {
+  venue_id: number
+  field_id: number
+  booking_date: string
+  time_slots: number[] // Array of time slot IDs
+  customer_name: string
+  customer_phone: string
+  customer_email?: string
+  notes?: string
+  payment_method: string
+  total_price: number
 }
