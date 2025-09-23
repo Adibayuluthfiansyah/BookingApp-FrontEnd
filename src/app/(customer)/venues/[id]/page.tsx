@@ -317,7 +317,7 @@ export default function VenueDetailPage() {
                 </div>
                 <button
                   onClick={handleBooking}
-                  className="w-full mt-4 bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors text-sm"
+                  className="w-full mt-4 bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors text-sm cursor-pointer"
                 >
                   Lanjutkan Booking
                 </button>

@@ -78,15 +78,15 @@ export default function BookingFormPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen pt-15">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-40">
+      <div className="shadow-sm sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center">
           <button
             onClick={() => router.back()}
             className="mr-4 p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-6 h-6" />
+            <ArrowLeft className="w-6 h-6 cursor-pointer" />
           </button>
           <div>
             <h1 className="text-xl font-bold text-gray-900">Form Booking</h1>
@@ -108,7 +108,7 @@ export default function BookingFormPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nama Lengkap *
+                    Nama Lengkap 
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -126,7 +126,7 @@ export default function BookingFormPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nomor Telepon *
+                    Nomor Telepon 
                   </label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -183,7 +183,7 @@ export default function BookingFormPage() {
               </h2>
 
               <div className="space-y-3 mb-6">
-                <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
+                <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-orange-300">
                   <input
                     type="radio"
                     name="paymentMethod"
@@ -198,7 +198,7 @@ export default function BookingFormPage() {
                   </div>
                 </label>
 
-                <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
+                <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-orange-300">
                   <input
                     type="radio"
                     name="paymentMethod"
@@ -213,7 +213,7 @@ export default function BookingFormPage() {
                   </div>
                 </label>
 
-                <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
+                <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-orange-300">
                   <input
                     type="radio"
                     name="paymentMethod"
@@ -232,7 +232,7 @@ export default function BookingFormPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-orange-500 text-white py-4 rounded-lg font-medium hover:bg-orange-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="w-full bg-orange-500 text-white py-4 rounded-lg font-medium hover:bg-orange-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isLoading ? 'Memproses...' : 'Konfirmasi Booking'}
               </button>

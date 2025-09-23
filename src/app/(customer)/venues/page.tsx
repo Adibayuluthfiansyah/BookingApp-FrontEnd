@@ -112,13 +112,13 @@ export default function VenuesPage() {
             <div className="flex border rounded-lg overflow-hidden">
               <button 
                 onClick={() => setViewMode('grid')} 
-                className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-orange-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-black text-white' : 'bg-white text-gray-600 hover:bg-gray-50 cursor-pointer'}`}
               >
                 <Grid3X3 className="w-4 h-4" />
               </button>
               <button 
                 onClick={() => setViewMode('list')} 
-                className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-orange-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-black text-white' : 'bg-white text-gray-600 hover:bg-gray-50 cursor-pointer'}`}
               >
                 <List className="w-4 h-4" />
               </button>
@@ -130,7 +130,7 @@ export default function VenuesPage() {
         <div className="mb-4">
           <p className="text-gray-600">
             Menampilkan {sortedVenues.length} lapangan
-            {searchQuery && <span> untuk "{searchQuery}"</span>}
+            {searchQuery && <span> untuk {searchQuery}</span>}
           </p>
         </div>
 
