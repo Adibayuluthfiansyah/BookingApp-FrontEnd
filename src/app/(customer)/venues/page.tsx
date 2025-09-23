@@ -106,7 +106,6 @@ export default function VenuesPage() {
               onChange={(e) => setSortBy(e.target.value)} 
               className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
             >
-              <option value="rating">Rating Tertinggi</option>
               <option value="price">Harga Terendah</option>
               <option value="name">Nama A-Z</option>
             </select>

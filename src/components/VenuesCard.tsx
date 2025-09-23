@@ -1,7 +1,7 @@
 'use client'
 import React from 'react'
 import { formatCurrency } from '@/lib/utils'
-import { MapPin, Star } from 'lucide-react'
+import { MapPin } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { VenuesCardProps } from '@/types'
@@ -22,12 +22,6 @@ const VenuesCard: React.FC<VenuesCardProps> = ({ venue, viewMode }) => {
       {/* Image */}
       <div className={`relative ${isGrid ? "h-48 w-full" : "h-32 w-48 flex-shrink-0"}`}>
         <Image src={venue.image} alt={venue.name} fill className="object-cover" />
-        
-        {/* Rating Badge */}
-        <div className="absolute top-3 left-3 bg-white/90 px-2 py-1 rounded-full flex items-center gap-1">
-          <Star className="w-3 h-3 text-yellow-400 fill-current" />
-          <span className="text-xs font-medium">{venue.rating}</span>
-        </div>
       </div>
 
       {/* Content */}

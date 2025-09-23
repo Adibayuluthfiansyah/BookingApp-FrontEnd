@@ -4,14 +4,8 @@ import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, User, Phone, Mail, MessageSquare, CreditCard, Calendar, Clock } from 'lucide-react'
 import { formatCurrency, formatTime } from '@/lib/utils'
+import { BookingFormData } from '@/types'
 
-interface BookingFormData {
-  customerName: string
-  customerEmail: string
-  customerPhone: string
-  notes: string
-  paymentMethod: string
-}
 
 export default function BookingFormPage() {
   const router = useRouter()

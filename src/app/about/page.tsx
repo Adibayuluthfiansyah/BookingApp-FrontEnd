@@ -7,7 +7,7 @@ const AboutPage = () => {
   return (
     //Hero Section
     <div className='min-h-screen'>
-        <div className=' relative h-80 md:h-96 overflow-hidden'>
+        <div className='relative h-80 md:h-96 overflow-hidden'>
         <div className='absolute inset-0'>
             <Image src='/about1.jpg' width={650} height={579} alt="about image"
             className='object-cover w-full h-full'/>

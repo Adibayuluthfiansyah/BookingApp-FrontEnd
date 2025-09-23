@@ -112,48 +112,38 @@ export default function VenueDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       {/* Header Image */}
-      <div className="relative h-64 md:h-80">
+      <div className="relative h-48 sm:h-64 md:h-80 lg:h-96 overflow-hidden">
         <Image
           src={venue.image}
           alt={venue.name}
           fill
-          className="object-cover"
+          className="object-cover w-full h-full"
         />
-        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="absolute inset-0 bg-black/50"></div>
         
         {/* Back Button */}
         <button
           onClick={() => router.back()}
-          className="absolute top-4 left-4 bg-white/90 p-2 rounded-full shadow-lg hover:bg-white transition-colors"
+          className="absolute bottom-4 left-4 bg-white/90 p-2 rounded-full shadow-lg hover:bg-black hover:text-white cursor-pointer transition-colors"
         >
           <ArrowLeft className="w-6 h-6" />
-        </button>
-
-        {/* Share Button */}
-        <button className="absolute top-4 right-4 bg-white/90 p-2 rounded-full shadow-lg hover:bg-white transition-colors">
-          <Share2 className="w-6 h-6" />
         </button>
       </div>
 
       {/* Venue Info */}
       <div className="bg-white">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 lg:gap-6">
             <div className="flex-1">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{venue.name}</h1>
-              <div className="text-red-500 font-medium mb-2">{venue.name}</div>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{venue.name}</h1>
+              <div className="text-black font-medium mb-2 text-sm sm:text-base">{venue.name}</div>
               
-              <div className="flex items-center gap-4 mb-4">
-                <div className="flex items-center gap-1">
-                  <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                  <span className="font-medium">{venue.rating}</span>
-                </div>
-                
+              <div className="flex items-start gap-4 mb-4">                
                 <div className="flex items-center text-gray-600">
-                  <MapPin className="w-4 h-4 mr-1" />
-                  <span className="text-sm">{venue.address}</span>
+                  <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm">{venue.address}</span>
                 </div>
               </div>
 
@@ -169,14 +159,14 @@ export default function VenueDetailPage() {
             </div>
 
             {/* Booking Section */}
-            <div className="bg-orange-50 p-4 rounded-lg md:w-80">
+            <div className="bg-orange-50 p-4 rounded-lg w-full lg:w-80">
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-2">Pilih Tanggal Booking :</label>
                 <input
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-black cursor-pointer text-sm"
                 />
               </div>
               
@@ -185,7 +175,7 @@ export default function VenueDetailPage() {
                 <select
                   value={selectedField || ''}
                   onChange={(e) => setSelectedField(parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-black cursor-pointer text-sm"
                 >
                   {venue.fields.map(field => (
                     <option key={field.id} value={field.id}>{field.name}</option>
@@ -195,7 +185,7 @@ export default function VenueDetailPage() {
 
               <button
                 onClick={handleBooking}
-                className="w-full bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors"
+                className="w-full bg-black text-white py-3 rounded-lg font-medium hover:bg-orange-50 hover:text-black cursor-pointer transition-colors text-sm"
               >
                 Cari Venue
               </button>
@@ -205,12 +195,12 @@ export default function VenueDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white border-t">
+      <div className="bg-white border-t sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex">
+          <div className="flex overflow-x-auto">
             <button
               onClick={() => setActiveTab('schedule')}
-              className={`px-6 py-4 font-medium border-b-2 transition-colors ${
+              className={`px-4 sm:px-6 py-4 font-medium border-b-2 transition-colors whitespace-nowrap cursor-pointer text-sm ${
                 activeTab === 'schedule' 
                   ? 'border-orange-500 text-orange-600' 
                   : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -220,7 +210,7 @@ export default function VenueDetailPage() {
             </button>
             <button
               onClick={() => setActiveTab('gallery')}
-              className={`px-6 py-4 font-medium border-b-2 transition-colors ${
+              className={`px-4 sm:px-6 py-4 font-medium border-b-2 transition-colors whitespace-nowrap cursor-pointer text-sm ${
                 activeTab === 'gallery' 
                   ? 'border-orange-500 text-orange-600' 
                   : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -230,7 +220,7 @@ export default function VenueDetailPage() {
             </button>
             <button
               onClick={() => setActiveTab('about')}
-              className={`px-6 py-4 font-medium border-b-2 transition-colors ${
+              className={`px-4 sm:px-6 py-4 font-medium border-b-2 transition-colors whitespace-nowrap cursor-pointer text-sm ${
                 activeTab === 'about' 
                   ? 'border-orange-500 text-orange-600' 
                   : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -243,22 +233,22 @@ export default function VenueDetailPage() {
       </div>
 
       {/* Tab Content */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
         {activeTab === 'schedule' && (
           <div>
             {/* Date Selector */}
-            <div className="grid grid-cols-7 gap-2 mb-6">
+            <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-6">
               {dates.map((date) => (
                 <button
                   key={date.date}
                   onClick={() => setSelectedDate(date.date)}
-                  className={`p-3 text-center rounded-lg border transition-colors ${
+                  className={`flex flex-col items-center justify-center p-2 sm:p-3 text-center rounded-lg border transition-colors ${
                     selectedDate === date.date
-                      ? 'bg-orange-500 text-white border-orange-500'
-                      : 'bg-white text-gray-700 border-gray-200 hover:border-orange-300'
+                      ? 'bg-orange-500 text-white border-white'
+                      : 'bg-white text-gray-700 border-gray-200 hover:border-orange-500 cursor-pointer'
                   }`}
                 >
-                  <div className="text-sm font-medium">{date.dayNumber} {date.date.split('-')[1]}</div>
+                  <div className="text-xs sm:text-sm font-medium">{date.dayNumber} {date.date.split('-')[1]}</div>
                   <div className="text-xs">{date.dayName}</div>
                   {date.isToday && <div className="text-xs text-orange-500 font-medium">Today</div>}
                 </button>
@@ -266,7 +256,7 @@ export default function VenueDetailPage() {
             </div>
 
             {/* Time Slots Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3 ">
               {MOCK_TIME_SLOTS.map((slot) => {
                 const isAvailable = slot.is_available
                 const isSelected = isSlotSelected(slot)
@@ -276,7 +266,7 @@ export default function VenueDetailPage() {
                     key={slot.id}
                     onClick={() => handleSlotClick(slot)}
                     disabled={!isAvailable}
-                    className={`p-4 rounded-lg text-center transition-all ${
+                    className={`p-3 sm:p-4 rounded-lg text-center transition-all cursor-pointer ${
                       !isAvailable
                         ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                         : isSelected
@@ -286,14 +276,14 @@ export default function VenueDetailPage() {
                   >
                     <div className="flex items-center justify-center mb-1">
                       {isSelected ? (
-                        <Check className="w-4 h-4" />
+                        <Check className="w-3 h-3 sm:w-4 sm:h-4" />
                       ) : !isAvailable ? (
-                        <X className="w-4 h-4" />
+                        <X className="w-3 h-3 sm:w-4 sm:h-4" />
                       ) : (
-                        <Clock className="w-4 h-4" />
+                        <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
                       )}
                     </div>
-                    <div className="text-sm font-medium">
+                    <div className="text-xs sm:text-sm font-medium">
                       {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
                     </div>
                     <div className="text-xs mt-1">
@@ -310,10 +300,10 @@ export default function VenueDetailPage() {
             {/* Selected Slots Summary */}
             {selectedSlots.length > 0 && (
               <div className="mt-6 bg-white rounded-lg border p-4">
-                <h3 className="font-medium mb-3">Jadwal Terpilih:</h3>
+                <h3 className="font-medium mb-3 text-sm sm:text-base">Jadwal Terpilih:</h3>
                 <div className="space-y-2">
                   {selectedSlots.map((slot, index) => (
-                    <div key={index} className="flex justify-between items-center text-sm">
+                    <div key={index} className="flex justify-between items-center text-xs sm:text-sm">
                       <span>
                         {slot.fieldName} - {formatTime(slot.timeSlot.start_time)}-{formatTime(slot.timeSlot.end_time)}
                       </span>
@@ -321,13 +311,13 @@ export default function VenueDetailPage() {
                     </div>
                   ))}
                 </div>
-                <div className="border-t mt-3 pt-3 flex justify-between items-center font-bold">
+                <div className="border-t mt-3 pt-3 flex justify-between items-center font-bold text-sm sm:text-base">
                   <span>Total:</span>
                   <span>{formatCurrency(getTotalPrice())}</span>
                 </div>
                 <button
                   onClick={handleBooking}
-                  className="w-full mt-4 bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors"
+                  className="w-full mt-4 bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors text-sm"
                 >
                   Lanjutkan Booking
                 </button>
@@ -337,10 +327,10 @@ export default function VenueDetailPage() {
         )}
 
         {activeTab === 'gallery' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Mock Gallery Images */}
             {[1,2,3,4,5,6].map((i) => (
-              <div key={i} className="relative h-48 bg-gray-200 rounded-lg overflow-hidden">
+              <div key={i} className="relative h-32 sm:h-48 bg-gray-200 rounded-lg overflow-hidden">
                 <Image
                   src={venue.image}
                   alt={`Gallery ${i}`}
@@ -353,22 +343,23 @@ export default function VenueDetailPage() {
         )}
 
         {activeTab === 'about' && (
-          <div className="bg-white rounded-lg p-6">
-            <h3 className="text-lg font-bold mb-4">Tentang {venue.name}</h3>
-            <p className="text-gray-700 mb-6">{venue.description}</p>
+          <div className="bg-white rounded-lg p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-bold mb-4">Tentang {venue.name}</h3>
+            <p className="text-gray-700 mb-6 text-sm sm:text-base">{venue.description}</p>
             
-            <h4 className="font-bold mb-3">Fasilitas:</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            <h4 className="font-bold mb-3 text-sm sm:text-base">Fasilitas:</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {venue.facilities.map((facility, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-green-500" />
-                  <span className="text-sm">{facility}</span>
+                  <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm">{facility}</span>
                 </div>
               ))}
             </div>
           </div>
         )}
       </div>
+      
     </div>
   )
 }

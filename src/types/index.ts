@@ -86,3 +86,4 @@ export interface BookingRequest {
   payment_method: string
   total_price: number
 }
+
