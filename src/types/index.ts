@@ -1,9 +1,12 @@
 export interface User {
-  id: number;
-  name: string;
-  email: string;
-  phone?: string;
-  role: 'customer' | 'admin';
+  id: number
+  name: string
+  email: string
+  role: 'admin' | 'customer'
+  phone?: string
+  email_verified_at?: string
+  created_at: string
+  updated_at: string
 }
 
 export interface Venue {
@@ -18,6 +21,7 @@ export interface Venue {
   rating: number; // Added rating field
   fields: Field[]; // Changed from inline to Field interface
 }
+
 
 export interface Field {
   id: number;
@@ -37,25 +41,20 @@ export interface TimeSlot {
 }
 
 export interface Booking {
-  id: number;
-  user_id: number;
-  field_id: number;
-  booking_date: string;
-  start_time: string;
-  end_time: string;
-  total_price: number;
-  status: 'pending' | 'confirmed' | 'cancelled';
-  customer_name: string;
-  customer_phone: string;
-  notes?: string;
-  venue_name: string;
-  field_name: string;
-}
-
-export interface VenuesCardProps {
+  id: number
+  user_id: number
+  venue_id: number
+  booking_date: string
+  start_time: string
+  end_time: string
+  total_price: number
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed'
+  payment_status: 'pending' | 'paid' | 'failed'
+  notes?: string
+  user: User
   venue: Venue
-  viewMode: 'grid' | 'list'
-  onVenueClick?: (venue: Venue) => void // Made optional since we handle routing internally
+  created_at: string
+  updated_at: string
 }
 
 // New interfaces for booking flow
@@ -87,3 +86,41 @@ export interface BookingRequest {
   total_price: number
 }
 
+export interface ApiResponse<T = any> {
+  success: boolean
+  message: string
+  data?: T
+  token?: string
+  error?: string
+}
+
+export interface LoginCredentials {
+  email: string
+  password: string
+}
+
+export interface User {
+  id: number
+  name: string
+  email: string
+  role: 'admin' | 'customer'
+  phone?: string
+  email_verified_at?: string
+  created_at: string
+  updated_at: string
+}
+export interface AdminStats {
+  total_users: number
+  total_venues: number
+  total_bookings: number
+  monthly_revenue: number
+  today_bookings: number
+  active_users: number
+}
+
+
+export interface VenuesCardProps {
+  venue: Venue
+  viewMode: 'grid' | 'list'
+  onVenueClick?: (venue: Venue) => void // Made optional since we handle routing internally
+}
