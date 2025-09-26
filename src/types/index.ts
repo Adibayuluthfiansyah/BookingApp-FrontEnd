@@ -86,28 +86,26 @@ export interface BookingRequest {
   total_price: number
 }
 
+// export interface User {
+//   id: number;
+//   name: string;
+//   email: string;
+//   role: 'admin' | 'customer';
+// }
+
+export interface LoginResponse {
+  success: boolean;
+  message: string;
+  data: {
+    user: User;
+    token: string;
+  };
+}
+
 export interface ApiResponse<T = any> {
-  success: boolean
-  message: string
-  data?: T
-  token?: string
-  error?: string
-}
-
-export interface LoginCredentials {
-  email: string
-  password: string
-}
-
-export interface User {
-  id: number
-  name: string
-  email: string
-  role: 'admin' | 'customer'
-  phone?: string
-  email_verified_at?: string
-  created_at: string
-  updated_at: string
+  success: boolean;
+  message: string;
+  data?: T;
 }
 export interface AdminStats {
   total_users: number
