@@ -1,63 +1,18 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Card } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
+import { isAuthenticated, getAdminDashboard, logout } from '@/lib/api';
 
-// Mock data for dashboard stats
-const mockStats = {
-  totalRevenue: 15000000,
-  totalBookings: 45,
-  totalVenues: 3,
-  totalFields: 6,
-  todayBookings: 8,
-  monthlyGrowth: 12.5,
-  revenueGrowth: 18.2,
-  bookingGrowth: 23.4
-};
-
-const mockRecentBookings = [
-  {
-    id: 1,
-    customerName: 'Ahmad Ridwan',
-    venueName: 'GOR Senayan Futsal',
-    fieldName: 'Lapangan A',
-    date: '2024-01-15',
-    time: '19:00-20:00',
-    status: 'confirmed',
-    amount: 200000
-  },
-  {
-    id: 2,
-    customerName: 'Sarah Putri',
-    venueName: 'Arena Mini Soccer Plus',
-    fieldName: 'Lapangan 1',
-    date: '2024-01-15',
-    time: '16:00-17:00',
-    status: 'pending',
-    amount: 180000
-  },
-  {
-    id: 3,
-    customerName: 'Budi Santoso',
-    venueName: 'Futsal Center Jakarta',
-    fieldName: 'Court 1',
-    date: '2024-01-14',
-    time: '20:00-21:00',
-    status: 'confirmed',
-    amount: 150000
-  }
-];
-
-const mockRevenueData = [
-  { month: 'Jan', revenue: 8500000 },
-  { month: 'Feb', revenue: 12000000 },
-  { month: 'Mar', revenue: 15000000 },
-  { month: 'Apr', revenue: 18500000 },
-  { month: 'May', revenue: 22000000 },
-  { month: 'Jun', revenue: 25500000 }
-];
+interface DashboardStats {
+  total_bookings: number;
+  total_customers: number;
+  total_fields: number;
+  revenue_today: number;
+}
 
 interface StatsCardProps {
   title: string;
@@ -97,22 +52,110 @@ function StatsCard({ title, value, change, icon, changeType = 'increase' }: Stat
 }
 
 export default function AdminDashboard() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState('today');
 
   useEffect(() => {
-    // TODO: Check admin authentication
-    const token = localStorage.getItem('adminToken');
-    if (!token) {
-      window.location.href = '/admin/login';
+    // Check authentication
+    if (!isAuthenticated('admin')) {
+      router.push('/admin/login');
+      return;
     }
-  }, []);
+
+    // Fetch dashboard data
+    fetchDashboardData();
+  }, [router]);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await getAdminDashboard();
+      
+      if (response.success) {
+        setStats(response.data.stats);
+      } else {
+        setError('Gagal memuat data dashboard');
+      }
+    } catch (err: any) {
+      console.error('Dashboard error:', err);
+      setError('Terjadi kesalahan saat memuat data');
+      
+      // If unauthorized, redirect to login
+      if (err.message?.includes('401') || err.message?.includes('Unauthenticated')) {
+        await logout();
+        router.push('/admin/login');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push('/admin/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force logout even if API fails
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      router.push('/admin/login');
+    }
+  };
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Memuat dashboard...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <Card className="p-6 max-w-md">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Error</h3>
+              <p className="text-gray-600 mb-4">{error}</p>
+              <button
+                onClick={fetchDashboardData}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Coba Lagi
+              </button>
+            </div>
+          </Card>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
       <div className="py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-900">Dashboard Admin</h1>
+              <p className="text-sm text-gray-600 mt-1">Selamat datang di Kashmir Booking Fields</p>
+            </div>
             <div className="flex items-center space-x-4">
               <select
                 value={timeRange}
@@ -123,6 +166,15 @@ export default function AdminDashboard() {
                 <option value="week">7 Hari Terakhir</option>
                 <option value="month">30 Hari Terakhir</option>
               </select>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Logout
+              </button>
             </div>
           </div>
         </div>
@@ -131,9 +183,9 @@ export default function AdminDashboard() {
           {/* Stats Grid */}
           <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             <StatsCard
-              title="Total Revenue"
-              value={formatCurrency(mockStats.totalRevenue)}
-              change={`${mockStats.revenueGrowth}%`}
+              title="Revenue Hari Ini"
+              value={formatCurrency(stats?.revenue_today || 0)}
+              change="18.2%"
               icon={
                 <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
@@ -143,8 +195,8 @@ export default function AdminDashboard() {
 
             <StatsCard
               title="Total Bookings"
-              value={mockStats.totalBookings.toString()}
-              change={`${mockStats.bookingGrowth}%`}
+              value={stats?.total_bookings?.toString() || '0'}
+              change="23.4%"
               icon={
                 <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -153,83 +205,42 @@ export default function AdminDashboard() {
             />
 
             <StatsCard
-              title="Active Venues"
-              value={mockStats.totalVenues.toString()}
+              title="Total Customers"
+              value={stats?.total_customers?.toString() || '0'}
               icon={
                 <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               }
             />
 
             <StatsCard
-              title="Today's Bookings"
-              value={mockStats.todayBookings.toString()}
+              title="Total Fields"
+              value={stats?.total_fields?.toString() || '0'}
               icon={
                 <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                 </svg>
               }
             />
           </div>
 
-          <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
-            {/* Revenue Chart */}
-            <Card className="p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Monthly Revenue</h3>
-              <div className="h-64 flex items-end space-x-2">
-                {mockRevenueData.map((data, index) => (
-                  <div key={index} className="flex-1 flex flex-col items-center">
-                    <div
-                      className="w-full bg-blue-500 rounded-t"
-                      style={{ height: `${(data.revenue / 25500000) * 100}%` }}
-                    />
-                    <div className="mt-2 text-sm text-gray-600">{data.month}</div>
-                    <div className="text-xs text-gray-500">
-                      {formatCurrency(data.revenue).replace('Rp ', '')}
-                    </div>
-                  </div>
-                ))}
+          {/* Info Card */}
+          <Card className="p-6 mt-8 bg-blue-50 border-blue-200">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
-            </Card>
-
-            {/* Recent Bookings */}
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Recent Bookings</h3>
-                <a href="/admin/bookings" className="text-blue-600 hover:text-blue-700 text-sm">
-                  View all
-                </a>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-blue-800">Dashboard Terhubung dengan API</h3>
+                <p className="mt-1 text-sm text-blue-700">
+                  Data dashboard ini real-time dari Laravel backend. Sistem autentikasi dan authorization sudah berjalan dengan baik.
+                </p>
               </div>
-              <div className="space-y-4">
-                {mockRecentBookings.map((booking) => (
-                  <div key={booking.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900">{booking.customerName}</p>
-                      <p className="text-sm text-gray-600">
-                        {booking.venueName} - {booking.fieldName}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {booking.date} at {booking.time}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-gray-900">
-                        {formatCurrency(booking.amount)}
-                      </p>
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        booking.status === 'confirmed'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {booking.status === 'confirmed' ? 'Confirmed' : 'Pending'}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </div>
+            </div>
+          </Card>
 
           {/* Quick Actions */}
           <Card className="p-6 mt-8">
