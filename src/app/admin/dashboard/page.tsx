@@ -8,63 +8,12 @@ import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
 import { isAuthenticated, getAdminDashboard } from '@/lib/api';
 import { toast } from 'sonner';
-import { Users, Calendar, DollarSign, Grid3x3, Plus, Eye, Settings, RefreshCw,AlertCircle,CheckCircle,TrendingUp,TrendingDown,Info} from 'lucide-react';
+import {
+Users,Calendar,DollarSign,Grid3x3,Plus,Eye,Settings,RefreshCw,AlertCircle,CheckCircle,Info,} from 'lucide-react';
 import { DashboardStats } from '@/types';
-import { StatsCardProps } from '@/types';
-import { QuickActionProps } from '@/types';
+import StatsCard from '@/components/admin/AdminStatsCard';
+import QuickActionCard from '@/components/admin/AdminQuickAction';
 
-function StatsCard({ title, value, change, icon, changeType = 'increase', color }: StatsCardProps) {
-  return (
-    <Card className="p-6 hover:shadow-lg transition-shadow duration-200 border-l-4" style={{ borderLeftColor: color }}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <div className="p-3 rounded-full" style={{ backgroundColor: `${color}20` }}>
-            {icon} 
-          </div>
-          <div className="ml-4">
-            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">{title}</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
-          </div>
-        </div>
-        {change && (
-          <div className={`flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
-            changeType === 'increase'
-              ? 'bg-green-100 text-green-700'
-              : 'bg-red-100 text-red-700'
-          }`}>
-            {changeType === 'increase' ? (
-              <TrendingUp className="w-4 h-4 mr-1" />
-            ) : (
-              <TrendingDown className="w-4 h-4 mr-1" />
-            )}
-            {change}
-          </div>
-        )}
-      </div>
-    </Card>
-  );
-}
-
-function QuickActionCard({ title, href, icon, color }: QuickActionProps) {
-  return (
-    <a
-      href={href}
-      onClick={() => toast.info(`Navigating to ${title}...`, { duration: 1500 })}
-      className="block p-6 bg-white rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200 group"
-    >
-      <div className="flex items-center">
-        <div className="p-3 rounded-lg group-hover:scale-110 transition-transform duration-200" 
-             style={{ backgroundColor: `${color}20` }}>
-          {icon}
-        </div>
-        <div className="ml-4">
-          <h3 className="text-lg font-semibold text-gray-900 group-hover:text-gray-700">{title}</h3>
-          <p className="text-sm text-gray-600">Manage {title.toLowerCase()}</p>
-        </div>
-      </div>
-    </a>
-  );
-}
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -86,9 +35,9 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await getAdminDashboard();
-      
+
       if (response.success) {
         setStats(response.data.stats);
         if (!loading) {
@@ -106,7 +55,6 @@ export default function AdminDashboard() {
     } catch (err: any) {
       console.error('Dashboard error:', err);
       setError('Terjadi kesalahan saat memuat data');
-      
       toast.error('Terjadi kesalahan saat memuat data', {
         icon: <AlertCircle className="h-5 w-5" />,
       });
@@ -122,6 +70,7 @@ export default function AdminDashboard() {
     await fetchDashboardData();
   };
 
+  // State Loading
   if (loading) {
     return (
       <AdminLayout>
@@ -135,6 +84,7 @@ export default function AdminDashboard() {
     );
   }
 
+  // State Error
   if (error) {
     return (
       <AdminLayout>
@@ -158,12 +108,12 @@ export default function AdminDashboard() {
   return (
     <AdminLayout>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 space-y-4 sm:space-y-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-600 mt-1">Welcome to Kashmir Booking Fields Admin</p>
         </div>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
@@ -186,7 +136,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
         <StatsCard
           title="Revenue Hari Ini"
           value={formatCurrency(stats?.revenue_today || 0)}
@@ -218,13 +168,12 @@ export default function AdminDashboard() {
       {/* Info Card */}
       <Card className="p-6 mb-8 bg-blue-50 border-blue-200">
         <div className="flex items-start">
-          <div className="flex-shrink-0">
-            <Info className="w-6 h-6 text-blue-600" />
-          </div>
+          <Info className="w-6 h-6 text-blue-600 flex-shrink-0" />
           <div className="ml-3">
             <h3 className="text-base font-semibold text-blue-900">Dashboard Connected to API</h3>
             <p className="mt-2 text-sm text-blue-800 leading-relaxed">
-              Dashboard data is real-time from Laravel backend. Authentication and authorization systems are working properly.
+              Dashboard data is real-time from Laravel backend. Authentication and authorization
+              systems are working properly.
             </p>
           </div>
         </div>
@@ -233,7 +182,7 @@ export default function AdminDashboard() {
       {/* Quick Actions */}
       <div className="mb-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">Quick Actions</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
           <QuickActionCard
             title="Add Venue"
             href="/admin/venues"
