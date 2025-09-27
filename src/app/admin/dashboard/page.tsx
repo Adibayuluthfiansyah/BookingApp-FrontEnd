@@ -4,50 +4,65 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
-import { isAuthenticated, getAdminDashboard, logout } from '@/lib/api';
+import { isAuthenticated, getAdminDashboard } from '@/lib/api';
+import { toast } from 'sonner';
+import { Users, Calendar, DollarSign, Grid3x3, Plus, Eye, Settings, RefreshCw,AlertCircle,CheckCircle,TrendingUp,TrendingDown,Info} from 'lucide-react';
+import { DashboardStats } from '@/types';
+import { StatsCardProps } from '@/types';
+import { QuickActionProps } from '@/types';
 
-interface DashboardStats {
-  total_bookings: number;
-  total_customers: number;
-  total_fields: number;
-  revenue_today: number;
-}
-
-interface StatsCardProps {
-  title: string;
-  value: string;
-  change?: string;
-  icon: React.ReactNode;
-  changeType?: 'increase' | 'decrease';
-}
-
-function StatsCard({ title, value, change, icon, changeType = 'increase' }: StatsCardProps) {
+function StatsCard({ title, value, change, icon, changeType = 'increase', color }: StatsCardProps) {
   return (
-    <Card className="p-6">
-      <div className="flex items-center">
-        <div className="flex-shrink-0">
-          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-            {icon}
+    <Card className="p-6 hover:shadow-lg transition-shadow duration-200 border-l-4" style={{ borderLeftColor: color }}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <div className="p-3 rounded-full" style={{ backgroundColor: `${color}20` }}>
+            {icon} 
+          </div>
+          <div className="ml-4">
+            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">{title}</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
           </div>
         </div>
-        <div className="ml-5 w-0 flex-1">
-          <dl>
-            <dt className="text-sm font-medium text-gray-500 truncate">{title}</dt>
-            <dd className="text-lg font-medium text-gray-900">{value}</dd>
-          </dl>
-        </div>
         {change && (
-          <div className={`inline-flex items-baseline px-2.5 py-0.5 rounded-full text-sm font-medium ${
+          <div className={`flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
             changeType === 'increase'
-              ? 'bg-green-100 text-green-800'
-              : 'bg-red-100 text-red-800'
+              ? 'bg-green-100 text-green-700'
+              : 'bg-red-100 text-red-700'
           }`}>
-            {changeType === 'increase' ? '+' : '-'}{change}
+            {changeType === 'increase' ? (
+              <TrendingUp className="w-4 h-4 mr-1" />
+            ) : (
+              <TrendingDown className="w-4 h-4 mr-1" />
+            )}
+            {change}
           </div>
         )}
       </div>
     </Card>
+  );
+}
+
+function QuickActionCard({ title, href, icon, color }: QuickActionProps) {
+  return (
+    <a
+      href={href}
+      onClick={() => toast.info(`Navigating to ${title}...`, { duration: 1500 })}
+      className="block p-6 bg-white rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200 group"
+    >
+      <div className="flex items-center">
+        <div className="p-3 rounded-lg group-hover:scale-110 transition-transform duration-200" 
+             style={{ backgroundColor: `${color}20` }}>
+          {icon}
+        </div>
+        <div className="ml-4">
+          <h3 className="text-lg font-semibold text-gray-900 group-hover:text-gray-700">{title}</h3>
+          <p className="text-sm text-gray-600">Manage {title.toLowerCase()}</p>
+        </div>
+      </div>
+    </a>
   );
 }
 
@@ -57,15 +72,13 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState('today');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    // Check authentication
     if (!isAuthenticated('admin')) {
       router.push('/admin/login');
       return;
     }
-
-    // Fetch dashboard data
     fetchDashboardData();
   }, [router]);
 
@@ -78,43 +91,44 @@ export default function AdminDashboard() {
       
       if (response.success) {
         setStats(response.data.stats);
+        if (!loading) {
+          toast.success('Data berhasil dimuat!', {
+            icon: <CheckCircle className="h-5 w-5" />,
+            duration: 2000,
+          });
+        }
       } else {
         setError('Gagal memuat data dashboard');
+        toast.error('Gagal memuat data dashboard', {
+          icon: <AlertCircle className="h-5 w-5" />,
+        });
       }
     } catch (err: any) {
       console.error('Dashboard error:', err);
       setError('Terjadi kesalahan saat memuat data');
       
-      // If unauthorized, redirect to login
-      if (err.message?.includes('401') || err.message?.includes('Unauthenticated')) {
-        await logout();
-        router.push('/admin/login');
-      }
+      toast.error('Terjadi kesalahan saat memuat data', {
+        icon: <AlertCircle className="h-5 w-5" />,
+      });
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      router.push('/admin/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Force logout even if API fails
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      router.push('/admin/login');
-    }
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    toast.info('Memuat ulang data...', { duration: 1000 });
+    await fetchDashboardData();
   };
 
   if (loading) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
-            <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Memuat dashboard...</p>
+            <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600 text-sm">Memuat dashboard...</p>
           </div>
         </div>
       </AdminLayout>
@@ -124,23 +138,17 @@ export default function AdminDashboard() {
   if (error) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <Card className="p-6 max-w-md">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Error</h3>
-              <p className="text-gray-600 mb-4">{error}</p>
-              <button
-                onClick={fetchDashboardData}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Coba Lagi
-              </button>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Card className="p-8 max-w-md w-full mx-4 text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-8 h-8 text-red-600" />
             </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Error</h3>
+            <p className="text-gray-600 mb-6 text-sm">{error}</p>
+            <Button onClick={fetchDashboardData} className="bg-blue-600 hover:bg-blue-700">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Coba Lagi
+            </Button>
           </Card>
         </div>
       </AdminLayout>
@@ -149,153 +157,115 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout>
-      <div className="py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900">Dashboard Admin</h1>
-              <p className="text-sm text-gray-600 mt-1">Selamat datang di Kashmir Booking Fields</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="today">Hari Ini</option>
-                <option value="week">7 Hari Terakhir</option>
-                <option value="month">30 Hari Terakhir</option>
-              </select>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                Logout
-              </button>
-            </div>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 space-y-4 sm:space-y-0">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600 mt-1">Welcome to Kashmir Booking Fields Admin</p>
+        </div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+          <select
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value)}
+            className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="today">Hari Ini</option>
+            <option value="week">7 Hari Terakhir</option>
+            <option value="month">30 Hari Terakhir</option>
+          </select>
+          <Button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatsCard
+          title="Revenue Hari Ini"
+          value={formatCurrency(stats?.revenue_today || 0)}
+          change="18.2%"
+          icon={<DollarSign className="w-6 h-6 text-green-600" />}
+          color="#10b981"
+        />
+        <StatsCard
+          title="Total Bookings"
+          value={stats?.total_bookings?.toString() || '0'}
+          change="23.4%"
+          icon={<Calendar className="w-6 h-6 text-blue-600" />}
+          color="#3b82f6"
+        />
+        <StatsCard
+          title="Total Customers"
+          value={stats?.total_customers?.toString() || '0'}
+          icon={<Users className="w-6 h-6 text-purple-600" />}
+          color="#8b5cf6"
+        />
+        <StatsCard
+          title="Total Fields"
+          value={stats?.total_fields?.toString() || '0'}
+          icon={<Grid3x3 className="w-6 h-6 text-orange-600" />}
+          color="#f59e0b"
+        />
+      </div>
+
+      {/* Info Card */}
+      <Card className="p-6 mb-8 bg-blue-50 border-blue-200">
+        <div className="flex items-start">
+          <div className="flex-shrink-0">
+            <Info className="w-6 h-6 text-blue-600" />
+          </div>
+          <div className="ml-3">
+            <h3 className="text-base font-semibold text-blue-900">Dashboard Connected to API</h3>
+            <p className="mt-2 text-sm text-blue-800 leading-relaxed">
+              Dashboard data is real-time from Laravel backend. Authentication and authorization systems are working properly.
+            </p>
           </div>
         </div>
+      </Card>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-          {/* Stats Grid */}
-          <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <StatsCard
-              title="Revenue Hari Ini"
-              value={formatCurrency(stats?.revenue_today || 0)}
-              change="18.2%"
-              icon={
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-              }
-            />
+      {/* Quick Actions */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">Quick Actions</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <QuickActionCard
+            title="Add Venue"
+            href="/admin/venues"
+            icon={<Plus className="w-6 h-6 text-blue-600" />}
+            color="#3b82f6"
+          />
+          <QuickActionCard
+            title="View Bookings"
+            href="/admin/bookings"
+            icon={<Eye className="w-6 h-6 text-green-600" />}
+            color="#10b981"
+          />
+          <QuickActionCard
+            title="Manage Fields"
+            href="/admin/fields"
+            icon={<Grid3x3 className="w-6 h-6 text-purple-600" />}
+            color="#8b5cf6"
+          />
+          <QuickActionCard
+            title="Settings"
+            href="/admin/settings"
+            icon={<Settings className="w-6 h-6 text-orange-600" />}
+            color="#f59e0b"
+          />
+        </div>
+      </div>
 
-            <StatsCard
-              title="Total Bookings"
-              value={stats?.total_bookings?.toString() || '0'}
-              change="23.4%"
-              icon={
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              }
-            />
-
-            <StatsCard
-              title="Total Customers"
-              value={stats?.total_customers?.toString() || '0'}
-              icon={
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-              }
-            />
-
-            <StatsCard
-              title="Total Fields"
-              value={stats?.total_fields?.toString() || '0'}
-              icon={
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-              }
-            />
-          </div>
-
-          {/* Info Card */}
-          <Card className="p-6 mt-8 bg-blue-50 border-blue-200">
-            <div className="flex items-start">
-              <div className="flex-shrink-0">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-blue-800">Dashboard Terhubung dengan API</h3>
-                <p className="mt-1 text-sm text-blue-700">
-                  Data dashboard ini real-time dari Laravel backend. Sistem autentikasi dan authorization sudah berjalan dengan baik.
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card className="p-6 mt-8">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <a
-                href="/admin/venues"
-                className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
-                <span className="font-medium text-gray-900">Add Venue</span>
-              </a>
-
-              <a
-                href="/admin/bookings"
-                className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                </div>
-                <span className="font-medium text-gray-900">View Bookings</span>
-              </a>
-
-              <a
-                href="/admin/fields"
-                className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
-                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                  </svg>
-                </div>
-                <span className="font-medium text-gray-900">Manage Fields</span>
-              </a>
-
-              <a
-                href="/admin/settings"
-                className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
-                  <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <span className="font-medium text-gray-900">Settings</span>
-              </a>
-            </div>
-          </Card>
+      {/* Connection Status */}
+      <div className="text-center">
+        <div className="inline-flex items-center gap-2 text-sm text-gray-500">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <span>Connected to server</span>
         </div>
       </div>
     </AdminLayout>

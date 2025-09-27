@@ -116,6 +116,28 @@ export interface AdminStats {
   active_users: number
 }
 
+export interface DashboardStats {
+  total_bookings: number;
+  total_customers: number;
+  total_fields: number;
+  revenue_today: number;
+}
+
+export interface StatsCardProps {
+  title: string;
+  value: string;
+  change?: string;
+  icon: React.ReactNode;
+  changeType?: 'increase' | 'decrease';
+  color: string;
+}
+
+export interface QuickActionProps {
+  title: string;
+  href: string;
+  icon: React.ReactNode;
+  color: string;
+}
 
 export interface VenuesCardProps {
   venue: Venue
