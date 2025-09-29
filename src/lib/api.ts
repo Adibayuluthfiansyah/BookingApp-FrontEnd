@@ -1,62 +1,45 @@
-
 import { ApiResponse, User, LoginResponse } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
 
+// Ambil token dari localStorage
 export const getToken = (): string | null => {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem('token');
 };
 
-// Helper function untuk mendapatkan user - FIXED VERSION
+// Ambil user dari localStorage
 export const getUser = (): User | null => {
   if (typeof window === 'undefined') return null;
-  
+
   try {
     const userStr = localStorage.getItem('user');
     if (!userStr) return null;
-    
+
     const user = JSON.parse(userStr);
     return user;
   } catch (error) {
     console.error('Error parsing user data:', error);
-    // Clear corrupted data
     localStorage.removeItem('user');
     return null;
   }
 };
 
-// Helper function untuk check apakah user sudah login
-export const isAuthenticated = (role?: 'admin' | 'customer'): boolean => {
-  const token = getToken();
-  const user = getUser();
-  
-  if (!token || !user) return false;
-  
-  if (role) {
-    return user.role === role;
-  }
-  
-  return true;
-};
-
-// Helper function untuk menyimpan auth data
-const saveAuthData = (token: string, user: User): void => {
+// Simpan token & user
+export const saveAuthData = (token: string, user: User): void => {
   localStorage.setItem('token', token);
   localStorage.setItem('user', JSON.stringify(user));
 };
 
-// Helper function untuk menghapus auth data
-const clearAuthData = (): void => {
+// Hapus token & user
+export const clearAuthData = (): void => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
 };
 
-// API Functions
+// ================== API Functions ==================
 
-/**
- * Login user
- */
+// Login
 export const login = async (email: string, password: string): Promise<LoginResponse> => {
   try {
     const response = await fetch(`${API_BASE_URL}/login`, {
@@ -80,14 +63,12 @@ export const login = async (email: string, password: string): Promise<LoginRespo
     return {
       success: false,
       message: 'Tidak dapat terhubung ke server',
-      data: null
+      data: null,
     };
   }
 };
 
-/**
- * Logout user
- */
+// Logout
 export const logout = async (): Promise<ApiResponse> => {
   const token = getToken();
 
@@ -110,18 +91,15 @@ export const logout = async (): Promise<ApiResponse> => {
     return data;
   } catch (error) {
     console.error('Logout error:', error);
-    // Clear data anyway on error
     clearAuthData();
     return {
       success: true,
-      message: 'Logout berhasil'
+      message: 'Logout berhasil',
     };
   }
 };
 
-/**
- * Get current user info
- */
+// Get current user
 export const getCurrentUser = async (): Promise<ApiResponse<{ user: User }>> => {
   const token = getToken();
 
@@ -137,9 +115,7 @@ export const getCurrentUser = async (): Promise<ApiResponse<{ user: User }>> => 
   return await response.json();
 };
 
-/**
- * Refresh token
- */
+// Refresh token
 export const refreshToken = async (): Promise<ApiResponse<{ token: string }>> => {
   const token = getToken();
 
@@ -161,9 +137,7 @@ export const refreshToken = async (): Promise<ApiResponse<{ token: string }>> =>
   return data;
 };
 
-/**
- * Get admin dashboard data
- */
+// Get admin dashboard
 export const getAdminDashboard = async (): Promise<ApiResponse> => {
   const token = getToken();
 
@@ -179,9 +153,7 @@ export const getAdminDashboard = async (): Promise<ApiResponse> => {
   return await response.json();
 };
 
-/**
- * Get customer bookings
- */
+// Get customer bookings
 export const getCustomerBookings = async (): Promise<ApiResponse> => {
   const token = getToken();
 

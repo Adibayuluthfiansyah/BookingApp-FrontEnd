@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import LoadingAnimation from '../loading/page';
 import Navbar from '../navbar/page';
+import { AuthProvider } from '@/app/contexts/AuthContext';
 
 interface ClientLayoutProps {
   children: React.ReactNode;
@@ -25,7 +26,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   const isAdminRoute = pathname?.startsWith('/admin');
 
   return (
-    <>
+    <AuthProvider>
       {isLoading && (
         <LoadingAnimation
           isLoading={isLoading}
@@ -37,6 +38,6 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       {!isAdminRoute && <Navbar />}
 
       {children}
-    </>
+    </AuthProvider>
   );
 }

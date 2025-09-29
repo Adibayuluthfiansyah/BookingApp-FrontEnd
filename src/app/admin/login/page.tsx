@@ -7,10 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Eye, EyeOff, LogIn, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
-import { isAuthenticated, getUser, login as loginApi } from '@/lib/api';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 export default function UnifiedLoginPage() {
   const router = useRouter();
+  const { login, user, isAuthenticated, checkAuth } = useAuth();
+  
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -21,12 +23,14 @@ export default function UnifiedLoginPage() {
 
   // Redirect jika sudah login
   useEffect(() => {
-    if (isAuthenticated('admin')) {
-      router.push('/admin/dashboard');
-    } else if (isAuthenticated('customer')) {
-      router.push('/');
+    if (isAuthenticated && user) {
+      if (user.role === 'admin') {
+        router.push('/admin/dashboard');
+      } else if (user.role === 'customer') {
+        router.push('/');
+      }
     }
-  }, [router]);
+  }, [isAuthenticated, user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,14 +38,20 @@ export default function UnifiedLoginPage() {
     setError(null);
 
     try {
-      const response = await loginApi(formData.email, formData.password);
+      const success = await login(formData.email, formData.password);
 
-      if (response.success) {
-        const user = getUser();
+      if (success) {
+        // Tunggu sebentar agar context terupdate
+        await new Promise(resolve => setTimeout(resolve, 100));
+        checkAuth(); // Force check auth
+        
+        // Get user from localStorage for immediate access
+        const userStr = localStorage.getItem('user');
+        const loggedUser = userStr ? JSON.parse(userStr) : null;
         
         // Toast success
         toast.success('Login Berhasil!', {
-          description: `Selamat datang, ${user?.name}`,
+          description: `Selamat datang, ${loggedUser?.name}`,
           duration: 3000,
           icon: <CheckCircle className="h-5 w-5" />,
           style: {
@@ -53,7 +63,7 @@ export default function UnifiedLoginPage() {
 
         // Redirect berdasarkan role
         setTimeout(() => {
-          if (user?.role === 'admin') {
+          if (loggedUser?.role === 'admin') {
             router.push('/admin/dashboard');
           } else {
             router.push('/'); // Beranda untuk customer
@@ -61,9 +71,9 @@ export default function UnifiedLoginPage() {
         }, 1000);
       } else {
         // Toast error
-        setError(response.message || 'Email atau password tidak valid');
+        setError('Email atau password tidak valid');
         toast.error('Login Gagal', {
-          description: response.message || 'Email atau password tidak valid',
+          description: 'Email atau password tidak valid',
           duration: 4000,
           icon: <AlertCircle className="h-5 w-5" />,
           style: {

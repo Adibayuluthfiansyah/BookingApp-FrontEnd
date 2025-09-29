@@ -4,9 +4,9 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { logout, getUser } from '@/lib/api';
 import { toast } from 'sonner';
 import { Menu, LogOut, User } from 'lucide-react';
+import { getUser } from '@/lib/api';
 
 interface AdminHeaderProps {
   isSidebarOpen: boolean;
@@ -17,22 +17,30 @@ export default function AdminHeader({ isSidebarOpen, setIsSidebarOpen }: AdminHe
   const router = useRouter();
   const user = getUser();
 
- const handleLogout = async () => {
+  const handleLogout = async () => {
     try {
-      toast.info('Logging out...', { duration: 1000 }); 
-      await logout();
-      toast.success('Berhasil logout!', { duration: 2000 }); 
+      toast.info('Logging out...', { duration: 1000 });
+
+      // Bersihkan localStorage
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+
+      // Broadcast event ke AuthContext supaya reset state
+      if (typeof window !== 'undefined') {
+        const event = new Event("logout");
+        window.dispatchEvent(event);
+      }
+
+      toast.success('Berhasil logout!', { duration: 2000 });
+
       setTimeout(() => {
         router.push('/admin/login');
       }, 1000);
     } catch (error) {
       console.error('Logout error:', error);
-      toast.error('Gagal logout, mencoba paksa...'); 
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      router.push('/admin/login');
+      toast.error('Gagal logout, coba ulangi.');
     }
-};
+  };
 
   return (
     <nav className="bg-white border-b border-gray-200 fixed w-full z-30 top-0 shadow-sm">
@@ -58,7 +66,7 @@ export default function AdminHeader({ isSidebarOpen, setIsSidebarOpen }: AdminHe
               </div>
             </Link>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:flex items-center gap-3">
               <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">

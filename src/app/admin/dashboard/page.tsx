@@ -6,30 +6,33 @@ import AdminLayout from '@/components/admin/AdminLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
-import { isAuthenticated, getAdminDashboard } from '@/lib/api';
+import { getAdminDashboard } from '@/lib/api';
 import { toast } from 'sonner';
 import {
 Users,Calendar,DollarSign,Grid3x3,Plus,Eye,Settings,RefreshCw,AlertCircle,CheckCircle,Info,} from 'lucide-react';
 import { DashboardStats } from '@/types';
 import StatsCard from '@/components/admin/AdminStatsCard';
 import QuickActionCard from '@/components/admin/AdminQuickAction';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const { isAuthenticated, user } = useAuth()
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState('today');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    if (!isAuthenticated('admin')) {
+ useEffect(() => {
+    if (!isAuthenticated || user?.role !== 'admin') {
       router.push('/admin/login');
       return;
     }
     fetchDashboardData();
-  }, [router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user]);
 
   const fetchDashboardData = async () => {
     try {
@@ -111,7 +114,9 @@ export default function AdminDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">Welcome to Kashmir Booking Fields Admin</p>
+            <p className="text-gray-600 mt-1">
+            Halo {user?.name}, selamat datang di Kashmir Booking Fields Admin
+          </p>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
           <select
