@@ -93,13 +93,20 @@ export interface BookingRequest {
 //   role: 'admin' | 'customer';
 // }
 
-export interface LoginResponse {
-  success: boolean;
-  message: string;
+// export interface LoginResponse {
+//   success: boolean;
+//   message: string;
+//   data: {
+//     user: User;
+//     token: string;
+//   };
+// }
+
+export interface LoginResponse extends ApiResponse {
   data: {
     user: User;
     token: string;
-  };
+  } | null;
 }
 
 export interface ApiResponse<T = any> {

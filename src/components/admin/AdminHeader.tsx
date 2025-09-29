@@ -19,15 +19,15 @@ export default function AdminHeader({ isSidebarOpen, setIsSidebarOpen }: AdminHe
 
  const handleLogout = async () => {
     try {
-      toast.info('Logging out...', { duration: 1000 }); // Tambah
+      toast.info('Logging out...', { duration: 1000 }); 
       await logout();
-      toast.success('Berhasil logout!', { duration: 2000 }); // Tambah
+      toast.success('Berhasil logout!', { duration: 2000 }); 
       setTimeout(() => {
         router.push('/admin/login');
       }, 1000);
     } catch (error) {
       console.error('Logout error:', error);
-      toast.error('Gagal logout, mencoba paksa...'); // Tambah
+      toast.error('Gagal logout, mencoba paksa...'); 
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       router.push('/admin/login');
@@ -43,9 +43,9 @@ export default function AdminHeader({ isSidebarOpen, setIsSidebarOpen }: AdminHe
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               variant="ghost"
               size="sm"
-              className="p-2 text-gray-600 hover:bg-gray-100 lg:hidden"
+              className="p-2 text-gray-600 hover:bg-gray-100 cursor-pointer lg:hidden"
             >
-              <Menu className="w-6 h-6" />
+              <Menu className="w-6 h-6 " />
             </Button>
             <Link href="/admin/dashboard" className="flex ml-2 md:mr-24">
               <div className="flex flex-col">
@@ -73,7 +73,7 @@ export default function AdminHeader({ isSidebarOpen, setIsSidebarOpen }: AdminHe
               onClick={handleLogout}
               variant="ghost"
               size="sm"
-              className="flex items-center gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
+              className="flex items-center gap-2 text-red-600 hover:bg-red-100 hover:text-red-700 transition-colors cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
               <span className="hidden sm:inline">Logout</span>
