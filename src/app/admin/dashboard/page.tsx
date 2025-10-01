@@ -31,7 +31,6 @@ export default function AdminDashboard() {
       return;
     }
     fetchDashboardData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user]);
 
   const fetchDashboardData = async () => {
