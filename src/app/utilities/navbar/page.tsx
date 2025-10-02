@@ -31,25 +31,24 @@ const Navbar: React.FC = () => {
 
   return (
     <nav
-      className={`fixed top-0 w-full z-50 transition-all duration-700 ease-in-out ${
-        isScrolled
+      className={`fixed top-0 w-full z-50 transition-all duration-700 ease-in-out ${isScrolled
           ? 'bg-white/95 backdrop-blur-xl shadow-2xl border-b border-black/5'
           : 'bg-black/20 backdrop-blur-sm'
-      }`}
+        }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-17">
+        <div className="flex items-center justify-between h-18">
           <NavLogo isScrolled={isScrolled} />
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-1">
-            <NavLinks 
+            <NavLinks
               items={navItems}
               pathname={pathname}
               isScrolled={isScrolled}
             />
-            
-            <AuthSection 
+
+            <AuthSection
               isScrolled={isScrolled}
               isAuthenticated={isAuthenticated}
               user={user}
@@ -59,11 +58,10 @@ const Navbar: React.FC = () => {
           {/* Mobile Toggle */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className={`md:hidden focus:outline-none p-3 rounded-xl cursor-pointer transition-all duration-300 ${
-              isScrolled 
-                ? 'hover:bg-gray-100 text-black' 
+            className={`md:hidden focus:outline-none p-3 rounded-xl cursor-pointer transition-all duration-300 ${isScrolled
+                ? 'hover:bg-gray-100 text-black'
                 : 'hover:bg-white/10 text-white'
-            }`}
+              }`}
           >
             <div className="relative w-6 h-6">
               <span className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 opacity-0' : 'rotate-0 opacity-100'}`}>
