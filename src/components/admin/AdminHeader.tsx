@@ -34,7 +34,7 @@ export default function AdminHeader({ isSidebarOpen, setIsSidebarOpen }: AdminHe
       toast.success('Berhasil logout!', { duration: 2000 });
 
       setTimeout(() => {
-        router.push('/admin/login');
+        router.push('/login');
       }, 1000);
     } catch (error) {
       console.error('Logout error:', error);

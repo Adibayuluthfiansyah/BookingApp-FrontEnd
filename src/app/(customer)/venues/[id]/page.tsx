@@ -1,229 +1,217 @@
-'use client'
+'use client';
 
-import React, { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import Image from 'next/image'
-import { ArrowLeft, MapPin, Star, Share2, Instagram, Facebook, Clock, Check, X } from 'lucide-react'
-import { MOCK_VENUES, MOCK_TIME_SLOTS, formatCurrency, formatTime } from '@/lib/utils'
-import { Venue, TimeSlot } from '@/types'
-import { BookingSlot } from '@/types'
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { Venue, Field , TimeSlot } from '@/types';
+import { getVenueBySlug, getAvailableSlots } from '@/lib/api';
+import { format, addDays } from 'date-fns';
+import { id as localeId } from 'date-fns/locale';
+import { MapPin, Facebook, Instagram, Clock, CheckCircle } from 'lucide-react';
 
 export default function VenueDetailPage() {
-  const params = useParams()
-  const router = useRouter()
-  const venueId = parseInt(params.id as string)
+  const params = useParams();
+  const router = useRouter();
+  const [venue, setVenue] = useState<Venue | null>(null);
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [selectedField, setSelectedField] = useState<Field | null>(null);
+  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
+  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'schedule' | 'gallery' | 'about'>('schedule');
   
-  const [venue, setVenue] = useState<Venue | null>(null)
-  const [selectedDate, setSelectedDate] = useState<string>('')
-  const [selectedField, setSelectedField] = useState<number | null>(null)
-  const [selectedSlots, setSelectedSlots] = useState<BookingSlot[]>([])
-  const [activeTab, setActiveTab] = useState<'schedule' | 'gallery' | 'about'>('schedule')
-
   // Generate dates for the next 7 days
-  const generateDates = () => {
-    const dates = []
-    const today = new Date()
-    
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(today)
-      date.setDate(today.getDate() + i)
-      
-      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-      const dayNamesID = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
-      
-      dates.push({
-        date: date.toISOString().split('T')[0],
-        dayName: dayNamesID[date.getDay()],
-        dayNumber: date.getDate(),
-        isToday: i === 0
-      })
-    }
-    return dates
-  }
-
-  const [dates] = useState(generateDates())
+  const [dates, setDates] = useState<Date[]>([]);
 
   useEffect(() => {
-    const foundVenue = MOCK_VENUES.find(v => v.id === venueId)
-    if (foundVenue) {
-      setVenue(foundVenue)
-      setSelectedDate(dates[0].date)
-      setSelectedField(foundVenue.fields[0]?.id || null)
+    const generateDates = () => {
+      const datesArray = [];
+      const today = new Date();
+      for (let i = 0; i < 7; i++) {
+        const date = addDays(today, i);
+        datesArray.push(date);
+      }
+      setDates(datesArray);
+    };
+    generateDates();
+  }, []);
+
+  useEffect(() => {
+    loadVenue();
+  }, [params.id]);
+
+  useEffect(() => {
+    if (selectedField && selectedDate) {
+      loadAvailableSlots();
     }
-  }, [venueId])
+  }, [selectedField, selectedDate]);
 
-  const handleSlotClick = (timeSlot: TimeSlot) => {
-    if (!timeSlot.is_available || !selectedField || !selectedDate) return
-
-    const fieldName = venue?.fields.find(f => f.id === selectedField)?.name || ''
-    
-    const bookingSlot: BookingSlot = {
-      date: selectedDate,
-      timeSlot,
-      fieldId: selectedField,
-      fieldName
+  const loadVenue = async () => {
+    try {
+      setLoading(true);
+      const result = await getVenueBySlug(params.id as string);
+      
+      if (result.success) {
+        setVenue(result.data);
+        
+        // Set default field
+        if (result.data.fields && result.data.fields.length > 0) {
+          setSelectedField(result.data.fields[0]);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading venue:', error);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const existingIndex = selectedSlots.findIndex(
-      slot => slot.date === selectedDate && 
-               slot.timeSlot.id === timeSlot.id && 
-               slot.fieldId === selectedField
-    )
+  const loadAvailableSlots = async () => {
+    if (!venue || !selectedField) return;
 
-    if (existingIndex >= 0) {
-      setSelectedSlots(selectedSlots.filter((_, index) => index !== existingIndex))
-    } else {
-      setSelectedSlots([...selectedSlots, bookingSlot])
+    try {
+      setSlotsLoading(true);
+      const result = await getAvailableSlots(venue.id, {
+        field_id: selectedField.id,
+        date: selectedDate,
+      });
+      
+      if (result.success) {
+        setAvailableSlots(result.data);
+      }
+    } catch (error) {
+      console.error('Error loading slots:', error);
+      setAvailableSlots([]);
+    } finally {
+      setSlotsLoading(false);
     }
-  }
+  };
 
-  const isSlotSelected = (timeSlot: TimeSlot) => {
-    return selectedSlots.some(
-      slot => slot.date === selectedDate && 
-               slot.timeSlot.id === timeSlot.id && 
-               slot.fieldId === selectedField
-    )
-  }
-
-  const getTotalPrice = () => {
-    return selectedSlots.reduce((total, slot) => total + slot.timeSlot.price, 0)
-  }
+  const handleSlotClick = (slot: TimeSlot) => {
+    setSelectedSlot(slot);
+  };
 
   const handleBooking = () => {
-    if (selectedSlots.length === 0) {
-      alert('Silakan pilih jadwal terlebih dahulu')
-      return
-    }
-    
-    // Navigate to booking form with selected slots
+    if (!selectedSlot || !selectedField) return;
+
+    // Navigate to booking form dengan data
     const bookingData = {
-      venueId,
-      slots: selectedSlots,
-      totalPrice: getTotalPrice()
-    }
-    
-    // Store in localStorage temporarily
-    localStorage.setItem('bookingData', JSON.stringify(bookingData))
-    router.push('/booking/form')
+      venueId: venue?.id,
+      venueName: venue?.name,
+      fieldId: selectedField.id,
+      fieldName: selectedField.name,
+      date: selectedDate,
+      timeSlotId: selectedSlot.id,
+      startTime: selectedSlot.start_time,
+      endTime: selectedSlot.end_time,
+      price: selectedSlot.price,
+    };
+
+    // Store in sessionStorage untuk diambil di booking form
+    sessionStorage.setItem('bookingData', JSON.stringify(bookingData));
+    router.push('/booking/form');
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(price);
+  };
+
+  const formatTime = (time: string) => {
+    return time.substring(0, 5); // Get HH:MM from HH:MM:SS
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
   }
 
   if (!venue) {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-xl">Venue tidak ditemukan</div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen">
-      {/* Header Image */}
-      <div className="relative h-48 sm:h-64 md:h-80 lg:h-96 overflow-hidden">
-        <Image
-          src={venue.image}
-          alt={venue.name}
-          fill
-          className="object-cover w-full h-full"
-        />
-        <div className="absolute inset-0 bg-black/50"></div>
-        
-        {/* Back Button */}
-        <button
-          onClick={() => router.back()}
-          className="absolute bottom-4 left-4 bg-white/90 p-2 rounded-full shadow-lg hover:bg-black hover:text-white cursor-pointer transition-colors"
-        >
-          <ArrowLeft className="w-6 h-6" />
-        </button>
-      </div>
-
-      {/* Venue Info */}
-      <div className="bg-white">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 lg:gap-6">
-            <div className="flex-1">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{venue.name}</h1>
-              <div className="text-black font-medium mb-2 text-sm sm:text-base">{venue.name}</div>
-              
-              <div className="flex items-start gap-4 mb-4">                
-                <div className="flex items-center text-gray-600">
-                  <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
-                  <span className="text-xs sm:text-sm">{venue.address}</span>
-                </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header Section */}
+      <div className="bg-white shadow">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">{venue.name}</h1>
+              <div className="flex items-center mt-2 text-gray-600">
+                <MapPin className="w-5 h-5 mr-2" />
+                <span>{venue.address}</span>
               </div>
+              <p className="mt-3 text-gray-700">{venue.description}</p>
 
-              {/* Social Media Icons */}
-              <div className="flex gap-2">
-                <button className="bg-blue-600 text-white p-2 rounded">
-                  <Facebook className="w-4 h-4" />
-                </button>
-                <button className="bg-pink-500 text-white p-2 rounded">
-                  <Instagram className="w-4 h-4" />
-                </button>
+              {/* Social Media Links */}
+              <div className="flex gap-2 mt-4">
+                {venue.facebook_url && (
+                  <a
+                    href={venue.facebook_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    <Facebook className="w-5 h-5" />
+                  </a>
+                )}
+                {venue.instagram_url && (
+                  <a
+                    href={venue.instagram_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 bg-pink-600 text-white rounded hover:bg-pink-700"
+                  >
+                    <Instagram className="w-5 h-5" />
+                  </a>
+                )}
               </div>
-            </div>
-
-            {/* Booking Section */}
-            <div className="bg-orange-50 p-4 rounded-lg w-full lg:w-80">
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">Pilih Tanggal Booking :</label>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-black cursor-pointer text-sm"
-                />
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">Pilih Lapangan :</label>
-                <select
-                  value={selectedField || ''}
-                  onChange={(e) => setSelectedField(parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-black cursor-pointer text-sm"
-                >
-                  {venue.fields.map(field => (
-                    <option key={field.id} value={field.id}>{field.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <button
-                onClick={handleBooking}
-                className="w-full bg-black text-white py-3 rounded-lg font-medium hover:bg-orange-50 hover:text-black cursor-pointer transition-colors text-sm"
-              >
-                Cari Venue
-              </button>
             </div>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white border-t sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex overflow-x-auto">
+      <div className="bg-white border-b">
+        <div className="container mx-auto px-4">
+          <div className="flex gap-8">
             <button
               onClick={() => setActiveTab('schedule')}
-              className={`px-4 sm:px-6 py-4 font-medium border-b-2 transition-colors whitespace-nowrap cursor-pointer text-sm ${
-                activeTab === 'schedule' 
-                  ? 'border-orange-500 text-orange-600' 
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              className={`py-4 px-2 border-b-2 font-medium ${
+                activeTab === 'schedule'
+                  ? 'border-orange-600 text-orange-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
               SCHEDULE
             </button>
             <button
               onClick={() => setActiveTab('gallery')}
-              className={`px-4 sm:px-6 py-4 font-medium border-b-2 transition-colors whitespace-nowrap cursor-pointer text-sm ${
-                activeTab === 'gallery' 
-                  ? 'border-orange-500 text-orange-600' 
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              className={`py-4 px-2 border-b-2 font-medium ${
+                activeTab === 'gallery'
+                  ? 'border-orange-600 text-orange-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
               GALLERY
             </button>
             <button
               onClick={() => setActiveTab('about')}
-              className={`px-4 sm:px-6 py-4 font-medium border-b-2 transition-colors whitespace-nowrap cursor-pointer text-sm ${
-                activeTab === 'about' 
-                  ? 'border-orange-500 text-orange-600' 
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              className={`py-4 px-2 border-b-2 font-medium ${
+                activeTab === 'about'
+                  ? 'border-orange-600 text-orange-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
               ABOUT
@@ -232,134 +220,217 @@ export default function VenueDetailPage() {
         </div>
       </div>
 
-      {/* Tab Content */}
-      <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
-        {activeTab === 'schedule' && (
-          <div>
-            {/* Date Selector */}
-            <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-6">
-              {dates.map((date) => (
-                <button
-                  key={date.date}
-                  onClick={() => setSelectedDate(date.date)}
-                  className={`flex flex-col items-center justify-center p-2 sm:p-3 text-center rounded-lg border transition-colors ${
-                    selectedDate === date.date
-                      ? 'bg-orange-500 text-white border-white'
-                      : 'bg-white text-gray-700 border-gray-200 hover:border-orange-500 cursor-pointer'
-                  }`}
-                >
-                  <div className="text-xs sm:text-sm font-medium">{date.dayNumber} {date.date.split('-')[1]}</div>
-                  <div className="text-xs">{date.dayName}</div>
-                  {date.isToday && <div className="text-xs text-orange-500 font-medium">Today</div>}
-                </button>
-              ))}
-            </div>
+      {/* Content */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2">
+            {activeTab === 'schedule' && (
+              <div>
+                {/* Date Selector */}
+                <div className="bg-white rounded-lg shadow p-4 mb-6">
+                  <div className="grid grid-cols-7 gap-2">
+                    {dates.map((date) => {
+                      const dateStr = format(date, 'yyyy-MM-dd');
+                      const isSelected = dateStr === selectedDate;
+                      const dayName = format(date, 'EEE', { locale: localeId });
+                      const dayNumber = format(date, 'd');
+                      const month = format(date, 'MMM', { locale: localeId });
 
-            {/* Time Slots Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3 ">
-              {MOCK_TIME_SLOTS.map((slot) => {
-                const isAvailable = slot.is_available
-                const isSelected = isSlotSelected(slot)
+                      return (
+                        <button
+                          key={dateStr}
+                          onClick={() => setSelectedDate(dateStr)}
+                          className={`p-3 rounded-lg text-center transition ${
+                            isSelected
+                              ? 'bg-orange-600 text-white'
+                              : 'bg-gray-100 hover:bg-gray-200'
+                          }`}
+                        >
+                          <div className="text-xs">{dayName}</div>
+                          <div className="text-lg font-bold">{dayNumber}</div>
+                          <div className="text-xs">{month}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Field Selector */}
+                {venue.fields && venue.fields.length > 1 && (
+                  <div className="bg-white rounded-lg shadow p-4 mb-6">
+                    <h3 className="font-semibold mb-3">Pilih Lapangan:</h3>
+                    <div className="flex gap-2 flex-wrap">
+                      {venue.fields.map((field) => (
+                        <button
+                          key={field.id}
+                          onClick={() => setSelectedField(field)}
+                          className={`px-4 py-2 rounded-lg transition ${
+                            selectedField?.id === field.id
+                              ? 'bg-orange-600 text-white'
+                              : 'bg-gray-100 hover:bg-gray-200'
+                          }`}
+                        >
+                          {field.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Time Slots */}
+                <div className="bg-white rounded-lg shadow p-4">
+                  <h3 className="font-semibold mb-4">Jadwal Tersedia:</h3>
+                  
+                  {slotsLoading ? (
+                    <div className="text-center py-8">Loading slots...</div>
+                  ) : availableSlots.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      Tidak ada slot tersedia untuk tanggal ini
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {availableSlots.map((slot) => (
+                        <button
+                          key={slot.id}
+                          onClick={() => handleSlotClick(slot)}
+                          className={`p-4 rounded-lg border-2 transition ${
+                            selectedSlot?.id === slot.id
+                              ? 'border-orange-600 bg-orange-50'
+                              : 'border-gray-200 hover:border-orange-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-center mb-2">
+                            <Clock className="w-4 h-4 mr-1" />
+                            <span className="font-semibold">
+                              {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-600">{formatPrice(slot.price)}</div>
+                          <div className="flex items-center justify-center mt-2 text-green-600">
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            <span className="text-xs">Available</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'gallery' && (
+              <div className="bg-white rounded-lg shadow p-4">
+                <h3 className="font-semibold mb-4">Gallery</h3>
+                {venue.images && venue.images.length > 0 ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {venue.images.map((image) => (
+                      <img
+                        key={image.id}
+                        src={image.image_url}
+                        alt={image.caption || venue.name}
+                        className="w-full h-48 object-cover rounded-lg"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    Belum ada foto gallery
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'about' && (
+              <div className="bg-white rounded-lg shadow p-4">
+                <h3 className="font-semibold mb-4">Tentang Venue</h3>
+                <p className="text-gray-700 mb-4">{venue.description}</p>
                 
-                return (
-                  <button
-                    key={slot.id}
-                    onClick={() => handleSlotClick(slot)}
-                    disabled={!isAvailable}
-                    className={`p-3 sm:p-4 rounded-lg text-center transition-all cursor-pointer ${
-                      !isAvailable
-                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        : isSelected
-                        ? 'bg-orange-500 text-white shadow-lg'
-                        : 'bg-white text-gray-700 border border-gray-200 hover:border-orange-300 hover:bg-orange-50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-center mb-1">
-                      {isSelected ? (
-                        <Check className="w-3 h-3 sm:w-4 sm:h-4" />
-                      ) : !isAvailable ? (
-                        <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                      ) : (
-                        <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-                      )}
-                    </div>
-                    <div className="text-xs sm:text-sm font-medium">
-                      {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
-                    </div>
-                    <div className="text-xs mt-1">
-                      {formatCurrency(slot.price)}
-                    </div>
-                    <div className="text-xs mt-1 font-medium">
-                      {isAvailable ? (isSelected ? 'Terpilih' : 'Available') : 'Booked'}
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-
-            {/* Selected Slots Summary */}
-            {selectedSlots.length > 0 && (
-              <div className="mt-6 bg-white rounded-lg border p-4">
-                <h3 className="font-medium mb-3 text-sm sm:text-base">Jadwal Terpilih:</h3>
-                <div className="space-y-2">
-                  {selectedSlots.map((slot, index) => (
-                    <div key={index} className="flex justify-between items-center text-xs sm:text-sm">
-                      <span>
-                        {slot.fieldName} - {formatTime(slot.timeSlot.start_time)}-{formatTime(slot.timeSlot.end_time)}
+                <h4 className="font-semibold mb-2">Fasilitas:</h4>
+                {venue.facilities && venue.facilities.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {venue.facilities.map((facility) => (
+                      <span
+                        key={facility.id}
+                        className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                      >
+                        {facility.name}
                       </span>
-                      <span className="font-medium">{formatCurrency(slot.timeSlot.price)}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="border-t mt-3 pt-3 flex justify-between items-center font-bold text-sm sm:text-base">
-                  <span>Total:</span>
-                  <span>{formatCurrency(getTotalPrice())}</span>
-                </div>
-                <button
-                  onClick={handleBooking}
-                  className="w-full mt-4 bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors text-sm cursor-pointer"
-                >
-                  Lanjutkan Booking
-                </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">Tidak ada informasi fasilitas</p>
+                )}
               </div>
             )}
           </div>
-        )}
 
-        {activeTab === 'gallery' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Mock Gallery Images */}
-            {[1,2,3,4,5,6].map((i) => (
-              <div key={i} className="relative h-32 sm:h-48 bg-gray-200 rounded-lg overflow-hidden">
-                <Image
-                  src={venue.image}
-                  alt={`Gallery ${i}`}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            ))}
-          </div>
-        )}
+          {/* Sidebar - Booking Summary */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow p-6 sticky top-4">
+              <h3 className="font-semibold text-lg mb-4">Pilih Tanggal Booking:</h3>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                min={format(new Date(), 'yyyy-MM-dd')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md mb-4"
+              />
 
-        {activeTab === 'about' && (
-          <div className="bg-white rounded-lg p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-bold mb-4">Tentang {venue.name}</h3>
-            <p className="text-gray-700 mb-6 text-sm sm:text-base">{venue.description}</p>
-            
-            <h4 className="font-bold mb-3 text-sm sm:text-base">Fasilitas:</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-              {venue.facilities.map((facility, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                  <span className="text-xs sm:text-sm">{facility}</span>
-                </div>
-              ))}
+              <h3 className="font-semibold mb-2">Pilih Lapangan:</h3>
+              <select
+                value={selectedField?.id || ''}
+                onChange={(e) => {
+                  const field = venue.fields?.find((f) => f.id === Number(e.target.value));
+                  setSelectedField(field || null);
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md mb-4"
+              >
+                {venue.fields?.map((field) => (
+                  <option key={field.id} value={field.id}>
+                    {field.name}
+                  </option>
+                ))}
+              </select>
+
+              {selectedSlot && (
+                <>
+                  <div className="border-t pt-4 mt-4">
+                    <h3 className="font-semibold mb-2">Ringkasan Booking:</h3>
+                    <div className="space-y-2 text-sm text-gray-700">
+                      <div className="flex justify-between">
+                        <span>Tanggal:</span>
+                        <span>{format(new Date(selectedDate), 'dd MMM yyyy', { locale: localeId })}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Lapangan:</span>
+                        <span>{selectedField?.name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Jam:</span>
+                        <span>
+                          {formatTime(selectedSlot.start_time)} - {formatTime(selectedSlot.end_time)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between font-semibold">
+                        <span>Harga:</span>
+                        <span>{formatPrice(selectedSlot.price)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleBooking}
+                    className="w-full mt-6 py-3 px-4 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition"
+                  >
+                    Lanjutkan Booking
+                  </button>
+                </>
+              )}
             </div>
           </div>
-        )}
+        </div>
       </div>
-      
     </div>
-  )
+  );
 }

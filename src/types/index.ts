@@ -9,26 +9,55 @@ export interface User {
   updated_at: string
 }
 
+// export interface Venue {
+//   id: number;
+//   name: string;
+//   address: string;
+//   price_per_hour: number;
+//   type: string;
+//   image: string;
+//   facilities: string[];
+//   description: string;
+//   rating: number; // Added rating field
+//   fields: Field[]; // Changed from inline to Field interface
+// }
+
+
 export interface Venue {
   id: number;
   name: string;
-  address: string;
-  price_per_hour: number;
-  type: string;
-  image: string;
-  facilities: string[];
+  slug: string;
   description: string;
-  rating: number; // Added rating field
-  fields: Field[]; // Changed from inline to Field interface
+  address: string;
+  city: string;
+  province: string;
+  latitude: number | null;
+  longitude: number | null;
+  image_url: string;
+  facebook_url: string | null;
+  instagram_url: string | null;
+  created_at: string;
+  updated_at: string;
+  facilities?: Facility[];
+  fields?: Field[];
+  images?: VenueImage[];
 }
 
+// export interface Field {
+//   id: number;
+//   venue_id: number;
+//   name: string;
+//   type: 'futsal' | 'minisoccer';
+//   status: 'active' | 'maintenance';
+// }
 
 export interface Field {
   id: number;
   venue_id: number;
   name: string;
-  type: 'futsal' | 'minisoccer';
-  status: 'active' | 'maintenance';
+  field_type: 'futsal' | 'minisoccer' | 'other';
+  description: string | null;
+  time_slots?: TimeSlot[];
 }
 
 export interface TimeSlot {
@@ -159,4 +188,29 @@ export interface RegisterData {
   phone: string;
   password: string;
   password_confirmation: string;
+}
+
+
+export interface Facility {
+  id: number;
+  name: string;
+  icon: string;
+}
+
+
+export interface TimeSlot {
+  id: number;
+  field_id: number;
+  start_time: string;
+  end_time: string;
+  price: number;
+  day_type: 'weekday' | 'weekend' | 'all';
+}
+
+export interface VenueImage {
+  id: number;
+  venue_id: number;
+  image_url: string;
+  caption: string | null;
+  display_order: number;
 }
