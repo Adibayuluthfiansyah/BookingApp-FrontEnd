@@ -151,3 +151,12 @@ export interface VenuesCardProps {
   viewMode: 'grid' | 'list'
   onVenueClick?: (venue: Venue) => void // Made optional since we handle routing internally
 }
+
+
+export interface RegisterData {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  password_confirmation: string;
+}

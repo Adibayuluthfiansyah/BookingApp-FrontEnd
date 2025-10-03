@@ -18,7 +18,7 @@ export const AuthSection: React.FC<AuthSectionProps> = ({
       {isAuthenticated && user ? (
         <ProfileDropdown user={user} isScrolled={isScrolled} />
       ) : (
-        <Link href="/admin/login">
+        <Link href="/login">
           <button
             className={`flex items-center gap-2 px-4 py-3 rounded-full font-medium transition-all duration-300 cursor-pointer transform hover:scale-105 border ${
               isScrolled

@@ -114,7 +114,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               </>
             ) : (
               <Link
-                href="/admin/login"
+                href="/login"
                 onClick={onClose}
                 className="flex items-center gap-3 px-6 py-4 rounded-2xl font-medium text-blue-600 hover:text-white hover:bg-blue-600 transition-all duration-300 transform hover:scale-[1.02] hover:translate-x-2"
               >

@@ -104,7 +104,7 @@ export default function UnifiedLoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="max-w-md w-full relative z-10">
+      <div className="max-w-md w-full relative z-10 pt-10">
         <Link 
           href="/"
           className="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors duration-300 mb-8 group"
