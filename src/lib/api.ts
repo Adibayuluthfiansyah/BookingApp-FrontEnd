@@ -2,7 +2,8 @@ import { ApiResponse, User, LoginResponse, Venue, TimeSlot } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
 
-// Auth functions
+// ==================== Auth Helper Functions ====================
+
 export const getToken = (): string | null => {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem('token');
@@ -30,6 +31,8 @@ export const clearAuthData = (): void => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
 };
+
+// ==================== Auth API Functions ====================
 
 export const login = async (email: string, password: string): Promise<LoginResponse> => {
   try {
@@ -89,7 +92,23 @@ export const logout = async (): Promise<ApiResponse> => {
   }
 };
 
-// Venue Functions
+export const getCurrentUser = async (): Promise<ApiResponse<{ user: User }>> => {
+  const token = getToken();
+
+  const response = await fetch(`${API_BASE_URL}/me`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  return await response.json();
+};
+
+// ==================== Venue API Functions ====================
+
 export const getAllVenues = async (params?: {
   search?: string;
   city?: string;
@@ -118,7 +137,7 @@ export const getAllVenues = async (params?: {
   }
 };
 
-// Get venue by ID or slug (flexible)
+// Get venue by ID or slug
 export const getVenue = async (identifier: string | number): Promise<ApiResponse<Venue>> => {
   try {
     const response = await fetch(`${API_BASE_URL}/venues/${identifier}`, {
@@ -144,7 +163,7 @@ export const getVenue = async (identifier: string | number): Promise<ApiResponse
   }
 };
 
-// Backward compatibility - keep old function name but use new one
+// Alias functions for backward compatibility
 export const getVenueBySlug = getVenue;
 export const getVenueById = getVenue;
 
@@ -160,7 +179,7 @@ export const getAvailableSlots = async (
     });
 
     const response = await fetch(
-      `${API_BASE_URL}/venues/${venueId}/schedule?${queryParams.toString()}`,
+      `${API_BASE_URL}/venues/${venueId}/available-slots?${queryParams.toString()}`,
       {
         method: 'GET',
         headers: {
@@ -170,29 +189,26 @@ export const getAvailableSlots = async (
       }
     );
 
-    if (!response.ok) throw new Error('Failed to fetch available slots');
+    if (!response.ok) {
+      throw new Error('Failed to fetch available slots');
+    }
+    
     return await response.json();
   } catch (error) {
     console.error('Error fetching available slots:', error);
-    return { success: false, message: 'Gagal mengambil slot jadwal', data: [] };
+    return { 
+      success: false, 
+      message: 'Gagal mengambil slot jadwal', 
+      data: [] 
+    };
   }
 };
 
-export const getCurrentUser = async (): Promise<ApiResponse<{ user: User }>> => {
-  const token = getToken();
-  const response = await fetch(`${API_BASE_URL}/me`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return await response.json();
-};
+// ==================== Admin API Functions ====================
 
 export const getAdminDashboard = async (): Promise<ApiResponse> => {
   const token = getToken();
+
   const response = await fetch(`${API_BASE_URL}/admin/dashboard`, {
     method: 'GET',
     headers: {
@@ -201,11 +217,15 @@ export const getAdminDashboard = async (): Promise<ApiResponse> => {
       'Authorization': `Bearer ${token}`,
     },
   });
+
   return await response.json();
 };
 
+// ==================== Customer API Functions ====================
+
 export const getCustomerBookings = async (): Promise<ApiResponse> => {
   const token = getToken();
+
   const response = await fetch(`${API_BASE_URL}/customer/bookings`, {
     method: 'GET',
     headers: {
@@ -214,5 +234,6 @@ export const getCustomerBookings = async (): Promise<ApiResponse> => {
       'Authorization': `Bearer ${token}`,
     },
   });
+
   return await response.json();
 };

@@ -4,15 +4,41 @@ import { formatCurrency } from '@/lib/utils'
 import { MapPin } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { VenuesCardProps } from '@/types'
+import { Venue } from '@/types'
 
-const VenuesCard: React.FC<VenuesCardProps> = ({ venue, viewMode }) => {
+interface VenuesCardProps {
+  venue: Venue;
+  viewMode?: 'grid' | 'list';
+}
+
+const VenuesCard: React.FC<VenuesCardProps> = ({ venue, viewMode = 'grid' }) => {
   const router = useRouter()
   const isGrid = viewMode === 'grid'
   
   const handleClick = () => {
-    router.push(`/venues/${venue.id}`)
+    // Gunakan slug untuk route
+    router.push(`/venues/${venue.slug}`)
   }
+
+  // Get minimum price dari fields
+  const getMinPrice = () => {
+    if (!venue.fields || venue.fields.length === 0) return 0;
+    
+    let minPrice = Infinity;
+    venue.fields.forEach(field => {
+      if (field.time_slots && field.time_slots.length > 0) {
+        field.time_slots.forEach(slot => {
+          if (slot.price < minPrice) {
+            minPrice = slot.price;
+          }
+        });
+      }
+    });
+    
+    return minPrice === Infinity ? 0 : minPrice;
+  }
+
+  const minPrice = getMinPrice();
 
   return (
     <div
@@ -21,7 +47,12 @@ const VenuesCard: React.FC<VenuesCardProps> = ({ venue, viewMode }) => {
     >
       {/* Image */}
       <div className={`relative ${isGrid ? "h-48 w-full" : "h-32 w-48 flex-shrink-0"}`}>
-        <Image src={venue.image} alt={venue.name} fill className="object-cover" />
+        <Image 
+          src={venue.image_url || 'js-minso.jpg'} 
+          alt={venue.name} 
+          fill 
+          className="object-cover" 
+        />
       </div>
 
       {/* Content */}
@@ -29,7 +60,7 @@ const VenuesCard: React.FC<VenuesCardProps> = ({ venue, viewMode }) => {
         <div className="flex items-start justify-between mb-2">
           <h3 className="text-lg font-bold text-gray-900 line-clamp-1">{venue.name}</h3>
           <div className="text-right text-green-600 font-bold">
-            {formatCurrency(venue.price_per_hour)}
+            {formatCurrency(minPrice)}
             <div className="text-gray-500 text-xs">/ jam</div>
           </div>
         </div>
@@ -42,18 +73,29 @@ const VenuesCard: React.FC<VenuesCardProps> = ({ venue, viewMode }) => {
         <p className="text-gray-700 text-sm mb-3 line-clamp-2">{venue.description}</p>
         
         {/* Facilities */}
-        <div className="flex flex-wrap gap-1 mb-3">
-          {venue.facilities.slice(0, 3).map((f, i) => (
-            <span key={i} className="bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs">{f}</span>
-          ))}
-          {venue.facilities.length > 3 && (
-            <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">+{venue.facilities.length - 3} lainnya</span>
-          )}
-        </div>
+        {venue.facilities && venue.facilities.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {venue.facilities.slice(0, 3).map((facility) => (
+              <span 
+                key={facility.id} 
+                className="bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs"
+              >
+                {facility.name}
+              </span>
+            ))}
+            {venue.facilities.length > 3 && (
+              <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">
+                +{venue.facilities.length - 3} lainnya
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Fields Count */}
         <div className="flex items-center justify-between text-xs text-gray-600">
-          <span>{venue.fields.length} lapangan tersedia</span>
+          <span>
+            {venue.fields ? venue.fields.length : 0} lapangan tersedia
+          </span>
           <span className="text-orange-500 font-medium hover:text-orange-600">
             Lihat Detail →
           </span>
