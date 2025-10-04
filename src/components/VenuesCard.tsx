@@ -48,7 +48,7 @@ const VenuesCard: React.FC<VenuesCardProps> = ({ venue, viewMode = 'grid' }) => 
       {/* Image */}
       <div className={`relative ${isGrid ? "h-48 w-full" : "h-32 w-48 flex-shrink-0"}`}>
         <Image 
-          src={venue.image_url || 'js-minso.jpg'} 
+          src={venue.image_url || '/jsminso.jpg'} 
           alt={venue.name} 
           fill 
           className="object-cover" 
