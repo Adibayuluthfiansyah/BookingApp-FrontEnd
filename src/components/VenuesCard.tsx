@@ -85,7 +85,7 @@ const VenuesCard: React.FC<VenuesCardProps> = ({ venue, viewMode = 'grid' }) => 
             ))}
             {venue.facilities.length > 3 && (
               <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">
-                +{venue.facilities.length - 3} lainnya
+                +{venue.facilities.length - 3} Lainnya
               </span>
             )}
           </div>
