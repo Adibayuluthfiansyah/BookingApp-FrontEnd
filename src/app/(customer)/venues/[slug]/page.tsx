@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Venue, Field , TimeSlot } from '@/types';
-import { getVenueBySlug, getAvailableSlots } from '@/lib/api';
+import { getVenue, getAvailableSlots } from '@/lib/api';
+import { Venue, Field, TimeSlot } from '@/types';
 import { format, addDays } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 import { MapPin, Facebook, Instagram, Clock, CheckCircle } from 'lucide-react';
@@ -38,7 +38,7 @@ export default function VenueDetailPage() {
 
   useEffect(() => {
     loadVenue();
-  }, [params.id]);
+  }, [params.slug]);
 
   useEffect(() => {
     if (selectedField && selectedDate) {
@@ -49,7 +49,7 @@ export default function VenueDetailPage() {
   const loadVenue = async () => {
     try {
       setLoading(true);
-      const result = await getVenueBySlug(params.id as string);
+      const result = await getVenue(params.slug as string);
       
       if (result.success) {
         setVenue(result.data);
@@ -396,36 +396,46 @@ export default function VenueDetailPage() {
               {selectedSlot && (
                 <>
                   <div className="border-t pt-4 mt-4">
-                    <h3 className="font-semibold mb-2">Ringkasan Booking:</h3>
-                    <div className="space-y-2 text-sm text-gray-700">
+                    <h4 className="font-semibold mb-3">Jadwal Terpilih:</h4>
+                    <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span>Tanggal:</span>
-                        <span>{format(new Date(selectedDate), 'dd MMM yyyy', { locale: localeId })}</span>
+                        <span className="text-gray-600">Lapangan:</span>
+                        <span className="font-medium">{selectedField?.name}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Lapangan:</span>
-                        <span>{selectedField?.name}</span>
+                        <span className="text-gray-600">Tanggal:</span>
+                        <span className="font-medium">
+                          {format(new Date(selectedDate), 'dd MMM yyyy', { locale: localeId })}
+                        </span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Jam:</span>
-                        <span>
+                        <span className="text-gray-600">Waktu:</span>
+                        <span className="font-medium">
                           {formatTime(selectedSlot.start_time)} - {formatTime(selectedSlot.end_time)}
                         </span>
                       </div>
-                      <div className="flex justify-between font-semibold">
-                        <span>Harga:</span>
-                        <span>{formatPrice(selectedSlot.price)}</span>
+                      <div className="flex justify-between pt-2 border-t">
+                        <span className="text-gray-600">Harga:</span>
+                        <span className="font-bold text-orange-600">
+                          {formatPrice(selectedSlot.price)}
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   <button
                     onClick={handleBooking}
-                    className="w-full mt-6 py-3 px-4 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition"
+                    className="w-full mt-6 bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-700 transition font-semibold"
                   >
                     Lanjutkan Booking
                   </button>
                 </>
+              )}
+
+              {!selectedSlot && (
+                <div className="text-center py-8 text-gray-500 text-sm">
+                  Pilih jadwal terlebih dahulu
+                </div>
               )}
             </div>
           </div>

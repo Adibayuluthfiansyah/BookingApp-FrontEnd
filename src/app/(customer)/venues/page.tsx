@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Search, Grid3X3, List } from 'lucide-react'
 import Image from 'next/image'
-import { MOCK_VENUES } from '@/lib/utils'
 import Footer from '@/app/utilities/footer/page'
 import VenuesCard from '@/components/VenuesCard'
+import { getAllVenues } from '@/lib/api'
+import { Venue } from '@/types'
 
 const PRICE_RANGES = [
   { label: "Semua Harga", min: 0, max: Infinity },
@@ -15,44 +16,116 @@ const PRICE_RANGES = [
 ]
 
 export default function VenuesPage() {
+  const [venues, setVenues] = useState<Venue[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedPriceRange, setSelectedPriceRange] = useState(PRICE_RANGES[0])
-  const [sortBy, setSortBy] = useState('rating')
+  const [sortBy, setSortBy] = useState('price')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [showOpenOnly, setShowOpenOnly] = useState(false)
+
+  useEffect(() => {
+    loadVenues()
+  }, [])
+
+  const loadVenues = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const result = await getAllVenues()
+
+      if (result.success) {
+        setVenues(result.data)
+      } else {
+        setError(result.message || 'Gagal memuat data lapangan')
+      }
+    } catch (err) {
+      console.error('Error loading venues:', err)
+      setError('Terjadi kesalahan saat memuat data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Get minimum price from venue's time slots
+  const getMinPrice = (venue: Venue) => {
+    if (!venue.fields || venue.fields.length === 0) return 0
+    
+    let minPrice = Infinity
+    venue.fields.forEach(field => {
+      if (field.time_slots && field.time_slots.length > 0) {
+        field.time_slots.forEach(slot => {
+          if (slot.price < minPrice) {
+            minPrice = slot.price
+          }
+        })
+      }
+    })
+    
+    return minPrice === Infinity ? 0 : minPrice
+  }
 
   // Filter venues
-  const filteredVenues = MOCK_VENUES.filter((v) => {
+  const filteredVenues = venues.filter((v) => {
     const matchesSearch = [v.name, v.address, v.description].some((txt) =>
       txt.toLowerCase().includes(searchQuery.toLowerCase())
     )
-    const matchesPrice = v.price_per_hour >= selectedPriceRange.min && v.price_per_hour <= selectedPriceRange.max
-    // Remove the is_open check since it doesn't exist in our data structure
+    const venueMinPrice = getMinPrice(v)
+    const matchesPrice = venueMinPrice >= selectedPriceRange.min && venueMinPrice <= selectedPriceRange.max
     return matchesSearch && matchesPrice
   })
 
   const sortedVenues = [...filteredVenues].sort((a, b) => {
     switch (sortBy) {
-      case 'price': return a.price_per_hour - b.price_per_hour
-      case 'name': return a.name.localeCompare(b.name)
-      case 'rating': return (b.rating || 0) - (a.rating || 0)
-      default: return 0
+      case 'price': 
+        return getMinPrice(a) - getMinPrice(b)
+      case 'name': 
+        return a.name.localeCompare(b.name)
+      default: 
+        return 0
     }
   })
 
   const clearAllFilters = () => {
     setSearchQuery('')
     setSelectedPriceRange(PRICE_RANGES[0])
-    setShowOpenOnly(false)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-xl">Loading...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-screen">
+        <div className="text-xl text-red-500 mb-4">{error}</div>
+        <button 
+          onClick={loadVenues}
+          className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600"
+        >
+          Coba Lagi
+        </button>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className=' relative h-80 md:h-96 overflow-hidden'>
+      <div className='relative h-80 md:h-96 overflow-hidden'>
         <div className='absolute inset-0'>
-          <Image src='/lapanganpage.jpg' width={650} height={579} alt="about image"
-          className='object-cover w-full h-full'/>
+          <Image 
+            src='/lapanganpage.jpg' 
+            width={650} 
+            height={579} 
+            alt="about image"
+            className='object-cover w-full h-full'
+          />
         </div>
         <div className='absolute inset-0 bg-black/50'></div>
         <div className='relative z-10 flex items-center justify-center h-full text-center text-white'>
@@ -130,7 +203,7 @@ export default function VenuesPage() {
         <div className="mb-4">
           <p className="text-gray-600">
             Menampilkan {sortedVenues.length} lapangan
-            {searchQuery && <span> untuk {searchQuery}</span>}
+            {searchQuery && <span> untuk "{searchQuery}"</span>}
           </p>
         </div>
 
@@ -141,8 +214,7 @@ export default function VenuesPage() {
               <VenuesCard 
                 key={venue.id} 
                 venue={venue} 
-                viewMode={viewMode} 
-                onVenueClick={() => {}} // Remove this prop as it's handled internally now
+                viewMode={viewMode}
               />
             ))}
           </div>

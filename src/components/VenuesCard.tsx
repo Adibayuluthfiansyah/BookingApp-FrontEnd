@@ -48,7 +48,7 @@ const VenuesCard: React.FC<VenuesCardProps> = ({ venue, viewMode = 'grid' }) => 
       {/* Image */}
       <div className={`relative ${isGrid ? "h-48 w-full" : "h-32 w-48 flex-shrink-0"}`}>
         <Image 
-          src={venue.image_url || '/jsminso.jpg'} 
+          src={venue.image_url || '/images/default-venue.jpg'} 
           alt={venue.name} 
           fill 
           className="object-cover" 
@@ -85,7 +85,7 @@ const VenuesCard: React.FC<VenuesCardProps> = ({ venue, viewMode = 'grid' }) => 
             ))}
             {venue.facilities.length > 3 && (
               <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">
-                +{venue.facilities.length - 3} Lainnya
+                +{venue.facilities.length - 3} lainnya
               </span>
             )}
           </div>
