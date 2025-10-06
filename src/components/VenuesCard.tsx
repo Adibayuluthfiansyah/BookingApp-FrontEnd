@@ -17,7 +17,7 @@ const VenuesCard: React.FC<VenuesCardProps> = ({ venue, viewMode = 'grid' }) => 
   
   const handleClick = () => {
     // Gunakan slug untuk route
-    router.push(`/venues/${venue.slug}`)
+    router.push(`/venues/${venue.id}`)
   }
 
   // Get minimum price dari fields
