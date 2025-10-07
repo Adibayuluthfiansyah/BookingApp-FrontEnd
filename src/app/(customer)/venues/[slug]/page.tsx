@@ -6,7 +6,8 @@ import { getVenue, getAvailableSlots } from '@/lib/api';
 import { Venue, Field, TimeSlot } from '@/types';
 import { format, addDays } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
-import { MapPin, Facebook, Instagram, Clock, CheckCircle } from 'lucide-react';
+import { MapPin, Facebook, Instagram, Clock, CheckCircle, ArrowLeft } from 'lucide-react';
+import Image from 'next/image';
 
 export default function VenueDetailPage() {
   const params = useParams();
@@ -18,9 +19,9 @@ export default function VenueDetailPage() {
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [loading, setLoading] = useState(true);
   const [slotsLoading, setSlotsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'schedule' | 'gallery' | 'about'>('schedule');
   
-  // Generate dates for the next 7 days
   const [dates, setDates] = useState<Date[]>([]);
 
   useEffect(() => {
@@ -37,11 +38,13 @@ export default function VenueDetailPage() {
   }, []);
 
   useEffect(() => {
-    loadVenue();
+    if (params.slug) {
+      loadVenue();
+    }
   }, [params.slug]);
 
   useEffect(() => {
-    if (selectedField && selectedDate) {
+    if (selectedField && selectedDate && venue) {
       loadAvailableSlots();
     }
   }, [selectedField, selectedDate]);
@@ -49,18 +52,28 @@ export default function VenueDetailPage() {
   const loadVenue = async () => {
     try {
       setLoading(true);
-      const result = await getVenue(params.slug as string);
+      setError(null);
       
-      if (result.success) {
+      // Gunakan ID dari params
+      const venueId = params.slug as string;
+      console.log('Loading venue with ID:', venueId);
+      
+      const result = await getVenue(venueId);
+      console.log('Venue result:', result);
+      
+      if (result.success && result.data) {
         setVenue(result.data);
         
         // Set default field
         if (result.data.fields && result.data.fields.length > 0) {
           setSelectedField(result.data.fields[0]);
         }
+      } else {
+        setError(result.message || 'Venue tidak ditemukan');
       }
     } catch (error) {
       console.error('Error loading venue:', error);
+      setError('Gagal memuat data venue');
     } finally {
       setLoading(false);
     }
@@ -78,6 +91,8 @@ export default function VenueDetailPage() {
       
       if (result.success) {
         setAvailableSlots(result.data);
+      } else {
+        setAvailableSlots([]);
       }
     } catch (error) {
       console.error('Error loading slots:', error);
@@ -92,12 +107,11 @@ export default function VenueDetailPage() {
   };
 
   const handleBooking = () => {
-    if (!selectedSlot || !selectedField) return;
+    if (!selectedSlot || !selectedField || !venue) return;
 
-    // Navigate to booking form dengan data
     const bookingData = {
-      venueId: venue?.id,
-      venueName: venue?.name,
+      venueId: venue.id,
+      venueName: venue.name,
       fieldId: selectedField.id,
       fieldName: selectedField.name,
       date: selectedDate,
@@ -107,7 +121,6 @@ export default function VenueDetailPage() {
       price: selectedSlot.price,
     };
 
-    // Store in sessionStorage untuk diambil di booking form
     sessionStorage.setItem('bookingData', JSON.stringify(bookingData));
     router.push('/booking/form');
   };
@@ -121,30 +134,62 @@ export default function VenueDetailPage() {
   };
 
   const formatTime = (time: string) => {
-    return time.substring(0, 5); // Get HH:MM from HH:MM:SS
+    return time.substring(0, 5);
   };
 
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="text-xl">Loading...</div>
+        <div className="text-xl">Memuat data venue...</div>
       </div>
     );
   }
 
-  if (!venue) {
+  if (error || !venue) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-xl">Venue tidak ditemukan</div>
+      <div className="flex flex-col justify-center items-center min-h-screen">
+        <div className="text-xl text-red-500 mb-4">{error || 'Venue tidak ditemukan'}</div>
+        <button 
+          onClick={() => router.push('/venues')}
+          className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600"
+        >
+          Kembali ke Daftar Lapangan
+        </button>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Back Button */}
+      <div className="bg-white border-b">
+        <div className="container mx-auto px-4 py-3">
+          <button 
+            onClick={() => router.back()}
+            className="flex items-center text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Kembali
+          </button>
+        </div>
+      </div>
+
       {/* Header Section */}
       <div className="bg-white shadow">
         <div className="container mx-auto px-4 py-8">
+          {/* Main Image */}
+          {venue.image_url && (
+            <div className="relative w-full h-64 md:h-96 mb-6 rounded-lg overflow-hidden">
+              <Image 
+                src={venue.image_url} 
+                alt={venue.name}
+                fill
+                className="object-cover"
+                priority
+              />
+            </div>
+          )}
+
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{venue.name}</h1>
@@ -194,7 +239,7 @@ export default function VenueDetailPage() {
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              SCHEDULE
+              JADWAL
             </button>
             <button
               onClick={() => setActiveTab('gallery')}
@@ -204,7 +249,7 @@ export default function VenueDetailPage() {
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              GALLERY
+              GALERI
             </button>
             <button
               onClick={() => setActiveTab('about')}
@@ -214,7 +259,7 @@ export default function VenueDetailPage() {
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              ABOUT
+              TENTANG
             </button>
           </div>
         </div>
@@ -283,7 +328,7 @@ export default function VenueDetailPage() {
                   <h3 className="font-semibold mb-4">Jadwal Tersedia:</h3>
                   
                   {slotsLoading ? (
-                    <div className="text-center py-8">Loading slots...</div>
+                    <div className="text-center py-8">Memuat jadwal...</div>
                   ) : availableSlots.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
                       Tidak ada slot tersedia untuk tanggal ini
@@ -309,7 +354,7 @@ export default function VenueDetailPage() {
                           <div className="text-sm text-gray-600">{formatPrice(slot.price)}</div>
                           <div className="flex items-center justify-center mt-2 text-green-600">
                             <CheckCircle className="w-4 h-4 mr-1" />
-                            <span className="text-xs">Available</span>
+                            <span className="text-xs">Tersedia</span>
                           </div>
                         </button>
                       ))}
@@ -321,21 +366,23 @@ export default function VenueDetailPage() {
 
             {activeTab === 'gallery' && (
               <div className="bg-white rounded-lg shadow p-4">
-                <h3 className="font-semibold mb-4">Gallery</h3>
+                <h3 className="font-semibold mb-4">Galeri</h3>
                 {venue.images && venue.images.length > 0 ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {venue.images.map((image) => (
-                      <img
-                        key={image.id}
-                        src={image.image_url}
-                        alt={image.caption || venue.name}
-                        className="w-full h-48 object-cover rounded-lg"
-                      />
+                      <div key={image.id} className="relative h-48">
+                        <Image
+                          src={image.image_url}
+                          alt={image.caption || venue.name}
+                          fill
+                          className="object-cover rounded-lg"
+                        />
+                      </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500">
-                    Belum ada foto gallery
+                    Belum ada foto galeri
                   </div>
                 )}
               </div>
@@ -365,61 +412,35 @@ export default function VenueDetailPage() {
             )}
           </div>
 
-          {/* Sidebar - Booking Summary */}
+          {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow p-6 sticky top-4">
-              <h3 className="font-semibold text-lg mb-4">Pilih Tanggal Booking:</h3>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                min={format(new Date(), 'yyyy-MM-dd')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md mb-4"
-              />
+              <h3 className="font-semibold text-lg mb-4">Ringkasan Booking</h3>
 
-              <h3 className="font-semibold mb-2">Pilih Lapangan:</h3>
-              <select
-                value={selectedField?.id || ''}
-                onChange={(e) => {
-                  const field = venue.fields?.find((f) => f.id === Number(e.target.value));
-                  setSelectedField(field || null);
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md mb-4"
-              >
-                {venue.fields?.map((field) => (
-                  <option key={field.id} value={field.id}>
-                    {field.name}
-                  </option>
-                ))}
-              </select>
-
-              {selectedSlot && (
+              {selectedSlot && selectedField ? (
                 <>
-                  <div className="border-t pt-4 mt-4">
-                    <h4 className="font-semibold mb-3">Jadwal Terpilih:</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Lapangan:</span>
-                        <span className="font-medium">{selectedField?.name}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Tanggal:</span>
-                        <span className="font-medium">
-                          {format(new Date(selectedDate), 'dd MMM yyyy', { locale: localeId })}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Waktu:</span>
-                        <span className="font-medium">
-                          {formatTime(selectedSlot.start_time)} - {formatTime(selectedSlot.end_time)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between pt-2 border-t">
-                        <span className="text-gray-600">Harga:</span>
-                        <span className="font-bold text-orange-600">
-                          {formatPrice(selectedSlot.price)}
-                        </span>
-                      </div>
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Lapangan:</span>
+                      <span className="font-medium">{selectedField.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Tanggal:</span>
+                      <span className="font-medium">
+                        {format(new Date(selectedDate), 'dd MMM yyyy', { locale: localeId })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Waktu:</span>
+                      <span className="font-medium">
+                        {formatTime(selectedSlot.start_time)} - {formatTime(selectedSlot.end_time)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between pt-3 border-t">
+                      <span className="text-gray-600">Total:</span>
+                      <span className="font-bold text-orange-600 text-lg">
+                        {formatPrice(selectedSlot.price)}
+                      </span>
                     </div>
                   </div>
 
@@ -430,11 +451,9 @@ export default function VenueDetailPage() {
                     Lanjutkan Booking
                   </button>
                 </>
-              )}
-
-              {!selectedSlot && (
+              ) : (
                 <div className="text-center py-8 text-gray-500 text-sm">
-                  Pilih jadwal terlebih dahulu
+                  Pilih tanggal dan jadwal untuk melanjutkan
                 </div>
               )}
             </div>

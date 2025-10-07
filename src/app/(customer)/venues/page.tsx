@@ -33,10 +33,13 @@ export default function VenuesPage() {
       setLoading(true)
       setError(null)
       
+      console.log('Fetching venues...')
       const result = await getAllVenues()
+      console.log('Venues result:', result)
 
-      if (result.success) {
+      if (result.success && result.data) {
         setVenues(result.data)
+        console.log('Venues loaded:', result.data.length)
       } else {
         setError(result.message || 'Gagal memuat data lapangan')
       }
@@ -68,8 +71,8 @@ export default function VenuesPage() {
 
   // Filter venues
   const filteredVenues = venues.filter((v) => {
-    const matchesSearch = [v.name, v.address, v.description].some((txt) =>
-      txt.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesSearch = [v.name, v.address, v.description || ''].some((txt) =>
+      txt?.toLowerCase().includes(searchQuery.toLowerCase())
     )
     const venueMinPrice = getMinPrice(v)
     const matchesPrice = venueMinPrice >= selectedPriceRange.min && venueMinPrice <= selectedPriceRange.max
@@ -95,7 +98,7 @@ export default function VenuesPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="text-xl">Loading...</div>
+        <div className="text-xl">Memuat data lapangan...</div>
       </div>
     )
   }
@@ -121,10 +124,11 @@ export default function VenuesPage() {
         <div className='absolute inset-0'>
           <Image 
             src='/lapanganpage.jpg' 
-            width={650} 
-            height={579} 
-            alt="about image"
+            width={1920} 
+            height={1080} 
+            alt="Lapangan background"
             className='object-cover w-full h-full'
+            priority
           />
         </div>
         <div className='absolute inset-0 bg-black/50'></div>
@@ -149,7 +153,7 @@ export default function VenuesPage() {
               placeholder="Cari lapangan atau lokasi..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
             />
           </div>
         </div>
@@ -162,9 +166,9 @@ export default function VenuesPage() {
             <select
               value={selectedPriceRange.label}
               onChange={(e) => setSelectedPriceRange(PRICE_RANGES.find(r => r.label === e.target.value) ?? PRICE_RANGES[0])}
-              className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+              className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:outline-none"
             >
-              {PRICE_RANGES.map((r) => <option key={r.label}>{r.label}</option>)}
+              {PRICE_RANGES.map((r) => <option key={r.label} value={r.label}>{r.label}</option>)}
             </select>
             <button 
               onClick={clearAllFilters} 
@@ -177,7 +181,7 @@ export default function VenuesPage() {
             <select 
               value={sortBy} 
               onChange={(e) => setSortBy(e.target.value)} 
-              className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+              className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:outline-none"
             >
               <option value="price">Harga Terendah</option>
               <option value="name">Nama A-Z</option>
@@ -185,13 +189,15 @@ export default function VenuesPage() {
             <div className="flex border rounded-lg overflow-hidden">
               <button 
                 onClick={() => setViewMode('grid')} 
-                className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-black text-white' : 'bg-white text-gray-600 hover:bg-gray-50 cursor-pointer'}`}
+                className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-black text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                aria-label="Grid view"
               >
                 <Grid3X3 className="w-4 h-4" />
               </button>
               <button 
                 onClick={() => setViewMode('list')} 
-                className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-black text-white' : 'bg-white text-gray-600 hover:bg-gray-50 cursor-pointer'}`}
+                className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-black text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                aria-label="List view"
               >
                 <List className="w-4 h-4" />
               </button>
@@ -212,7 +218,7 @@ export default function VenuesPage() {
           <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
             {sortedVenues.map((venue) => (
               <VenuesCard 
-                key={venue.id} 
+                key={`venue-${venue.id}`}
                 venue={venue} 
                 viewMode={viewMode}
               />
