@@ -70,7 +70,7 @@ export default function Home() {
             </div>
           ) : venues.length > 0 ? (
             // Venues loaded
-            venues.map((venue : any) => (
+            venues.map((venue) => (
               <VenuesCard
                 key={venue.id}
                 venue={venue}

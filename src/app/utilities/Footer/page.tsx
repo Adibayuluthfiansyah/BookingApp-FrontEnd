@@ -19,7 +19,7 @@ export default function Footer() {
             <div className="flex space-x-4">
               <a href="#" className="text-gray-300 hover:text-white transition-colors">
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                 <Instagram/>
+                <Instagram/>
                 </svg>
               </a>
               <a href="#" className="text-gray-300 hover:text-white transition-colors">
