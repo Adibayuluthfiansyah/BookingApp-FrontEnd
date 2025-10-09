@@ -158,7 +158,7 @@ export const getVenue = async (identifier: string | number): Promise<ApiResponse
     return {
       success: false,
       message: 'Gagal mengambil data venue',
-      data: null as any
+      data: null as any,
     };
   }
 };
