@@ -208,7 +208,7 @@ export default function VenuesPage() {
         {/* Results Count */}
         <div className="mb-4">
           <p className="text-gray-600">
-            Menampilkan {sortedVenues.length} lapangan
+            Menampilkan {sortedVenues.length} Lapangan
             {searchQuery && <span> untuk {searchQuery}</span>}
           </p>
         </div>
