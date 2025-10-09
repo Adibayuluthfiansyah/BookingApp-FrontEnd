@@ -27,22 +27,38 @@ const VenuesCard: React.FC<VenuesCardProps> = ({ venue, viewMode = 'grid' }) => 
     }).format(price);
   }
 
-  // Get minimum price dari fields
+  // Get minimum price dari fields - IMPROVED
   const getMinPrice = () => {
-    if (!venue.fields || venue.fields.length === 0) return 0;
+    // Debug log
+    console.log('Venue:', venue.name);
+    console.log('Fields:', venue.fields);
+    
+    if (!venue.fields || venue.fields.length === 0) {
+      console.log('No fields found');
+      return 0;
+    }
     
     let minPrice = Infinity;
+    
     venue.fields.forEach(field => {
-      if (field.time_slots && field.time_slots.length > 0) {
-        field.time_slots.forEach(slot => {
-          if (slot.price < minPrice) {
+      console.log('Field:', field.name, 'Time slots:', field.time_slots || field.time_slots);
+      
+      // Check both time_slots (snake_case) and timeSlots (camelCase)
+      const slots = field.time_slots || field.time_slots || [];
+      
+      if (slots && slots.length > 0) {
+        slots.forEach(slot => {
+          if (slot.price && slot.price < minPrice) {
             minPrice = slot.price;
           }
         });
       }
     });
     
-    return minPrice === Infinity ? 0 : minPrice;
+    const finalPrice = minPrice === Infinity ? 0 : minPrice;
+    console.log('Min price for', venue.name, ':', finalPrice);
+    
+    return finalPrice;
   }
 
   const minPrice = getMinPrice();
@@ -54,7 +70,7 @@ const VenuesCard: React.FC<VenuesCardProps> = ({ venue, viewMode = 'grid' }) => 
     if (venue.images && venue.images.length > 0 && venue.images[0].image_url) {
       return venue.images[0].image_url;
     }
-    return '/lapanganpage.jpg'; // Gunakan image yang sudah ada di project
+    return '/lapanganpage.jpg';
   }
 
   const imageUrl = getImageUrl();
@@ -83,8 +99,8 @@ const VenuesCard: React.FC<VenuesCardProps> = ({ venue, viewMode = 'grid' }) => 
         <div className="flex items-start justify-between mb-2">
           <h3 className="text-lg font-bold text-gray-900 line-clamp-1">{venue.name}</h3>
           <div className="text-right text-green-600 font-bold ml-2 flex-shrink-0">
-            {formatCurrency(minPrice)}
-            <div className="text-gray-500 text-xs">/ jam</div>
+            {minPrice > 0 ? formatCurrency(minPrice) : 'Hubungi'}
+            {minPrice > 0 && <div className="text-gray-500 text-xs">/ jam</div>}
           </div>
         </div>
 
@@ -95,12 +111,12 @@ const VenuesCard: React.FC<VenuesCardProps> = ({ venue, viewMode = 'grid' }) => 
         
         <p className="text-gray-700 text-sm mb-3 line-clamp-2">{venue.description}</p>
         
-        {/* Facilities - FIXED: Added proper key */}
+        {/* Facilities - Support both facilities array structure */}
         {venue.facilities && venue.facilities.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
-            {venue.facilities.slice(0, 3).map((facility) => (
+            {venue.facilities.slice(0, 3).map((facility, index) => (
               <span 
-                key={`facility-${facility.id}`}
+                key={facility.id || `facility-${index}`}
                 className="bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs"
               >
                 {facility.name}

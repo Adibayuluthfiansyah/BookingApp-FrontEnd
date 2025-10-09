@@ -116,31 +116,20 @@ export const getAllVenues = async (params?: {
 }): Promise<ApiResponse<Venue[]>> => {
   try {
     const queryParams = new URLSearchParams();
+    
+    // Add search/filter params
     if (params?.search) queryParams.append('search', params.search);
     if (params?.city) queryParams.append('city', params.city);
     if (params?.sort) queryParams.append('sort', params.sort);
+    
+    // CRITICAL: Add includes for relations
+    queryParams.append('include', 'fields.timeSlots,facilities,images');
 
-    const url = `${API_BASE_URL}/venues${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const url = `${API_BASE_URL}/venues?${queryParams.toString()}`;
+    
+    console.log('Fetching venues from:', url);
     
     const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    });
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching venues:', error);
-    throw error;
-  }
-};
-
-// Get venue by ID or slug
-export const getVenue = async (identifier: string | number): Promise<ApiResponse<Venue>> => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/venues/${identifier}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -152,13 +141,53 @@ export const getVenue = async (identifier: string | number): Promise<ApiResponse
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log('Venues response:', data);
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching venues:', error);
+    return {
+      success: false,
+      message: 'Gagal mengambil data venue',
+      data: []
+    };
+  }
+};
+
+// Get venue by ID or slug
+export const getVenue = async (identifier: string | number): Promise<ApiResponse<Venue>> => {
+  try {
+    // Add includes for relations
+    const queryParams = new URLSearchParams();
+    queryParams.append('include', 'fields.timeSlots,facilities,images');
+    
+    const url = `${API_BASE_URL}/venues/${identifier}?${queryParams.toString()}`;
+    
+    console.log('Fetching venue from:', url);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Venue response:', data);
+
+    return data;
   } catch (error) {
     console.error('Error fetching venue:', error);
     return {
       success: false,
       message: 'Gagal mengambil data venue',
-      data: null as any,
+      data: null as any
     };
   }
 };
@@ -178,22 +207,26 @@ export const getAvailableSlots = async (
       date: params.date,
     });
 
-    const response = await fetch(
-      `${API_BASE_URL}/venues/${venueId}/available-slots?${queryParams.toString()}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      }
-    );
+    const url = `${API_BASE_URL}/venues/${venueId}/available-slots?${queryParams.toString()}`;
+    
+    console.log('Fetching available slots from:', url);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch available slots');
+      throw new Error(`Failed to fetch available slots: ${response.status}`);
     }
     
-    return await response.json();
+    const data = await response.json();
+    console.log('Available slots response:', data);
+    
+    return data;
   } catch (error) {
     console.error('Error fetching available slots:', error);
     return { 
