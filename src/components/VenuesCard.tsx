@@ -27,7 +27,7 @@ const VenuesCard: React.FC<VenuesCardProps> = ({ venue, viewMode = 'grid' }) => 
     }).format(price);
   }
 
-  // Get minimum price dari fields - IMPROVED
+  // Get minimum price dari fields
   const getMinPrice = () => {
     // Debug log
     console.log('Venue:', venue.name);
@@ -43,7 +43,6 @@ const VenuesCard: React.FC<VenuesCardProps> = ({ venue, viewMode = 'grid' }) => 
     venue.fields.forEach(field => {
       console.log('Field:', field.name, 'Time slots:', field.time_slots || field.time_slots);
       
-      // Check both time_slots (snake_case) and timeSlots (camelCase)
       const slots = field.time_slots || field.time_slots || [];
       
       if (slots && slots.length > 0) {
@@ -139,7 +138,7 @@ const VenuesCard: React.FC<VenuesCardProps> = ({ venue, viewMode = 'grid' }) => 
             {venue.fields ? venue.fields.length : 0} lapangan tersedia
           </span>
           <span className="text-orange-500 font-medium hover:text-orange-600">
-            Lihat Detail →
+            Lihat Detail
           </span>
         </div>
       </div>
