@@ -220,7 +220,7 @@ export const getAvailableSlots = async (
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch available slots: ${response.status}`);
+      throw new Error("Failed to fetch available slots");
     }
     
     const data = await response.json();
