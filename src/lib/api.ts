@@ -270,3 +270,61 @@ export const getCustomerBookings = async (): Promise<ApiResponse> => {
 
   return await response.json();
 };
+
+// ==================== Booking API Functions ====================
+
+export const createBooking = async (bookingData: {
+  field_id: number;
+  time_slot_id: number;
+  booking_date: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_email: string;
+  notes?: string;
+}): Promise<ApiResponse<{ booking: any; snap_token: string }>> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/bookings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(bookingData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to create booking');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Create booking error:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Gagal membuat booking',
+      data: null as any,
+    };
+  }
+};
+
+export const getBookingStatus = async (bookingNumber: string): Promise<ApiResponse<any>> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/bookings/${bookingNumber}/status`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+
+    return await response.json();
+  } catch (error) {
+    console.error('Get booking status error:', error);
+    return {
+      success: false,
+      message: 'Gagal mengambil status booking',
+      data: null,
+    };
+  }
+};
