@@ -1,23 +1,74 @@
 'use client'
 
-import React from 'react'
-import { useRouter } from 'next/navigation'
-import { CheckCircle, Calendar, Clock, MapPin, Phone, Mail } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { CheckCircle, Calendar, Clock, MapPin, Phone, Mail, Loader } from 'lucide-react'
+import { getBookingStatus } from '@/lib/api'
 
 export default function BookingSuccessPage() {
   const router = useRouter()
-  
-  // Mock booking data - in real app, this would come from API or props
-  const bookingDetails = {
-    bookingId: 'KSH' + Math.random().toString(36).substr(2, 9).toUpperCase(),
-    venueName: 'Arena Mini Soccer Plus',
-    fieldName: 'Lapangan 1',
-    date: '2025-09-23',
-    timeSlots: ['08:00-10:00', '10:00-12:00'],
-    totalPrice: 400000,
-    customerName: 'John Doe',
-    customerPhone: '08123456789',
-    paymentMethod: 'Transfer Bank'
+  const searchParams = useSearchParams()
+  const [booking, setBooking] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  const orderID = searchParams.get('order_id')
+
+  useEffect(() => {
+    if (orderID) {
+      loadBookingStatus()
+    } else {
+      setLoading(false)
+    }
+  }, [orderID])
+
+  const loadBookingStatus = async () => {
+    try {
+      const result = await getBookingStatus(orderID!)
+      
+      if (result.success && result.data) {
+        setBooking(result.data)
+      }
+    } catch (error) {
+      console.error('Failed to load booking status:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatCurrency = (price: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(price);
+  }
+
+  const formatTime = (time: string) => {
+    return time.substring(0, 5);
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader className="w-8 h-8 animate-spin text-orange-500" />
+      </div>
+    )
+  }
+
+  if (!booking) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Booking Not Found</h1>
+          <button
+            onClick={() => router.push('/venues')}
+            className="bg-orange-500 text-white px-6 py-3 rounded-lg"
+          >
+            Kembali ke Daftar Lapangan
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -28,7 +79,9 @@ export default function BookingSuccessPage() {
           <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Booking Berhasil!</h1>
           <p className="text-gray-600">
-            Terima kasih! Booking Anda telah berhasil dibuat.
+            {booking.status === 'paid' 
+              ? 'Pembayaran telah dikonfirmasi.' 
+              : 'Booking Anda telah dibuat. Silakan selesaikan pembayaran.'}
           </p>
         </div>
 
@@ -36,15 +89,24 @@ export default function BookingSuccessPage() {
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
           <div className="text-center mb-4">
             <div className="text-sm text-gray-600">Nomor Booking</div>
-            <div className="text-xl font-bold text-orange-600">{bookingDetails.bookingId}</div>
+            <div className="text-xl font-bold text-orange-600">{booking.booking_number}</div>
+            <div className="mt-2">
+              <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                booking.status === 'paid' 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-yellow-100 text-yellow-800'
+              }`}>
+                {booking.status === 'paid' ? 'Lunas' : 'Menunggu Pembayaran'}
+              </span>
+            </div>
           </div>
 
           <div className="border-t pt-4 space-y-3">
             <div className="flex items-start gap-3">
               <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
               <div>
-                <div className="font-medium">{bookingDetails.venueName}</div>
-                <div className="text-sm text-gray-600">{bookingDetails.fieldName}</div>
+                <div className="font-medium">{booking.field?.venue?.name}</div>
+                <div className="text-sm text-gray-600">{booking.field?.name}</div>
               </div>
             </div>
 
@@ -52,7 +114,7 @@ export default function BookingSuccessPage() {
               <Calendar className="w-5 h-5 text-gray-400" />
               <div>
                 <div className="font-medium">
-                  {new Date(bookingDetails.date).toLocaleDateString('id-ID', {
+                  {new Date(booking.booking_date).toLocaleDateString('id-ID', {
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',
@@ -65,35 +127,40 @@ export default function BookingSuccessPage() {
             <div className="flex items-center gap-3">
               <Clock className="w-5 h-5 text-gray-400" />
               <div>
-                <div className="font-medium">{bookingDetails.timeSlots.join(', ')}</div>
+                <div className="font-medium">
+                  {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
+                </div>
               </div>
             </div>
           </div>
 
           <div className="border-t pt-4 mt-4">
-            <div className="flex justify-between items-center font-bold text-lg">
-              <span>Total Bayar:</span>
-              <span className="text-orange-600">
-                {new Intl.NumberFormat('id-ID', {
-                  style: 'currency',
-                  currency: 'IDR',
-                  minimumFractionDigits: 0
-                }).format(bookingDetails.totalPrice)}
-              </span>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-gray-600">Subtotal</span>
+              <span>{formatCurrency(booking.subtotal)}</span>
+            </div>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-gray-600">Biaya Admin</span>
+              <span>{formatCurrency(booking.admin_fee)}</span>
+            </div>
+            <div className="flex justify-between items-center font-bold text-lg pt-2 border-t">
+              <span>Total Bayar</span>
+              <span className="text-orange-600">{formatCurrency(booking.total_amount)}</span>
             </div>
           </div>
         </div>
 
         {/* Payment Instructions */}
-        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6">
-          <h3 className="font-bold text-orange-800 mb-2">Instruksi Pembayaran</h3>
-          <div className="text-sm text-orange-700 space-y-1">
-            <p>• Silakan lakukan pembayaran sesuai metode yang dipilih</p>
-            <p>• Simpan nomor booking untuk referensi</p>
-            <p>• Konfirmasi pembayaran akan dikirim via WhatsApp</p>
-            <p>• Datang 15 menit sebelum jadwal bermain</p>
+        {booking.status !== 'paid' && (
+          <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6">
+            <h3 className="font-bold text-orange-800 mb-2">Instruksi Pembayaran</h3>
+            <div className="text-sm text-orange-700 space-y-1">
+              <p>• Selesaikan pembayaran Anda melalui Midtrans</p>
+              <p>• Simpan nomor booking untuk referensi</p>
+              <p>• Konfirmasi otomatis setelah pembayaran berhasil</p>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Contact Info */}
         <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
@@ -101,11 +168,11 @@ export default function BookingSuccessPage() {
           <div className="space-y-2 text-sm">
             <div className="flex items-center gap-2">
               <Phone className="w-4 h-4 text-gray-400" />
-              <span>+62 812-3456-7890</span>
+              <span>{booking.customer_phone}</span>
             </div>
             <div className="flex items-center gap-2">
               <Mail className="w-4 h-4 text-gray-400" />
-              <span>info@kashmirbooking.com</span>
+              <span>{booking.customer_email}</span>
             </div>
           </div>
         </div>
@@ -113,10 +180,13 @@ export default function BookingSuccessPage() {
         {/* Action Buttons */}
         <div className="space-y-3">
           <button
-            onClick={() => window.open(`https://wa.me/6281234567890?text=Halo, saya ingin konfirmasi booking dengan nomor ${bookingDetails.bookingId}`, '_blank')}
+            onClick={() => window.open(
+              `https://wa.me/6281234567890?text=Halo, saya ingin konfirmasi booking dengan nomor ${booking.booking_number}`, 
+              '_blank'
+            )}
             className="w-full bg-green-500 text-white py-3 rounded-lg font-medium hover:bg-green-600 transition-colors"
           >
-            Konfirmasi via WhatsApp
+            Hubungi via WhatsApp
           </button>
           
           <button
@@ -124,13 +194,6 @@ export default function BookingSuccessPage() {
             className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors"
           >
             Kembali ke Daftar Lapangan
-          </button>
-          
-          <button
-            onClick={() => router.push('/booking/history')}
-            className="w-full text-orange-600 py-2 font-medium hover:text-orange-700 transition-colors"
-          >
-            Lihat Riwayat Booking
           </button>
         </div>
       </div>
