@@ -156,7 +156,7 @@ export default function BookingFormPage() {
               type="button"
             >
               <ArrowLeft className="w-6 h-6" />
-            </button>
+            </button> 
             <div>
               <h1 className="text-xl font-bold text-gray-900">Form Booking</h1>
               <p className="text-gray-600 text-sm">Lengkapi data untuk melanjutkan booking</p>
