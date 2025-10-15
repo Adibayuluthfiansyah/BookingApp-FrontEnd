@@ -2,11 +2,10 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, User, Phone, Mail, MessageSquare, Calendar, Clock } from 'lucide-react'
+import { ArrowLeft, User, Phone, Mail, MessageSquare, Calendar, Clock, AlertCircle } from 'lucide-react'
 import { createBooking } from '@/lib/api'
 import Script from 'next/script'
 
-// Declare Midtrans Snap
 declare global {
   interface Window {
     snap: any;
@@ -24,19 +23,79 @@ export default function BookingFormPage() {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [snapLoaded, setSnapLoaded] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Get booking data from sessionStorage
-    const savedBookingData = sessionStorage.getItem('bookingData')
-    if (savedBookingData) {
+    loadBookingData()
+  }, [router])
+
+  const loadBookingData = () => {
+    try {
+      const savedBookingData = sessionStorage.getItem('bookingData')
+      
+      if (!savedBookingData) {
+        console.error('No booking data found')
+        router.push('/venues')
+        return
+      }
+
       const data = JSON.parse(savedBookingData)
       console.log('Loaded booking data:', data)
+
+      // VALIDASI CRITICAL: Cek apakah data lengkap dan valid
+      if (!data.timeSlotId || !data.fieldId || !data.date) {
+        console.error('Invalid booking data:', data)
+        setError('Data booking tidak lengkap. Silakan pilih slot lagi.')
+        sessionStorage.removeItem('bookingData')
+        
+        // Redirect setelah 2 detik
+        setTimeout(() => {
+          router.push('/venues')
+        }, 2000)
+        return
+      }
+
+      // VALIDASI: Cek apakah ID adalah number yang valid
+      const timeSlotId = Number(data.timeSlotId)
+      const fieldId = Number(data.fieldId)
+
+      if (isNaN(timeSlotId) || isNaN(fieldId) || timeSlotId <= 0 || fieldId <= 0) {
+        console.error('Invalid ID values:', { timeSlotId, fieldId })
+        setError('ID slot tidak valid. Silakan pilih slot lagi.')
+        sessionStorage.removeItem('bookingData')
+        
+        setTimeout(() => {
+          router.push('/venues')
+        }, 2000)
+        return
+      }
+
+      // VALIDASI: Cek timestamp (max 30 menit)
+      const savedAt = data.savedAt || Date.now()
+      const thirtyMinutes = 30 * 60 * 1000
+      
+      if (Date.now() - savedAt > thirtyMinutes) {
+        console.error('Booking data expired')
+        setError('Data booking sudah kadaluarsa. Silakan pilih slot lagi.')
+        sessionStorage.removeItem('bookingData')
+        
+        setTimeout(() => {
+          router.push('/venues')
+        }, 2000)
+        return
+      }
+
       setBookingData(data)
-    } else {
-      // Redirect back if no booking data
-      router.push('/venues')
+    } catch (error) {
+      console.error('Error loading booking data:', error)
+      setError('Error memuat data booking.')
+      sessionStorage.removeItem('bookingData')
+      
+      setTimeout(() => {
+        router.push('/venues')
+      }, 2000)
     }
-  }, [router])
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -66,23 +125,37 @@ export default function BookingFormPage() {
       return
     }
 
+    if (!bookingData) {
+      alert('Data booking tidak ditemukan. Silakan pilih slot lagi.')
+      router.push('/venues')
+      return
+    }
+
     setIsLoading(true)
+    setError(null)
 
     try {
-      // Prepare booking payload
-      const bookingPayload = {
-        field_id: bookingData.fieldId,
-        time_slot_id: bookingData.timeSlotId,
-        booking_date: bookingData.date,
-        customer_name: formData.customerName,
-        customer_phone: formData.customerPhone,
-        customer_email: formData.customerEmail,
-        notes: formData.notes,
+      // Convert ke number untuk memastikan
+      const fieldId = Number(bookingData.fieldId)
+      const timeSlotId = Number(bookingData.timeSlotId)
+
+      // Validasi lagi sebelum submit
+      if (isNaN(fieldId) || isNaN(timeSlotId) || fieldId <= 0 || timeSlotId <= 0) {
+        throw new Error('Data booking tidak valid. ID field atau time slot salah.')
       }
 
-      console.log('Creating booking with payload:', bookingPayload)
+      const bookingPayload = {
+        field_id: fieldId,
+        time_slot_id: timeSlotId,
+        booking_date: bookingData.date,
+        customer_name: formData.customerName.trim(),
+        customer_phone: formData.customerPhone.trim(),
+        customer_email: formData.customerEmail.trim(),
+        notes: formData.notes.trim(),
+      }
 
-      // Call API to create booking
+      console.log('Submitting booking with payload:', bookingPayload)
+
       const result = await createBooking(bookingPayload)
 
       console.log('Booking result:', result)
@@ -90,7 +163,6 @@ export default function BookingFormPage() {
       if (result.success && result.data) {
         const { snap_token, booking } = result.data
 
-        // Open Midtrans Snap popup
         window.snap.pay(snap_token, {
           onSuccess: function(result: any) {
             console.log('Payment success:', result)
@@ -113,18 +185,49 @@ export default function BookingFormPage() {
           }
         })
       } else {
-        alert(result.message || 'Gagal membuat booking. Silakan coba lagi.')
+        const errorMessage = result.message || 'Gagal membuat booking. Silakan coba lagi.'
+        setError(errorMessage)
+        
+        // Jika error terkait time slot tidak valid, redirect
+        if (errorMessage.toLowerCase().includes('time slot') || 
+            errorMessage.toLowerCase().includes('tidak ditemukan') ||
+            errorMessage.toLowerCase().includes('tidak valid')) {
+          sessionStorage.removeItem('bookingData')
+          setTimeout(() => {
+            router.push('/venues')
+          }, 3000)
+        }
+        
         setIsLoading(false)
       }
     } catch (error) {
       console.error('Booking failed:', error)
-      alert('Terjadi kesalahan. Silakan coba lagi.')
+      const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan. Silakan coba lagi.'
+      setError(errorMessage)
       setIsLoading(false)
     }
   }
 
+  // Show error state
+  if (error && !bookingData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Error</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <p className="text-sm text-gray-500">Mengalihkan ke halaman venue...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (!bookingData) {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
+      </div>
+    )
   }
 
   const adminFee = 5000
@@ -132,7 +235,6 @@ export default function BookingFormPage() {
 
   return (
     <>
-      {/* Load Midtrans Snap Script */}
       <Script
         src="https://app.sandbox.midtrans.com/snap/snap.js"
         data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
@@ -147,7 +249,6 @@ export default function BookingFormPage() {
       />
 
       <div className="min-h-screen pt-15 bg-gray-50">
-        {/* Header */}
         <div className="bg-white shadow-sm sticky top-0 z-40">
           <div className="max-w-4xl mx-auto px-4 py-4 flex items-center">
             <button
@@ -156,7 +257,7 @@ export default function BookingFormPage() {
               type="button"
             >
               <ArrowLeft className="w-6 h-6" />
-            </button> 
+            </button>
             <div>
               <h1 className="text-xl font-bold text-gray-900">Form Booking</h1>
               <p className="text-gray-600 text-sm">Lengkapi data untuk melanjutkan booking</p>
@@ -164,9 +265,20 @@ export default function BookingFormPage() {
           </div>
         </div>
 
+        {error && (
+          <div className="max-w-4xl mx-auto px-4 pt-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-red-800 font-medium">Error</p>
+                <p className="text-red-700 text-sm">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Booking Form */}
             <div className="lg:col-span-2">
               <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-6">
                 <h2 className="text-lg font-bold mb-6 flex items-center gap-2">
@@ -265,7 +377,6 @@ export default function BookingFormPage() {
               </form>
             </div>
 
-            {/* Booking Summary */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-xl shadow-sm p-6 sticky top-24">
                 <h3 className="text-lg font-bold mb-4">Ringkasan Booking</h3>

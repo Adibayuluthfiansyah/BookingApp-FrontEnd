@@ -119,8 +119,11 @@ export default function VenueDetailPage() {
       startTime: selectedSlot.start_time,
       endTime: selectedSlot.end_time,
       price: selectedSlot.price,
+      savedAt: Date.now(), // Tambahkan timestamp
     };
 
+    console.log('Saving booking data to sessionStorage:', bookingData);
+    sessionStorage.removeItem('bookingData');
     sessionStorage.setItem('bookingData', JSON.stringify(bookingData));
     router.push('/booking/form');
   };
@@ -158,6 +161,8 @@ export default function VenueDetailPage() {
       </div>
     );
   }
+
+  
 
   return (
     <div className="min-h-screen bg-gray-50">
