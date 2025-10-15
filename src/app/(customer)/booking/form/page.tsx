@@ -29,73 +29,102 @@ export default function BookingFormPage() {
     loadBookingData()
   }, [router])
 
-  const loadBookingData = () => {
-    try {
-      const savedBookingData = sessionStorage.getItem('bookingData')
-      
-      if (!savedBookingData) {
-        console.error('No booking data found')
-        router.push('/venues')
-        return
-      }
+ const loadBookingData = async () => {
+  try {
+    const savedBookingData = sessionStorage.getItem('bookingData')
+    
+    if (!savedBookingData) {
+      console.error('No booking data found')
+      router.push('/venues')
+      return
+    }
 
-      const data = JSON.parse(savedBookingData)
-      console.log('Loaded booking data:', data)
+    const data = JSON.parse(savedBookingData)
+    console.log('Loaded booking data:', data)
 
-      // VALIDASI CRITICAL: Cek apakah data lengkap dan valid
-      if (!data.timeSlotId || !data.fieldId || !data.date) {
-        console.error('Invalid booking data:', data)
-        setError('Data booking tidak lengkap. Silakan pilih slot lagi.')
-        sessionStorage.removeItem('bookingData')
-        
-        // Redirect setelah 2 detik
-        setTimeout(() => {
-          router.push('/venues')
-        }, 2000)
-        return
-      }
-
-      // VALIDASI: Cek apakah ID adalah number yang valid
-      const timeSlotId = Number(data.timeSlotId)
-      const fieldId = Number(data.fieldId)
-
-      if (isNaN(timeSlotId) || isNaN(fieldId) || timeSlotId <= 0 || fieldId <= 0) {
-        console.error('Invalid ID values:', { timeSlotId, fieldId })
-        setError('ID slot tidak valid. Silakan pilih slot lagi.')
-        sessionStorage.removeItem('bookingData')
-        
-        setTimeout(() => {
-          router.push('/venues')
-        }, 2000)
-        return
-      }
-
-      // VALIDASI: Cek timestamp (max 30 menit)
-      const savedAt = data.savedAt || Date.now()
-      const thirtyMinutes = 30 * 60 * 1000
-      
-      if (Date.now() - savedAt > thirtyMinutes) {
-        console.error('Booking data expired')
-        setError('Data booking sudah kadaluarsa. Silakan pilih slot lagi.')
-        sessionStorage.removeItem('bookingData')
-        
-        setTimeout(() => {
-          router.push('/venues')
-        }, 2000)
-        return
-      }
-
-      setBookingData(data)
-    } catch (error) {
-      console.error('Error loading booking data:', error)
-      setError('Error memuat data booking.')
+    // VALIDASI CRITICAL
+    if (!data.timeSlotId || !data.fieldId || !data.date) {
+      console.error('Invalid booking data:', data)
+      setError('Data booking tidak lengkap. Silakan pilih slot lagi.')
       sessionStorage.removeItem('bookingData')
       
       setTimeout(() => {
         router.push('/venues')
       }, 2000)
+      return
     }
+
+    // VALIDASI: Cek apakah ID adalah number yang valid
+    const timeSlotId = Number(data.timeSlotId)
+    const fieldId = Number(data.fieldId)
+
+    if (isNaN(timeSlotId) || isNaN(fieldId) || timeSlotId <= 0 || fieldId <= 0) {
+      console.error('Invalid ID values:', { timeSlotId, fieldId })
+      setError('ID slot tidak valid. Silakan pilih slot lagi.')
+      sessionStorage.removeItem('bookingData')
+      
+      setTimeout(() => {
+        router.push('/venues')
+      }, 2000)
+      return
+    }
+
+    // 🔥 VALIDASI PENTING: Cek ke backend apakah time slot masih ada
+    try {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api'
+      const response = await fetch(`${API_BASE_URL}/time-slots/${timeSlotId}/validate`, {
+        headers: {
+          'Accept': 'application/json',
+        }
+      })
+      
+      if (!response.ok) {
+        throw new Error('Time slot tidak ditemukan')
+      }
+      
+      const result = await response.json()
+      console.log('Time slot validated:', result)
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Time slot tidak valid')
+      }
+    } catch (err) {
+      console.error('Time slot validation failed:', err)
+      setError('Slot yang dipilih sudah tidak tersedia. Silakan pilih slot lain.')
+      sessionStorage.removeItem('bookingData')
+      
+      setTimeout(() => {
+        router.push('/venues')
+      }, 2000)
+      return
+    }
+
+    // VALIDASI: Cek timestamp (max 30 menit)
+    const savedAt = data.savedAt || Date.now()
+    const thirtyMinutes = 30 * 60 * 1000
+    
+    if (Date.now() - savedAt > thirtyMinutes) {
+      console.error('Booking data expired')
+      setError('Data booking sudah kadaluarsa. Silakan pilih slot lagi.')
+      sessionStorage.removeItem('bookingData')
+      
+      setTimeout(() => {
+        router.push('/venues')
+      }, 2000)
+      return
+    }
+
+    setBookingData(data)
+  } catch (error) {
+    console.error('Error loading booking data:', error)
+    setError('Error memuat data booking.')
+    sessionStorage.removeItem('bookingData')
+    
+    setTimeout(() => {
+      router.push('/venues')
+    }, 2000)
   }
+}
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target

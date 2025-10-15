@@ -103,6 +103,7 @@ export default function VenueDetailPage() {
   };
 
   const handleSlotClick = (slot: TimeSlot) => {
+    console.log('Selected slot:', slot) // Debug
     setSelectedSlot(slot);
   };
 
