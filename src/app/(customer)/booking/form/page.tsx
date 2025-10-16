@@ -27,104 +27,59 @@ export default function BookingFormPage() {
 
   useEffect(() => {
     loadBookingData()
-  }, [router])
+  }, [])
 
- const loadBookingData = async () => {
-  try {
-    const savedBookingData = sessionStorage.getItem('bookingData')
-    
-    if (!savedBookingData) {
-      console.error('No booking data found')
-      router.push('/venues')
-      return
-    }
-
-    const data = JSON.parse(savedBookingData)
-    console.log('Loaded booking data:', data)
-
-    // VALIDASI CRITICAL
-    if (!data.timeSlotId || !data.fieldId || !data.date) {
-      console.error('Invalid booking data:', data)
-      setError('Data booking tidak lengkap. Silakan pilih slot lagi.')
-      sessionStorage.removeItem('bookingData')
-      
-      setTimeout(() => {
-        router.push('/venues')
-      }, 2000)
-      return
-    }
-
-    // VALIDASI: Cek apakah ID adalah number yang valid
-    const timeSlotId = Number(data.timeSlotId)
-    const fieldId = Number(data.fieldId)
-
-    if (isNaN(timeSlotId) || isNaN(fieldId) || timeSlotId <= 0 || fieldId <= 0) {
-      console.error('Invalid ID values:', { timeSlotId, fieldId })
-      setError('ID slot tidak valid. Silakan pilih slot lagi.')
-      sessionStorage.removeItem('bookingData')
-      
-      setTimeout(() => {
-        router.push('/venues')
-      }, 2000)
-      return
-    }
-
-    // 🔥 VALIDASI PENTING: Cek ke backend apakah time slot masih ada
+  const loadBookingData = () => {
     try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api'
-      const response = await fetch(`${API_BASE_URL}/time-slots/${timeSlotId}/validate`, {
-        headers: {
-          'Accept': 'application/json',
-        }
-      })
+      const savedBookingData = sessionStorage.getItem('bookingData')
       
-      if (!response.ok) {
-        throw new Error('Time slot tidak ditemukan')
+      if (!savedBookingData) {
+        console.error('No booking data found')
+        router.push('/venues')
+        return
       }
-      
-      const result = await response.json()
-      console.log('Time slot validated:', result)
-      
-      if (!result.success) {
-        throw new Error(result.message || 'Time slot tidak valid')
+
+      const data = JSON.parse(savedBookingData)
+      console.log('Loaded booking data:', data)
+
+      // VALIDASI CRITICAL
+      if (!data.timeSlotId || !data.fieldId || !data.date) {
+        console.error('Invalid booking data:', data)
+        setError('Data booking tidak lengkap. Silakan pilih slot lagi.')
+        sessionStorage.removeItem('bookingData')
+        
+        setTimeout(() => {
+          router.push('/venues')
+        }, 2000)
+        return
       }
-    } catch (err) {
-      console.error('Time slot validation failed:', err)
-      setError('Slot yang dipilih sudah tidak tersedia. Silakan pilih slot lain.')
+
+      // VALIDASI: Cek apakah ID adalah number yang valid
+      const timeSlotId = Number(data.timeSlotId)
+      const fieldId = Number(data.fieldId)
+
+      if (isNaN(timeSlotId) || isNaN(fieldId) || timeSlotId <= 0 || fieldId <= 0) {
+        console.error('Invalid ID values:', { timeSlotId, fieldId })
+        setError('ID slot tidak valid. Silakan pilih slot lagi.')
+        sessionStorage.removeItem('bookingData')
+        
+        setTimeout(() => {
+          router.push('/venues')
+        }, 2000)
+        return
+      }
+
+      setBookingData(data)
+    } catch (error) {
+      console.error('Error loading booking data:', error)
+      setError('Error memuat data booking.')
       sessionStorage.removeItem('bookingData')
       
       setTimeout(() => {
         router.push('/venues')
       }, 2000)
-      return
     }
-
-    // VALIDASI: Cek timestamp (max 30 menit)
-    const savedAt = data.savedAt || Date.now()
-    const thirtyMinutes = 30 * 60 * 1000
-    
-    if (Date.now() - savedAt > thirtyMinutes) {
-      console.error('Booking data expired')
-      setError('Data booking sudah kadaluarsa. Silakan pilih slot lagi.')
-      sessionStorage.removeItem('bookingData')
-      
-      setTimeout(() => {
-        router.push('/venues')
-      }, 2000)
-      return
-    }
-
-    setBookingData(data)
-  } catch (error) {
-    console.error('Error loading booking data:', error)
-    setError('Error memuat data booking.')
-    sessionStorage.removeItem('bookingData')
-    
-    setTimeout(() => {
-      router.push('/venues')
-    }, 2000)
   }
-}
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -149,8 +104,19 @@ export default function BookingFormPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    console.log('=== FORM SUBMIT STARTED ===')
+    console.log('Snap loaded:', snapLoaded)
+    console.log('window.snap available:', typeof window !== 'undefined' && !!window.snap)
+    
     if (!snapLoaded) {
-      alert('Payment system is still loading. Please wait...')
+      alert('Sistem pembayaran masih loading. Mohon tunggu...')
+      return
+    }
+
+    // Double check window.snap
+    if (typeof window === 'undefined' || !window.snap) {
+      console.error('window.snap is NOT available!')
+      alert('Sistem pembayaran belum siap. Silakan refresh halaman dan coba lagi.')
       return
     }
 
@@ -164,11 +130,9 @@ export default function BookingFormPage() {
     setError(null)
 
     try {
-      // Convert ke number untuk memastikan
       const fieldId = Number(bookingData.fieldId)
       const timeSlotId = Number(bookingData.timeSlotId)
 
-      // Validasi lagi sebelum submit
       if (isNaN(fieldId) || isNaN(timeSlotId) || fieldId <= 0 || timeSlotId <= 0) {
         throw new Error('Data booking tidak valid. ID field atau time slot salah.')
       }
@@ -183,41 +147,64 @@ export default function BookingFormPage() {
         notes: formData.notes.trim(),
       }
 
-      console.log('Submitting booking with payload:', bookingPayload)
+      console.log('=== SUBMITTING BOOKING ===')
+      console.log('Payload:', bookingPayload)
 
       const result = await createBooking(bookingPayload)
 
-      console.log('Booking result:', result)
+      console.log('=== BOOKING RESULT ===')
+      console.log('Success:', result.success)
+      console.log('Full result:', result)
 
       if (result.success && result.data) {
         const { snap_token, booking } = result.data
 
-        window.snap.pay(snap_token, {
-          onSuccess: function(result: any) {
-            console.log('Payment success:', result)
-            sessionStorage.removeItem('bookingData')
-            router.push(`/booking/success?order_id=${booking.booking_number}`)
-          },
-          onPending: function(result: any) {
-            console.log('Payment pending:', result)
-            sessionStorage.removeItem('bookingData')
-            router.push(`/booking/success?order_id=${booking.booking_number}`)
-          },
-          onError: function(result: any) {
-            console.error('Payment error:', result)
-            alert('Pembayaran gagal. Silakan coba lagi.')
-            setIsLoading(false)
-          },
-          onClose: function() {
-            console.log('Payment popup closed')
-            setIsLoading(false)
-          }
-        })
+        console.log('=== SNAP TOKEN RECEIVED ===')
+        console.log('Token:', snap_token)
+        console.log('Booking number:', booking.booking_number)
+        console.log('window.snap exists:', !!window.snap)
+
+        // Validasi window.snap sekali lagi
+        if (!window.snap) {
+          throw new Error('window.snap tidak tersedia. Silakan refresh halaman.')
+        }
+
+        console.log('=== CALLING window.snap.pay() ===')
+
+        try {
+          window.snap.pay(snap_token, {
+            onSuccess: function(result: any) {
+              console.log('=== PAYMENT SUCCESS ===', result)
+              sessionStorage.removeItem('bookingData')
+              router.push(`/booking/success?order_id=${booking.booking_number}`)
+            },
+            onPending: function(result: any) {
+              console.log('=== PAYMENT PENDING ===', result)
+              sessionStorage.removeItem('bookingData')
+              router.push(`/booking/success?order_id=${booking.booking_number}`)
+            },
+            onError: function(result: any) {
+              console.error('=== PAYMENT ERROR ===', result)
+              alert('Pembayaran gagal. Silakan coba lagi.')
+              setIsLoading(false)
+            },
+            onClose: function() {
+              console.log('=== PAYMENT POPUP CLOSED ===')
+              setIsLoading(false)
+            }
+          })
+
+          console.log('=== window.snap.pay() CALLED SUCCESSFULLY ===')
+        } catch (snapError) {
+          console.error('=== ERROR CALLING window.snap.pay() ===', snapError)
+          throw new Error('Gagal membuka popup pembayaran: ' + (snapError instanceof Error ? snapError.message : 'Unknown error'))
+        }
       } else {
         const errorMessage = result.message || 'Gagal membuat booking. Silakan coba lagi.'
+        console.error('=== BOOKING FAILED ===')
+        console.error('Message:', errorMessage)
         setError(errorMessage)
         
-        // Jika error terkait time slot tidak valid, redirect
         if (errorMessage.toLowerCase().includes('time slot') || 
             errorMessage.toLowerCase().includes('tidak ditemukan') ||
             errorMessage.toLowerCase().includes('tidak valid')) {
@@ -230,14 +217,14 @@ export default function BookingFormPage() {
         setIsLoading(false)
       }
     } catch (error) {
-      console.error('Booking failed:', error)
+      console.error('=== BOOKING EXCEPTION ===', error)
       const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan. Silakan coba lagi.'
       setError(errorMessage)
+      alert(errorMessage)
       setIsLoading(false)
     }
   }
 
-  // Show error state
   if (error && !bookingData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -264,20 +251,34 @@ export default function BookingFormPage() {
 
   return (
     <>
+      {/* Midtrans Snap Script */}
       <Script
         src="https://app.sandbox.midtrans.com/snap/snap.js"
-        data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
+        data-client-key="Mid-client-VjEPsEP39JdRIjbB"
+        strategy="afterInteractive"
         onLoad={() => {
-          console.log('Midtrans Snap loaded')
-          setSnapLoaded(true)
+          console.log('=== MIDTRANS SCRIPT LOADED ===')
+          console.log('Checking window.snap...')
+          
+          // Tunggu sebentar untuk memastikan snap sudah ready
+          setTimeout(() => {
+            if (typeof window !== 'undefined' && window.snap) {
+              console.log('✅ window.snap is AVAILABLE')
+              setSnapLoaded(true)
+            } else {
+              console.error('❌ window.snap is NOT AVAILABLE after load')
+              alert('Gagal memuat sistem pembayaran. Silakan refresh halaman.')
+            }
+          }, 500)
         }}
-        onError={() => {
-          console.error('Failed to load Midtrans Snap')
-          alert('Gagal memuat sistem pembayaran')
+        onError={(e) => {
+          console.error('=== MIDTRANS SCRIPT LOAD ERROR ===', e)
+          alert('Gagal memuat sistem pembayaran Midtrans')
         }}
       />
 
       <div className="min-h-screen pt-15 bg-gray-50">
+        {/* Header */}
         <div className="bg-white shadow-sm sticky top-0 z-40">
           <div className="max-w-4xl mx-auto px-4 py-4 flex items-center">
             <button
@@ -294,6 +295,7 @@ export default function BookingFormPage() {
           </div>
         </div>
 
+        {/* Error Alert */}
         {error && (
           <div className="max-w-4xl mx-auto px-4 pt-4">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
@@ -306,8 +308,16 @@ export default function BookingFormPage() {
           </div>
         )}
 
+        {/* Snap Status Indicator (untuk debugging) */}
+        <div className="max-w-4xl mx-auto px-4 pt-2">
+          <div className={`text-xs p-2 rounded ${snapLoaded ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
+            Status Pembayaran: {snapLoaded ? '✅ Siap' : '⏳ Loading...'}
+          </div>
+        </div>
+
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Form */}
             <div className="lg:col-span-2">
               <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-6">
                 <h2 className="text-lg font-bold mb-6 flex items-center gap-2">
@@ -406,6 +416,7 @@ export default function BookingFormPage() {
               </form>
             </div>
 
+            {/* Summary */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-xl shadow-sm p-6 sticky top-24">
                 <h3 className="text-lg font-bold mb-4">Ringkasan Booking</h3>

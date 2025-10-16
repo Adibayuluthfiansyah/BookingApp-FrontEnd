@@ -80,54 +80,136 @@ export default function VenueDetailPage() {
   };
 
   const loadAvailableSlots = async () => {
-    if (!venue || !selectedField) return;
+  if (!venue || !selectedField) return;
 
-    try {
-      setSlotsLoading(true);
-      const result = await getAvailableSlots(venue.id, {
-        field_id: selectedField.id,
-        date: selectedDate,
-      });
+  try {
+    setSlotsLoading(true);
+    
+    console.log('=== FETCHING AVAILABLE SLOTS ===');
+    console.log('Venue ID:', venue.id);
+    console.log('Field ID:', selectedField.id);
+    console.log('Date:', selectedDate);
+    
+    const result = await getAvailableSlots(venue.id, {
+      field_id: selectedField.id,
+      date: selectedDate,
+    });
+    
+    console.log('=== API RESULT ===');
+    console.log('Success:', result.success);
+    console.log('Data:', result.data);
+    
+    // 🔍 DEBUG: Cek setiap slot
+    if (result.data && result.data.length > 0) {
+      console.log('=== FIRST SLOT DETAIL ===');
+      console.log('Slot object:', result.data[0]);
+      console.log('Slot ID:', result.data[0].id);
+      console.log('Slot ID type:', typeof result.data[0].id);
+      console.log('Is valid ID?', result.data[0].id > 0 && result.data[0].id < 100);
       
-      if (result.success) {
-        setAvailableSlots(result.data);
-      } else {
-        setAvailableSlots([]);
-      }
-    } catch (error) {
-      console.error('Error loading slots:', error);
-      setAvailableSlots([]);
-    } finally {
-      setSlotsLoading(false);
+      // Cek semua ID
+      const allIds = result.data.map(s => s.id);
+      console.log('All slot IDs:', allIds);
     }
-  };
+    console.log('========================');
+    
+    if (result.success) {
+      setAvailableSlots(result.data);
+    } else {
+      setAvailableSlots([]);
+    }
+  } catch (error) {
+    console.error('Error loading slots:', error);
+    setAvailableSlots([]);
+  } finally {
+    setSlotsLoading(false);
+  }
+};
 
   const handleSlotClick = (slot: TimeSlot) => {
     console.log('Selected slot:', slot) // Debug
     setSelectedSlot(slot);
   };
 
-  const handleBooking = () => {
-    if (!selectedSlot || !selectedField || !venue) return;
+const handleBooking = () => {
+  console.log('=== HANDLE BOOKING CLICKED ===');
+  
+  if (!selectedSlot || !selectedField || !venue) {
+    console.error('❌ Missing required data:', {
+      hasSlot: !!selectedSlot,
+      hasField: !!selectedField,
+      hasVenue: !!venue
+    });
+    alert('Silakan pilih slot terlebih dahulu');
+    return;
+  }
 
-    const bookingData = {
-      venueId: venue.id,
-      venueName: venue.name,
-      fieldId: selectedField.id,
-      fieldName: selectedField.name,
-      date: selectedDate,
-      timeSlotId: selectedSlot.id,
-      startTime: selectedSlot.start_time,
-      endTime: selectedSlot.end_time,
-      price: selectedSlot.price,
-      savedAt: Date.now(), // Tambahkan timestamp
-    };
+  console.log('Selected Slot:', selectedSlot);
+  console.log('Selected Field:', selectedField);
+  console.log('Venue:', venue);
 
-    console.log('Saving booking data to sessionStorage:', bookingData);
-    sessionStorage.removeItem('bookingData');
-    sessionStorage.setItem('bookingData', JSON.stringify(bookingData));
-    router.push('/booking/form');
+  // 🔍 CRITICAL VALIDATION
+  const slotId = Number(selectedSlot.id);
+  const fieldId = Number(selectedField.id);
+  
+  console.log('Slot ID (original):', selectedSlot.id, 'type:', typeof selectedSlot.id);
+  console.log('Slot ID (converted):', slotId, 'type:', typeof slotId);
+  console.log('Field ID (original):', selectedField.id, 'type:', typeof selectedField.id);
+  console.log('Field ID (converted):', fieldId, 'type:', typeof fieldId);
+
+  if (isNaN(slotId) || slotId <= 0 || slotId > 100) {
+    console.error('❌ INVALID SLOT ID:', slotId);
+    alert(`Error: ID slot tidak valid (${slotId}). Silakan refresh halaman.`);
+    return;
+  }
+
+  if (isNaN(fieldId) || fieldId <= 0) {
+    console.error('❌ INVALID FIELD ID:', fieldId);
+    alert(`Error: ID lapangan tidak valid (${fieldId}). Silakan refresh halaman.`);
+    return;
+  }
+
+  // ✅ Create booking data
+  const bookingData = {
+    venueId: venue.id,
+    venueName: venue.name,
+    fieldId: fieldId,
+    fieldName: selectedField.name,
+    date: selectedDate,
+    timeSlotId: slotId,
+    startTime: selectedSlot.start_time,
+    endTime: selectedSlot.end_time,
+    price: selectedSlot.price,
+    savedAt: Date.now(),
   };
+
+  console.log('=== BOOKING DATA TO SAVE ===');
+  console.log(JSON.stringify(bookingData, null, 2));
+  console.log('timeSlotId final value:', bookingData.timeSlotId);
+  console.log('timeSlotId final type:', typeof bookingData.timeSlotId);
+  console.log('===========================');
+
+  // ✅ Clear and save
+  sessionStorage.removeItem('bookingData');
+  sessionStorage.setItem('bookingData', JSON.stringify(bookingData));
+
+  // ✅ Verify
+  const saved = sessionStorage.getItem('bookingData');
+  const parsed = saved ? JSON.parse(saved) : null;
+  
+  console.log('✅ Verified saved data:', parsed);
+  
+  if (!parsed || parsed.timeSlotId !== slotId) {
+    console.error('❌ Data verification FAILED!');
+    console.error('Expected timeSlotId:', slotId);
+    console.error('Got timeSlotId:', parsed?.timeSlotId);
+    alert('Gagal menyimpan data. Silakan coba lagi.');
+    return;
+  }
+
+  console.log('✅ All validation passed! Navigating to form...');
+  router.push('/booking/form');
+};
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {

@@ -67,6 +67,9 @@ export interface TimeSlot {
   end_time: string;
   price: number;
   is_available: boolean;
+  day_type: 'weekday' | 'weekend' | 'all';
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Booking {
@@ -197,15 +200,6 @@ export interface Facility {
   icon: string;
 }
 
-
-export interface TimeSlot {
-  id: number;
-  field_id: number;
-  start_time: string;
-  end_time: string;
-  price: number;
-  day_type: 'weekday' | 'weekend' | 'all';
-}
 
 export interface VenueImage {
   id: number;
