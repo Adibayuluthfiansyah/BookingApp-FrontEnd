@@ -1,199 +1,257 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { CheckCircle, Calendar, Clock, MapPin, Phone, Mail, Loader } from 'lucide-react'
+import { CheckCircle, Clock, XCircle, Home, FileText } from 'lucide-react'
 import { getBookingStatus } from '@/lib/api'
 
 export default function BookingSuccessPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const orderId = searchParams.get('order_id')
+
   const [booking, setBooking] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-
-  const orderID = searchParams.get('order_id')
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (orderID) {
-      loadBookingStatus()
+    if (orderId) {
+      fetchBookingStatus()
     } else {
+      setError('Order ID tidak ditemukan')
       setLoading(false)
     }
-  }, [orderID])
+  }, [orderId])
 
-  const loadBookingStatus = async () => {
+  const fetchBookingStatus = async () => {
     try {
-      const result = await getBookingStatus(orderID!)
+      const result = await getBookingStatus(orderId!)
       
       if (result.success && result.data) {
         setBooking(result.data)
+      } else {
+        setError('Booking tidak ditemukan')
       }
-    } catch (error) {
-      console.error('Failed to load booking status:', error)
+    } catch (err) {
+      setError('Gagal mengambil status booking')
     } finally {
       setLoading(false)
     }
   }
 
-  const formatCurrency = (price: number) => {
+  const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
       minimumFractionDigits: 0,
-    }).format(price);
+    }).format(amount)
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('id-ID', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
   }
 
   const formatTime = (time: string) => {
-    return time.substring(0, 5);
+    return time.substring(0, 5)
+  }
+
+  const getStatusInfo = () => {
+    if (!booking) return null
+
+    const status = booking.status
+    const paymentStatus = booking.payment?.payment_status
+
+    if (status === 'confirmed' && paymentStatus === 'verified') {
+      return {
+        icon: <CheckCircle className="w-16 h-16 text-green-500" />,
+        title: 'Pembayaran Berhasil!',
+        message: 'Booking Anda telah dikonfirmasi',
+        color: 'green'
+      }
+    } else if (status === 'pending') {
+      return {
+        icon: <Clock className="w-16 h-16 text-yellow-500" />,
+        title: 'Menunggu Pembayaran',
+        message: 'Silakan selesaikan pembayaran Anda',
+        color: 'yellow'
+      }
+    } else if (status === 'cancelled') {
+      return {
+        icon: <XCircle className="w-16 h-16 text-red-500" />,
+        title: 'Booking Dibatalkan',
+        message: 'Pembayaran tidak berhasil atau dibatalkan',
+        color: 'red'
+      }
+    }
+
+    return null
   }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader className="w-8 h-8 animate-spin text-orange-500" />
+        <div className="text-center">
+          <Clock className="w-16 h-16 text-orange-500 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Memuat data booking...</p>
+        </div>
       </div>
     )
   }
 
-  if (!booking) {
+  if (error || !booking) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Booking Not Found</h1>
+        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
+          <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Error</h2>
+          <p className="text-gray-600 mb-6">{error || 'Booking tidak ditemukan'}</p>
           <button
             onClick={() => router.push('/venues')}
-            className="bg-orange-500 text-white px-6 py-3 rounded-lg"
+            className="w-full bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors"
           >
-            Kembali ke Daftar Lapangan
+            Kembali ke Venue
           </button>
         </div>
       </div>
     )
   }
 
+  const statusInfo = getStatusInfo()
+
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 pt-20">
-      <div className="max-w-md w-full">
-        {/* Success Icon */}
-        <div className="text-center mb-6">
-          <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Booking Berhasil!</h1>
-          <p className="text-gray-600">
-            {booking.status === 'paid' 
-              ? 'Pembayaran telah dikonfirmasi.' 
-              : 'Booking Anda telah dibuat. Silakan selesaikan pembayaran.'}
-          </p>
+    <div className="min-h-screen bg-gray-50 py-12 px-4">
+      <div className="max-w-2xl mx-auto">
+        {/* Status Card */}
+        <div className="bg-white rounded-xl shadow-lg p-8 mb-6 text-center">
+          {statusInfo && (
+            <>
+              {statusInfo.icon}
+              <h1 className="text-2xl font-bold text-gray-900 mt-4 mb-2">
+                {statusInfo.title}
+              </h1>
+              <p className="text-gray-600 mb-6">{statusInfo.message}</p>
+            </>
+          )}
+
+          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <div className="text-sm text-gray-600 mb-1">Nomor Booking</div>
+            <div className="text-2xl font-bold text-gray-900">{booking.booking_number}</div>
+          </div>
+
+          <div className="text-sm text-gray-500">
+            Simpan nomor booking ini untuk referensi Anda
+          </div>
         </div>
 
-        {/* Booking Details Card */}
+        {/* Booking Details */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="text-center mb-4">
-            <div className="text-sm text-gray-600">Nomor Booking</div>
-            <div className="text-xl font-bold text-orange-600">{booking.booking_number}</div>
-            <div className="mt-2">
-              <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                booking.status === 'paid' 
-                  ? 'bg-green-100 text-green-800' 
-                  : 'bg-yellow-100 text-yellow-800'
-              }`}>
-                {booking.status === 'paid' ? 'Lunas' : 'Menunggu Pembayaran'}
+          <h2 className="text-lg font-bold mb-4">Detail Booking</h2>
+          
+          <div className="space-y-3">
+            <div className="flex justify-between py-2 border-b">
+              <span className="text-gray-600">Venue</span>
+              <span className="font-medium">{booking.field?.venue?.name}</span>
+            </div>
+            
+            <div className="flex justify-between py-2 border-b">
+              <span className="text-gray-600">Lapangan</span>
+              <span className="font-medium">{booking.field?.name}</span>
+            </div>
+            
+            <div className="flex justify-between py-2 border-b">
+              <span className="text-gray-600">Tanggal</span>
+              <span className="font-medium">{formatDate(booking.booking_date)}</span>
+            </div>
+            
+            <div className="flex justify-between py-2 border-b">
+              <span className="text-gray-600">Waktu</span>
+              <span className="font-medium">
+                {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
               </span>
             </div>
+            
+            <div className="flex justify-between py-2 border-b">
+              <span className="text-gray-600">Nama Pemesan</span>
+              <span className="font-medium">{booking.customer_name}</span>
+            </div>
+            
+            <div className="flex justify-between py-2 border-b">
+              <span className="text-gray-600">No. Telepon</span>
+              <span className="font-medium">{booking.customer_phone}</span>
+            </div>
+            
+            <div className="flex justify-between py-2 border-b">
+              <span className="text-gray-600">Email</span>
+              <span className="font-medium">{booking.customer_email}</span>
+            </div>
+            
+            {booking.notes && (
+              <div className="py-2 border-b">
+                <div className="text-gray-600 mb-1">Catatan</div>
+                <div className="font-medium">{booking.notes}</div>
+              </div>
+            )}
           </div>
+        </div>
 
-          <div className="border-t pt-4 space-y-3">
-            <div className="flex items-start gap-3">
-              <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
-              <div>
-                <div className="font-medium">{booking.field?.venue?.name}</div>
-                <div className="text-sm text-gray-600">{booking.field?.name}</div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Calendar className="w-5 h-5 text-gray-400" />
-              <div>
-                <div className="font-medium">
-                  {new Date(booking.booking_date).toLocaleDateString('id-ID', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Clock className="w-5 h-5 text-gray-400" />
-              <div>
-                <div className="font-medium">
-                  {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t pt-4 mt-4">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-600">Subtotal</span>
+        {/* Payment Details */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          <h2 className="text-lg font-bold mb-4">Rincian Pembayaran</h2>
+          
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Harga Sewa</span>
               <span>{formatCurrency(booking.subtotal)}</span>
             </div>
-            <div className="flex justify-between items-center mb-2">
+            
+            <div className="flex justify-between">
               <span className="text-gray-600">Biaya Admin</span>
               <span>{formatCurrency(booking.admin_fee)}</span>
             </div>
-            <div className="flex justify-between items-center font-bold text-lg pt-2 border-t">
-              <span>Total Bayar</span>
+            
+            <div className="flex justify-between pt-2 border-t font-bold text-lg">
+              <span>Total</span>
               <span className="text-orange-600">{formatCurrency(booking.total_amount)}</span>
             </div>
-          </div>
-        </div>
-
-        {/* Payment Instructions */}
-        {booking.status !== 'paid' && (
-          <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6">
-            <h3 className="font-bold text-orange-800 mb-2">Instruksi Pembayaran</h3>
-            <div className="text-sm text-orange-700 space-y-1">
-              <p>• Selesaikan pembayaran Anda melalui Midtrans</p>
-              <p>• Simpan nomor booking untuk referensi</p>
-              <p>• Konfirmasi otomatis setelah pembayaran berhasil</p>
-            </div>
-          </div>
-        )}
-
-        {/* Contact Info */}
-        <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
-          <h3 className="font-bold mb-3">Informasi Kontak</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4 text-gray-400" />
-              <span>{booking.customer_phone}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Mail className="w-4 h-4 text-gray-400" />
-              <span>{booking.customer_email}</span>
+            
+            <div className="pt-2 border-t">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Status Pembayaran</span>
+                <span className={`font-medium ${
+                  booking.payment?.payment_status === 'verified' ? 'text-green-600' :
+                  booking.payment?.payment_status === 'pending' ? 'text-yellow-600' :
+                  'text-red-600'
+                }`}>
+                  {booking.payment?.payment_status === 'verified' ? 'Terbayar' :
+                   booking.payment?.payment_status === 'pending' ? 'Menunggu' :
+                   'Gagal'}
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="space-y-3">
+        {/* Actions */}
+        <div className="grid grid-cols-2 gap-4">
           <button
-            onClick={() => window.open(
-              `https://wa.me/6281234567890?text=Halo, saya ingin konfirmasi booking dengan nomor ${booking.booking_number}`, 
-              '_blank'
-            )}
-            className="w-full bg-green-500 text-white py-3 rounded-lg font-medium hover:bg-green-600 transition-colors"
+            onClick={() => router.push('/venues')}
+            className="flex items-center justify-center gap-2 bg-white border-2 border-orange-500 text-orange-500 py-3 rounded-lg font-medium hover:bg-orange-50 transition-colors"
           >
-            Hubungi via WhatsApp
+            <Home className="w-5 h-5" />
+            Kembali ke Home
           </button>
           
           <button
-            onClick={() => router.push('/venues')}
-            className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+            onClick={() => window.print()}
+            className="flex items-center justify-center gap-2 bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors"
           >
-            Kembali ke Daftar Lapangan
+            <FileText className="w-5 h-5" />
+            Cetak Booking
           </button>
         </div>
       </div>
