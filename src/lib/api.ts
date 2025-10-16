@@ -320,7 +320,7 @@ export const getBookingStatus = async (bookingNumber: string): Promise<ApiRespon
 
     return await response.json();
   } catch (error) {
-    console.error('Get booking status error:', error);
+    console.error('Get booking status error :', error);
     return {
       success: false,
       message: 'Gagal mengambil status booking',
