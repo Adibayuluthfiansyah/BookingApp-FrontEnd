@@ -17,6 +17,20 @@ export default function BookingSuccessPage() {
   useEffect(() => {
     if (orderId) {
       fetchBookingStatus()
+      // Auto refresh status setiap 5 detik untuk 30 detik pertama
+      const interval = setInterval(() => {
+        fetchBookingStatus()
+      }, 5000)
+
+      // Stop auto refresh after 30 seconds
+      const timeout = setTimeout(() => {
+        clearInterval(interval)
+      }, 30000)
+
+      return () => {
+        clearInterval(interval)
+        clearTimeout(timeout)
+      }
     } else {
       setError('Order ID tidak ditemukan')
       setLoading(false)
@@ -29,6 +43,7 @@ export default function BookingSuccessPage() {
       
       if (result.success && result.data) {
         setBooking(result.data)
+        console.log('Booking status updated:', result.data)
       } else {
         setError('Booking tidak ditemukan')
       }
@@ -60,37 +75,50 @@ export default function BookingSuccessPage() {
     return time.substring(0, 5)
   }
 
-  const getStatusInfo = () => {
-    if (!booking) return null
+ const getStatusInfo = () => {
+  if (!booking) return null
 
-    const status = booking.status
-    const paymentStatus = booking.payment?.payment_status
+  const status = booking.status
+  const paymentStatus = booking.payment?.payment_status
 
-    if (status === 'confirmed' && paymentStatus === 'verified') {
-      return {
-        icon: <CheckCircle className="w-16 h-16 text-green-500" />,
-        title: 'Pembayaran Berhasil!',
-        message: 'Booking Anda telah dikonfirmasi',
-        color: 'green'
-      }
-    } else if (status === 'pending') {
-      return {
-        icon: <Clock className="w-16 h-16 text-yellow-500" />,
-        title: 'Menunggu Pembayaran',
-        message: 'Silakan selesaikan pembayaran Anda',
-        color: 'yellow'
-      }
-    } else if (status === 'cancelled') {
-      return {
-        icon: <XCircle className="w-16 h-16 text-red-500" />,
-        title: 'Booking Dibatalkan',
-        message: 'Pembayaran tidak berhasil atau dibatalkan',
-        color: 'red'
-      }
+  console.log('Status check:', { status, paymentStatus })
+
+  // Check multiple conditions for successful payment
+  if (status === 'confirmed' || status === 'paid' || paymentStatus === 'verified') {
+    return {
+      icon: <CheckCircle className="w-16 h-16 text-green-500" />,
+      title: 'Pembayaran Berhasil!',
+      message: 'Booking Anda telah dikonfirmasi',
+      color: 'green',
+      badge: 'success'
     }
-
-    return null
+  } else if (status === 'pending' && paymentStatus === 'pending') {
+    return {
+      icon: <Clock className="w-16 h-16 text-yellow-500" />,
+      title: 'Menunggu Pembayaran',
+      message: 'Silakan selesaikan pembayaran Anda',
+      color: 'yellow',
+      badge: 'pending'
+    }
+  } else if (status === 'cancelled' || paymentStatus === 'rejected') {
+    return {
+      icon: <XCircle className="w-16 h-16 text-red-500" />,
+      title: 'Booking Dibatalkan',
+      message: 'Pembayaran tidak berhasil atau dibatalkan',
+      color: 'red',
+      badge: 'cancelled'
+    }
   }
+
+  // Default to pending if status unclear
+  return {
+    icon: <Clock className="w-16 h-16 text-yellow-500" />,
+    title: 'Memproses Pembayaran',
+    message: 'Status pembayaran sedang diverifikasi',
+    color: 'yellow',
+    badge: 'processing'
+  }
+}
 
   if (loading) {
     return (

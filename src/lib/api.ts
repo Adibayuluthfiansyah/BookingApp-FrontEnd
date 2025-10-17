@@ -328,3 +328,24 @@ export const getBookingStatus = async (bookingNumber: string): Promise<ApiRespon
     };
   }
 };
+
+export const cancelBooking = async (bookingNumber: string): Promise<ApiResponse<any>> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/bookings/${bookingNumber}/cancel`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+
+    return await response.json();
+  } catch (error) {
+    console.error('Cancel booking error:', error);
+    return {
+      success: false,
+      message: 'Gagal membatalkan booking',
+      data: null,
+    };
+  }
+};
