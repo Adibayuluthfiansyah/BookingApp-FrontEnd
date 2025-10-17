@@ -9,7 +9,7 @@ export default function BookingSuccessPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const orderId = searchParams.get('order_id')
-
+  const [confirming, setConfirming] = useState(false)
   const [booking, setBooking] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
