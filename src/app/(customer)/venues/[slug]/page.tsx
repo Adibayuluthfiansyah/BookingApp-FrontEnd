@@ -28,7 +28,7 @@ export default function VenueDetailPage() {
     const generateDates = () => {
       const datesArray = [];
       const today = new Date();
-      for (let i = 0; i < 7; i++) {
+      for (let i = 0; i < 14; i++) {
         const date = addDays(today, i);
         datesArray.push(date);
       }
