@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getVenue, getAvailableSlots } from '@/lib/api';
-import { Venue, Field, TimeSlot } from '@/types';
+import { Venue, Field, TimeSlotWithStatus } from '@/types';
 import { format, addDays } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
-import { MapPin, Facebook, Instagram, Clock, CheckCircle, ArrowLeft } from 'lucide-react';
+import { MapPin, Facebook, Instagram, Clock, CheckCircle, ArrowLeft, XCircle } from 'lucide-react';
 import Image from 'next/image';
 
 export default function VenueDetailPage() {
@@ -15,8 +15,8 @@ export default function VenueDetailPage() {
   const [venue, setVenue] = useState<Venue | null>(null);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedField, setSelectedField] = useState<Field | null>(null);
-  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
-  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
+  const [availableSlots, setAvailableSlots] = useState<TimeSlotWithStatus[]>([]);
+  const [selectedSlot, setSelectedSlot] = useState<TimeSlotWithStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +54,6 @@ export default function VenueDetailPage() {
       setLoading(true);
       setError(null);
       
-      // Gunakan ID dari params
       const venueId = params.slug as string;
       console.log('Loading venue with ID:', venueId);
       
@@ -64,7 +63,6 @@ export default function VenueDetailPage() {
       if (result.success && result.data) {
         setVenue(result.data);
         
-        // Set default field
         if (result.data.fields && result.data.fields.length > 0) {
           setSelectedField(result.data.fields[0]);
         }
@@ -80,136 +78,107 @@ export default function VenueDetailPage() {
   };
 
   const loadAvailableSlots = async () => {
-  if (!venue || !selectedField) return;
+    if (!venue || !selectedField) return;
 
-  try {
-    setSlotsLoading(true);
-    
-    console.log('=== FETCHING AVAILABLE SLOTS ===');
-    console.log('Venue ID:', venue.id);
-    console.log('Field ID:', selectedField.id);
-    console.log('Date:', selectedDate);
-    
-    const result = await getAvailableSlots(venue.id, {
-      field_id: selectedField.id,
-      date: selectedDate,
-    });
-    
-    console.log('=== API RESULT ===');
-    console.log('Success:', result.success);
-    console.log('Data:', result.data);
-    
-    // 🔍 DEBUG: Cek setiap slot
-    if (result.data && result.data.length > 0) {
-      console.log('=== FIRST SLOT DETAIL ===');
-      console.log('Slot object:', result.data[0]);
-      console.log('Slot ID:', result.data[0].id);
-      console.log('Slot ID type:', typeof result.data[0].id);
-      console.log('Is valid ID?', result.data[0].id > 0 && result.data[0].id < 100);
+    try {
+      setSlotsLoading(true);
       
-      // Cek semua ID
-      const allIds = result.data.map(s => s.id);
-      console.log('All slot IDs:', allIds);
-    }
-    console.log('========================');
-    
-    if (result.success) {
-      setAvailableSlots(result.data);
-    } else {
+      console.log('=== FETCHING SLOTS WITH STATUS ===');
+      console.log('Venue ID:', venue.id);
+      console.log('Field ID:', selectedField.id);
+      console.log('Date:', selectedDate);
+      
+      const result = await getAvailableSlots(venue.id, {
+        field_id: selectedField.id,
+        date: selectedDate,
+      });
+      
+      console.log('=== API RESULT ===');
+      console.log('Success:', result.success);
+      console.log('Data:', result.data);
+      console.log('Meta:', result.meta);
+      
+      if (result.success) {
+        setAvailableSlots(result.data);
+      } else {
+        setAvailableSlots([]);
+      }
+    } catch (error) {
+      console.error('Error loading slots:', error);
       setAvailableSlots([]);
+    } finally {
+      setSlotsLoading(false);
     }
-  } catch (error) {
-    console.error('Error loading slots:', error);
-    setAvailableSlots([]);
-  } finally {
-    setSlotsLoading(false);
-  }
-};
+  };
 
-  const handleSlotClick = (slot: TimeSlot) => {
-    console.log('Selected slot:', slot) // Debug
+  const handleSlotClick = (slot: TimeSlotWithStatus) => {
+    if (!slot.is_available) {
+      alert('Slot ini sudah dibooking oleh orang lain');
+      return;
+    }
+    console.log('Selected slot:', slot);
     setSelectedSlot(slot);
   };
 
-const handleBooking = () => {
-  console.log('=== HANDLE BOOKING CLICKED ===');
-  
-  if (!selectedSlot || !selectedField || !venue) {
-    console.error('❌ Missing required data:', {
-      hasSlot: !!selectedSlot,
-      hasField: !!selectedField,
-      hasVenue: !!venue
-    });
-    alert('Silakan pilih slot terlebih dahulu');
-    return;
-  }
+  const handleBooking = () => {
+    console.log('=== HANDLE BOOKING CLICKED ===');
+    
+    if (!selectedSlot || !selectedField || !venue) {
+      console.error('❌ Missing required data');
+      alert('Silakan pilih slot terlebih dahulu');
+      return;
+    }
 
-  console.log('Selected Slot:', selectedSlot);
-  console.log('Selected Field:', selectedField);
-  console.log('Venue:', venue);
+    if (!selectedSlot.is_available) {
+      alert('Slot ini sudah tidak tersedia');
+      return;
+    }
 
-  // 🔍 CRITICAL VALIDATION
-  const slotId = Number(selectedSlot.id);
-  const fieldId = Number(selectedField.id);
-  
-  console.log('Slot ID (original):', selectedSlot.id, 'type:', typeof selectedSlot.id);
-  console.log('Slot ID (converted):', slotId, 'type:', typeof slotId);
-  console.log('Field ID (original):', selectedField.id, 'type:', typeof selectedField.id);
-  console.log('Field ID (converted):', fieldId, 'type:', typeof fieldId);
+    const slotId = Number(selectedSlot.id);
+    const fieldId = Number(selectedField.id);
+    
+    console.log('Slot ID:', slotId, 'type:', typeof slotId);
+    console.log('Field ID:', fieldId, 'type:', typeof fieldId);
 
-  if (isNaN(slotId) || slotId <= 0 || slotId > 100) {
-    console.error('❌ INVALID SLOT ID:', slotId);
-    alert(`Error: ID slot tidak valid (${slotId}). Silakan refresh halaman.`);
-    return;
-  }
+    if (isNaN(slotId) || slotId <= 0) {
+      console.error('❌ INVALID SLOT ID:', slotId);
+      alert(`Error: ID slot tidak valid. Silakan refresh halaman.`);
+      return;
+    }
 
-  if (isNaN(fieldId) || fieldId <= 0) {
-    console.error('❌ INVALID FIELD ID:', fieldId);
-    alert(`Error: ID lapangan tidak valid (${fieldId}). Silakan refresh halaman.`);
-    return;
-  }
+    const bookingData = {
+      venueId: venue.id,
+      venueName: venue.name,
+      fieldId: fieldId,
+      fieldName: selectedField.name,
+      date: selectedDate,
+      timeSlotId: slotId,
+      startTime: selectedSlot.start_time,
+      endTime: selectedSlot.end_time,
+      price: selectedSlot.price,
+      savedAt: Date.now(),
+    };
 
-  // ✅ Create booking data
-  const bookingData = {
-    venueId: venue.id,
-    venueName: venue.name,
-    fieldId: fieldId,
-    fieldName: selectedField.name,
-    date: selectedDate,
-    timeSlotId: slotId,
-    startTime: selectedSlot.start_time,
-    endTime: selectedSlot.end_time,
-    price: selectedSlot.price,
-    savedAt: Date.now(),
+    console.log('=== BOOKING DATA TO SAVE ===');
+    console.log(JSON.stringify(bookingData, null, 2));
+
+    sessionStorage.removeItem('bookingData');
+    sessionStorage.setItem('bookingData', JSON.stringify(bookingData));
+
+    const saved = sessionStorage.getItem('bookingData');
+    const parsed = saved ? JSON.parse(saved) : null;
+    
+    console.log('✅ Verified saved data:', parsed);
+    
+    if (!parsed || parsed.timeSlotId !== slotId) {
+      console.error('❌ Data verification FAILED!');
+      alert('Gagal menyimpan data. Silakan coba lagi.');
+      return;
+    }
+
+    console.log('✅ All validation passed! Navigating to form...');
+    router.push('/booking/form');
   };
-
-  console.log('=== BOOKING DATA TO SAVE ===');
-  console.log(JSON.stringify(bookingData, null, 2));
-  console.log('timeSlotId final value:', bookingData.timeSlotId);
-  console.log('timeSlotId final type:', typeof bookingData.timeSlotId);
-  console.log('===========================');
-
-  // ✅ Clear and save
-  sessionStorage.removeItem('bookingData');
-  sessionStorage.setItem('bookingData', JSON.stringify(bookingData));
-
-  // ✅ Verify
-  const saved = sessionStorage.getItem('bookingData');
-  const parsed = saved ? JSON.parse(saved) : null;
-  
-  console.log('✅ Verified saved data:', parsed);
-  
-  if (!parsed || parsed.timeSlotId !== slotId) {
-    console.error('❌ Data verification FAILED!');
-    console.error('Expected timeSlotId:', slotId);
-    console.error('Got timeSlotId:', parsed?.timeSlotId);
-    alert('Gagal menyimpan data. Silakan coba lagi.');
-    return;
-  }
-
-  console.log('✅ All validation passed! Navigating to form...');
-  router.push('/booking/form');
-};
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -245,8 +214,6 @@ const handleBooking = () => {
     );
   }
 
-  
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Back Button */}
@@ -265,7 +232,6 @@ const handleBooking = () => {
       {/* Header Section */}
       <div className="bg-white shadow">
         <div className="container mx-auto px-4 py-8">
-          {/* Main Image */}
           {venue.image_url && (
             <div className="relative w-full h-64 md:h-96 mb-6 rounded-lg overflow-hidden">
               <Image 
@@ -287,25 +253,16 @@ const handleBooking = () => {
               </div>
               <p className="mt-3 text-gray-700">{venue.description}</p>
 
-              {/* Social Media Links */}
               <div className="flex gap-2 mt-4">
                 {venue.facebook_url && (
-                  <a
-                    href={venue.facebook_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                  >
+                  <a href={venue.facebook_url} target="_blank" rel="noopener noreferrer"
+                    className="p-2 bg-blue-600 text-white rounded hover:bg-blue-700">
                     <Facebook className="w-5 h-5" />
                   </a>
                 )}
                 {venue.instagram_url && (
-                  <a
-                    href={venue.instagram_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2 bg-pink-600 text-white rounded hover:bg-pink-700"
-                  >
+                  <a href={venue.instagram_url} target="_blank" rel="noopener noreferrer"
+                    className="p-2 bg-pink-600 text-white rounded hover:bg-pink-700">
                     <Instagram className="w-5 h-5" />
                   </a>
                 )}
@@ -319,34 +276,22 @@ const handleBooking = () => {
       <div className="bg-white border-b">
         <div className="container mx-auto px-4">
           <div className="flex gap-8">
-            <button
-              onClick={() => setActiveTab('schedule')}
+            <button onClick={() => setActiveTab('schedule')}
               className={`py-4 px-2 border-b-2 font-medium ${
-                activeTab === 'schedule'
-                  ? 'border-orange-600 text-orange-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
+                activeTab === 'schedule' ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}>
               JADWAL
             </button>
-            <button
-              onClick={() => setActiveTab('gallery')}
+            <button onClick={() => setActiveTab('gallery')}
               className={`py-4 px-2 border-b-2 font-medium ${
-                activeTab === 'gallery'
-                  ? 'border-orange-600 text-orange-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
+                activeTab === 'gallery' ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}>
               GALERI
             </button>
-            <button
-              onClick={() => setActiveTab('about')}
+            <button onClick={() => setActiveTab('about')}
               className={`py-4 px-2 border-b-2 font-medium ${
-                activeTab === 'about'
-                  ? 'border-orange-600 text-orange-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
+                activeTab === 'about' ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}>
               TENTANG
             </button>
           </div>
@@ -371,15 +316,10 @@ const handleBooking = () => {
                       const month = format(date, 'MMM', { locale: localeId });
 
                       return (
-                        <button
-                          key={dateStr}
-                          onClick={() => setSelectedDate(dateStr)}
+                        <button key={dateStr} onClick={() => setSelectedDate(dateStr)}
                           className={`p-3 rounded-lg text-center transition ${
-                            isSelected
-                              ? 'bg-orange-600 text-white'
-                              : 'bg-gray-100 hover:bg-gray-200'
-                          }`}
-                        >
+                            isSelected ? 'bg-orange-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                          }`}>
                           <div className="text-xs">{dayName}</div>
                           <div className="text-lg font-bold">{dayNumber}</div>
                           <div className="text-xs">{month}</div>
@@ -395,15 +335,10 @@ const handleBooking = () => {
                     <h3 className="font-semibold mb-3">Pilih Lapangan:</h3>
                     <div className="flex gap-2 flex-wrap">
                       {venue.fields.map((field) => (
-                        <button
-                          key={field.id}
-                          onClick={() => setSelectedField(field)}
+                        <button key={field.id} onClick={() => setSelectedField(field)}
                           className={`px-4 py-2 rounded-lg transition ${
-                            selectedField?.id === field.id
-                              ? 'bg-orange-600 text-white'
-                              : 'bg-gray-100 hover:bg-gray-200'
-                          }`}
-                        >
+                            selectedField?.id === field.id ? 'bg-orange-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                          }`}>
                           {field.name}
                         </button>
                       ))}
@@ -419,34 +354,59 @@ const handleBooking = () => {
                     <div className="text-center py-8">Memuat jadwal...</div>
                   ) : availableSlots.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
-                      Tidak ada slot tersedia untuk tanggal ini
+                      Tidak ada slot untuk tanggal ini
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {availableSlots.map((slot) => (
-                        <button
-                          key={slot.id}
-                          onClick={() => handleSlotClick(slot)}
-                          className={`p-4 rounded-lg border-2 transition ${
-                            selectedSlot?.id === slot.id
-                              ? 'border-orange-600 bg-orange-50'
-                              : 'border-gray-200 hover:border-orange-300'
-                          }`}
-                        >
-                          <div className="flex items-center justify-center mb-2">
-                            <Clock className="w-4 h-4 mr-1" />
-                            <span className="font-semibold">
-                              {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
-                            </span>
-                          </div>
-                          <div className="text-sm text-gray-600">{formatPrice(slot.price)}</div>
-                          <div className="flex items-center justify-center mt-2 text-green-600">
-                            <CheckCircle className="w-4 h-4 mr-1" />
-                            <span className="text-xs">Tersedia</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                    <>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                        {availableSlots.map((slot) => (
+                          <button
+                            key={slot.id}
+                            onClick={() => handleSlotClick(slot)}
+                            disabled={!slot.is_available}
+                            className={`p-4 rounded-lg border-2 transition ${
+                              !slot.is_available
+                                ? 'border-gray-300 bg-gray-100 cursor-not-allowed opacity-60'
+                                : selectedSlot?.id === slot.id
+                                ? 'border-orange-600 bg-orange-50 cursor-pointer'
+                                : 'border-gray-200 hover:border-orange-300 cursor-pointer'
+                            }`}
+                          >
+                            <div className="flex items-center justify-center mb-2">
+                              <Clock className="w-4 h-4 mr-1" />
+                              <span className="font-semibold">
+                                {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
+                              </span>
+                            </div>
+                            <div className="text-sm text-gray-600">{formatPrice(slot.price)}</div>
+                            
+                            {slot.is_available ? (
+                              <div className="flex items-center justify-center mt-2 text-green-600">
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                <span className="text-xs font-medium">Tersedia</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-center mt-2 text-red-600">
+                                <XCircle className="w-4 h-4 mr-1" />
+                                <span className="text-xs font-medium">Terbooking</span>
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      {/* Legend */}
+                      <div className="pt-4 border-t flex items-center gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-green-100 border-2 border-green-600 rounded"></div>
+                          <span className="text-gray-600">Tersedia</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-gray-100 border-2 border-gray-300 rounded"></div>
+                          <span className="text-gray-600">Terbooking</span>
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -459,19 +419,13 @@ const handleBooking = () => {
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {venue.images.map((image) => (
                       <div key={image.id} className="relative h-48">
-                        <Image
-                          src={image.image_url}
-                          alt={image.caption || venue.name}
-                          fill
-                          className="object-cover rounded-lg"
-                        />
+                        <Image src={image.image_url} alt={image.caption || venue.name}
+                          fill className="object-cover rounded-lg" />
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    Belum ada foto galeri
-                  </div>
+                  <div className="text-center py-8 text-gray-500">Belum ada foto galeri</div>
                 )}
               </div>
             )}
@@ -485,10 +439,8 @@ const handleBooking = () => {
                 {venue.facilities && venue.facilities.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {venue.facilities.map((facility) => (
-                      <span
-                        key={facility.id}
-                        className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
-                      >
+                      <span key={facility.id}
+                        className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
                         {facility.name}
                       </span>
                     ))}
@@ -532,10 +484,8 @@ const handleBooking = () => {
                     </div>
                   </div>
 
-                  <button
-                    onClick={handleBooking}
-                    className="w-full mt-6 bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-700 transition font-semibold"
-                  >
+                  <button onClick={handleBooking}
+                    className="w-full mt-6 bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-700 transition font-semibold">
                     Lanjutkan Booking
                   </button>
                 </>

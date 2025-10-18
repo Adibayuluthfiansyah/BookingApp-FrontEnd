@@ -1,4 +1,4 @@
-import { ApiResponse, User, LoginResponse, Venue, TimeSlot } from "@/types";
+import { ApiResponse, User, LoginResponse, Venue, TimeSlotWithStatus } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
 
@@ -117,13 +117,9 @@ export const getAllVenues = async (params?: {
   try {
     const queryParams = new URLSearchParams();
     
-    // Add search/filter params
     if (params?.search) queryParams.append('search', params.search);
     if (params?.city) queryParams.append('city', params.city);
     if (params?.sort) queryParams.append('sort', params.sort);
-    
-    // CRITICAL: Add includes for relations
-    queryParams.append('include', 'fields.timeSlots,facilities,images');
 
     const url = `${API_BASE_URL}/venues?${queryParams.toString()}`;
     
@@ -155,14 +151,9 @@ export const getAllVenues = async (params?: {
   }
 };
 
-// Get venue by ID or slug
 export const getVenue = async (identifier: string | number): Promise<ApiResponse<Venue>> => {
   try {
-    // Add includes for relations
-    const queryParams = new URLSearchParams();
-    queryParams.append('include', 'fields.timeSlots,facilities,images');
-    
-    const url = `${API_BASE_URL}/venues/${identifier}?${queryParams.toString()}`;
+    const url = `${API_BASE_URL}/venues/${identifier}`;
     
     console.log('Fetching venue from:', url);
     
@@ -192,15 +183,14 @@ export const getVenue = async (identifier: string | number): Promise<ApiResponse
   }
 };
 
-// Alias functions for backward compatibility
 export const getVenueBySlug = getVenue;
 export const getVenueById = getVenue;
 
-// Get available slots
+// ==================== UPDATED: Get Available Slots with Status ====================
 export const getAvailableSlots = async (
   venueId: number,
   params: { field_id: number; date: string }
-): Promise<ApiResponse<TimeSlot[]>> => {
+): Promise<ApiResponse<TimeSlotWithStatus[]>> => {
   try {
     const queryParams = new URLSearchParams({
       field_id: params.field_id.toString(),
@@ -209,7 +199,7 @@ export const getAvailableSlots = async (
 
     const url = `${API_BASE_URL}/venues/${venueId}/available-slots?${queryParams.toString()}`;
     
-    console.log('Fetching available slots from:', url);
+    console.log('Fetching slots with status from:', url);
     
     const response = await fetch(url, {
       method: 'GET',
@@ -220,55 +210,21 @@ export const getAvailableSlots = async (
     });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch available slots");
+      throw new Error("Failed to fetch slots");
     }
     
     const data = await response.json();
-    console.log('Available slots response:', data);
+    console.log('Slots response:', data);
     
     return data;
   } catch (error) {
-    console.error('Error fetching available slots:', error);
+    console.error('Error fetching slots:', error);
     return { 
       success: false, 
       message: 'Gagal mengambil slot jadwal', 
       data: [] 
     };
   }
-};
-
-// ==================== Admin API Functions ====================
-
-export const getAdminDashboard = async (): Promise<ApiResponse> => {
-  const token = getToken();
-
-  const response = await fetch(`${API_BASE_URL}/admin/dashboard`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-
-  return await response.json();
-};
-
-// ==================== Customer API Functions ====================
-
-export const getCustomerBookings = async (): Promise<ApiResponse> => {
-  const token = getToken();
-
-  const response = await fetch(`${API_BASE_URL}/customer/bookings`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-
-  return await response.json();
 };
 
 // ==================== Booking API Functions ====================
@@ -283,6 +239,8 @@ export const createBooking = async (bookingData: {
   notes?: string;
 }): Promise<ApiResponse<{ booking: any; snap_token: string }>> => {
   try {
+    console.log('Creating booking with data:', bookingData);
+    
     const response = await fetch(`${API_BASE_URL}/bookings`, {
       method: 'POST',
       headers: {
@@ -292,12 +250,13 @@ export const createBooking = async (bookingData: {
       body: JSON.stringify(bookingData),
     });
 
+    const result = await response.json();
+    
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to create booking');
+      throw new Error(result.message || 'Failed to create booking');
     }
 
-    return await response.json();
+    return result;
   } catch (error) {
     console.error('Create booking error:', error);
     return {
@@ -348,4 +307,36 @@ export const cancelBooking = async (bookingNumber: string): Promise<ApiResponse<
       data: null,
     };
   }
+};
+
+// ==================== Admin API Functions ====================
+
+export const getAdminDashboard = async (): Promise<ApiResponse> => {
+  const token = getToken();
+
+  const response = await fetch(`${API_BASE_URL}/admin/dashboard`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  return await response.json();
+};
+
+export const getCustomerBookings = async (): Promise<ApiResponse> => {
+  const token = getToken();
+
+  const response = await fetch(`${API_BASE_URL}/customer/bookings`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  return await response.json();
 };

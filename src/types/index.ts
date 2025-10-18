@@ -9,20 +9,6 @@ export interface User {
   updated_at: string
 }
 
-// export interface Venue {
-//   id: number;
-//   name: string;
-//   address: string;
-//   price_per_hour: number;
-//   type: string;
-//   image: string;
-//   facilities: string[];
-//   description: string;
-//   rating: number; // Added rating field
-//   fields: Field[]; // Changed from inline to Field interface
-// }
-
-
 export interface Venue {
   id: number;
   name: string;
@@ -43,14 +29,6 @@ export interface Venue {
   images?: VenueImage[];
 }
 
-// export interface Field {
-//   id: number;
-//   venue_id: number;
-//   name: string;
-//   type: 'futsal' | 'minisoccer';
-//   status: 'active' | 'maintenance';
-// }
-
 export interface Field {
   id: number;
   venue_id: number;
@@ -58,6 +36,7 @@ export interface Field {
   field_type: 'futsal' | 'minisoccer' | 'other';
   description: string | null;
   time_slots?: TimeSlot[];
+  venue?: Venue;
 }
 
 export interface TimeSlot {
@@ -66,30 +45,60 @@ export interface TimeSlot {
   start_time: string;
   end_time: string;
   price: number;
-  is_available: boolean;
+  is_available?: boolean;
   day_type: 'weekday' | 'weekend' | 'all';
   created_at?: string;
   updated_at?: string;
 }
 
+// NEW: TimeSlot with booking status
+export interface TimeSlotWithStatus extends TimeSlot {
+  is_available: boolean;
+  booking_status: 'available' | 'booked';
+  booking_info?: {
+    booking_number: string;
+    customer_name: string;
+    status: string;
+    payment_status: string;
+  } | null;
+}
+
 export interface Booking {
   id: number
-  user_id: number
-  venue_id: number
+  booking_number: string
+  user_id: number | null
+  field_id: number
+  time_slot_id: number
   booking_date: string
   start_time: string
   end_time: string
-  total_price: number
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed'
-  payment_status: 'pending' | 'paid' | 'failed'
+  customer_name: string
+  customer_phone: string
+  customer_email: string
   notes?: string
-  user: User
-  venue: Venue
+  subtotal: number
+  admin_fee: number
+  total_amount: number
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'paid'
+  created_at: string
+  updated_at: string
+  field?: Field
+  payment?: Payment
+  user?: User
+}
+
+export interface Payment {
+  id: number
+  booking_id: number
+  amount: number
+  payment_method: string
+  payment_status: 'pending' | 'verified' | 'rejected'
+  snap_token?: string
+  paid_at?: string
   created_at: string
   updated_at: string
 }
 
-// New interfaces for booking flow
 export interface BookingSlot {
   date: string
   timeSlot: TimeSlot
@@ -106,33 +115,14 @@ export interface BookingFormData {
 }
 
 export interface BookingRequest {
-  venue_id: number
   field_id: number
+  time_slot_id: number
   booking_date: string
-  time_slots: number[] // Array of time slot IDs
   customer_name: string
   customer_phone: string
-  customer_email?: string
+  customer_email: string
   notes?: string
-  payment_method: string
-  total_price: number
 }
-
-// export interface User {
-//   id: number;
-//   name: string;
-//   email: string;
-//   role: 'admin' | 'customer';
-// }
-
-// export interface LoginResponse {
-//   success: boolean;
-//   message: string;
-//   data: {
-//     user: User;
-//     token: string;
-//   };
-// }
 
 export interface LoginResponse extends ApiResponse {
   data: {
@@ -145,7 +135,10 @@ export interface ApiResponse<T = any> {
   success: boolean;
   message: string;
   data?: T;
+  meta?: any;
+  errors?: any;
 }
+
 export interface AdminStats {
   total_users: number
   total_venues: number
@@ -181,9 +174,8 @@ export interface QuickActionProps {
 export interface VenuesCardProps {
   venue: Venue
   viewMode: 'grid' | 'list'
-  onVenueClick?: (venue: Venue) => void // Made optional since we handle routing internally
+  onVenueClick?: (venue: Venue) => void
 }
-
 
 export interface RegisterData {
   name: string;
@@ -193,13 +185,11 @@ export interface RegisterData {
   password_confirmation: string;
 }
 
-
 export interface Facility {
   id: number;
   name: string;
   icon: string;
 }
-
 
 export interface VenueImage {
   id: number;
