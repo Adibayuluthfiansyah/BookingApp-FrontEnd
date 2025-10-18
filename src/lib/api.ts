@@ -186,7 +186,7 @@ export const getVenue = async (identifier: string | number): Promise<ApiResponse
 export const getVenueBySlug = getVenue;
 export const getVenueById = getVenue;
 
-// ==================== UPDATED: Get Available Slots with Status ====================
+// ==================== Get Available Slots with Status ====================
 export const getAvailableSlots = async (
   venueId: number,
   params: { field_id: number; date: string }
@@ -311,32 +311,169 @@ export const cancelBooking = async (bookingNumber: string): Promise<ApiResponse<
 
 // ==================== Admin API Functions ====================
 
-export const getAdminDashboard = async (): Promise<ApiResponse> => {
+export const getAdminDashboardStats = async (): Promise<ApiResponse> => {
   const token = getToken();
 
-  const response = await fetch(`${API_BASE_URL}/admin/dashboard`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/dashboard`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
 
-  return await response.json();
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching admin dashboard stats:', error);
+    return {
+      success: false,
+      message: 'Gagal mengambil statistik dashboard',
+    };
+  }
 };
+
+export const getAdminBookings = async (params?: {
+  status?: string;
+  payment_status?: string;
+  start_date?: string;
+  end_date?: string;
+  venue_id?: number;
+  search?: string;
+  sort_by?: string;
+  sort_order?: 'asc' | 'desc';
+  per_page?: number;
+  page?: number;
+}): Promise<ApiResponse> => {
+  const token = getToken();
+
+  try {
+    const queryParams = new URLSearchParams();
+    
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.payment_status) queryParams.append('payment_status', params.payment_status);
+    if (params?.start_date) queryParams.append('start_date', params.start_date);
+    if (params?.end_date) queryParams.append('end_date', params.end_date);
+    if (params?.venue_id) queryParams.append('venue_id', params.venue_id.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.sort_by) queryParams.append('sort_by', params.sort_by);
+    if (params?.sort_order) queryParams.append('sort_order', params.sort_order);
+    if (params?.per_page) queryParams.append('per_page', params.per_page.toString());
+    if (params?.page) queryParams.append('page', params.page.toString());
+
+    const url = `${API_BASE_URL}/admin/bookings?${queryParams.toString()}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching admin bookings:', error);
+    return {
+      success: false,
+      message: 'Gagal mengambil data booking',
+      data: [],
+    };
+  }
+};
+
+export const getAdminBookingDetail = async (id: number): Promise<ApiResponse> => {
+  const token = getToken();
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/bookings/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching booking detail:', error);
+    return {
+      success: false,
+      message: 'Gagal mengambil detail booking',
+    };
+  }
+};
+
+export const updateAdminBookingStatus = async (
+  id: number,
+  data: { status: string; notes?: string }
+): Promise<ApiResponse> => {
+  const token = getToken();
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/bookings/${id}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update status');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating booking status:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Gagal mengupdate status booking',
+    };
+  }
+};
+
+// Legacy admin functions (for backward compatibility)
+export const getAdminDashboard = getAdminDashboardStats;
 
 export const getCustomerBookings = async (): Promise<ApiResponse> => {
   const token = getToken();
 
-  const response = await fetch(`${API_BASE_URL}/customer/bookings`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}/customer/bookings`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
 
-  return await response.json();
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching customer bookings:', error);
+    return {
+      success: false,
+      message: 'Gagal mengambil data booking',
+      data: [],
+    };
+  }
 };

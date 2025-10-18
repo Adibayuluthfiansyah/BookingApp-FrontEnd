@@ -1,50 +1,51 @@
 'use client';
 
-import React from 'react';
-import { Card } from '@/components/ui/card';
-import { TrendingUp, TrendingDown } from 'lucide-react';
-import { StatsCardProps } from '@/types';
+import { LucideIcon } from 'lucide-react';
 
-export default function StatsCard({title,value,change,icon,changeType = 'increase',color,}: StatsCardProps) {
+interface StatsCardProps {
+  title: string;
+  value: string | number;
+  subtitle?: string;
+  icon: LucideIcon;
+  iconBgColor: string;
+  iconColor: string;
+  onClick?: () => void;
+}
+
+export default function StatsCard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
+  iconBgColor,
+  iconColor,
+  onClick,
+}: StatsCardProps) {
   return (
-   <Card className="relative p-6 hover:shadow-lg transition-shadow duration-200">
-  <div
-    className="absolute bottom-0 left-0 w-full h-1 rounded-b-lg"
-    style={{ backgroundColor: color }}
-  />
-
-  <div className="flex items-center">
     <div
-      className="p-3 rounded-full"
-      style={{ backgroundColor: `${color}20` }}
+      onClick={onClick}
+      className={`
+        bg-white rounded-xl shadow p-6 transition-all duration-300
+        ${onClick ? 'cursor-pointer hover:shadow-xl hover:-translate-y-1' : ''}
+      `}
     >
-      {icon}
-    </div>
-    <div className="ml-4 flex-1">
-      <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">
-        {title}
-      </p>
-      <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
-
-      {/* Badge taruh di bawah value */}
-      {change && (
-        <div
-          className={`mt-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
-            changeType === 'increase'
-              ? 'bg-green-100 text-green-700'
-              : 'bg-red-100 text-red-700'
-          }`}
-        >
-          {changeType === 'increase' ? (
-            <TrendingUp className="w-4 h-4 mr-1" />
-          ) : (
-            <TrendingDown className="w-4 h-4 mr-1" />
-          )}
-          {change}
+      <div className="flex items-center justify-between mb-4">
+        <div className={`p-3 ${iconBgColor} rounded-lg`}>
+          <Icon className={`w-6 h-6 ${iconColor}`} />
         </div>
+      </div>
+      
+      <h3 className="text-gray-600 text-sm font-medium">{title}</h3>
+      
+      <p className="text-2xl font-bold text-gray-900 mt-2">
+        {value}
+      </p>
+      
+      {subtitle && (
+        <p className="text-sm text-gray-500 mt-1">
+          {subtitle}
+        </p>
       )}
     </div>
-  </div>
-</Card>
-    );
+  );
 }

@@ -1,314 +1,452 @@
 'use client';
 
-import React, { useState } from 'react';
-import AdminLayout from '@/components/admin/AdminLayout';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { formatCurrency, formatTime } from '@/lib/utils';
-
-// Mock booking data
-const mockBookings = [
-  {
-    id: 1,
-    customerName: 'Ahmad Ridwan',
-    customerPhone: '081234567890',
-    customerEmail: 'ahmad@email.com',
-    venueName: 'GOR Senayan Futsal',
-    fieldName: 'Lapangan A',
-    bookingDate: '2024-01-15',
-    startTime: '19:00',
-    endTime: '20:00',
-    totalPrice: 200000,
-    status: 'confirmed',
-    notes: 'Tim kantor, tolong siapkan air minum',
-    createdAt: '2024-01-14 10:30:00',
-    paymentStatus: 'paid'
-  },
-  {
-    id: 2,
-    customerName: 'Sarah Putri',
-    customerPhone: '081234567891',
-    customerEmail: 'sarah@email.com',
-    venueName: 'Arena Mini Soccer Plus',
-    fieldName: 'Lapangan 1',
-    bookingDate: '2024-01-15',
-    startTime: '16:00',
-    endTime: '17:00',
-    totalPrice: 180000,
-    status: 'pending',
-    notes: '',
-    createdAt: '2024-01-14 15:45:00',
-    paymentStatus: 'pending'
-  },
-  {
-    id: 3,
-    customerName: 'Budi Santoso',
-    customerPhone: '081234567892',
-    customerEmail: 'budi@email.com',
-    venueName: 'Futsal Center Jakarta',
-    fieldName: 'Court 1',
-    bookingDate: '2024-01-14',
-    startTime: '20:00',
-    endTime: '21:00',
-    totalPrice: 150000,
-    status: 'completed',
-    notes: 'Regular customer',
-    createdAt: '2024-01-13 09:15:00',
-    paymentStatus: 'paid'
-  },
-  {
-    id: 4,
-    customerName: 'Lisa Wong',
-    customerPhone: '081234567893',
-    customerEmail: 'lisa@email.com',
-    venueName: 'GOR Senayan Futsal',
-    fieldName: 'Lapangan B',
-    bookingDate: '2024-01-16',
-    startTime: '18:00',
-    endTime: '19:00',
-    totalPrice: 200000,
-    status: 'cancelled',
-    notes: 'Cancelled due to rain',
-    createdAt: '2024-01-14 16:20:00',
-    paymentStatus: 'refunded'
-  }
-];
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { 
+  Search, 
+  Filter, 
+  Download,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Calendar
+} from 'lucide-react';
+import { getAdminBookings, getAllVenues } from '@/lib/api';
+import { Booking, Venue } from '@/types';
 
 export default function AdminBookingsPage() {
-  const [bookings, setBookings] = useState(mockBookings);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState('all');
-  const [selectedBooking, setSelectedBooking] = useState<any>(null);
-  const [showModal, setShowModal] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [meta, setMeta] = useState<any>(null);
+  
+  // Filters
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [status, setStatus] = useState(searchParams.get('status') || 'all');
+  const [paymentStatus, setPaymentStatus] = useState(searchParams.get('payment_status') || 'all');
+  const [venueId, setVenueId] = useState(searchParams.get('venue_id') || '');
+  const [startDate, setStartDate] = useState(searchParams.get('start_date') || '');
+  const [endDate, setEndDate] = useState(searchParams.get('end_date') || '');
+  const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
 
-  const filteredBookings = bookings.filter(booking => {
-    const matchesSearch = booking.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         booking.venueName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         booking.customerPhone.includes(searchTerm);
-    const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
-    const matchesDate = dateFilter === 'all' || (() => {
-      const bookingDate = new Date(booking.bookingDate);
-      const today = new Date();
-      const tomorrow = new Date(today);
-      tomorrow.setDate(today.getDate() + 1);
-      const weekFromNow = new Date(today);
-      weekFromNow.setDate(today.getDate() + 7);
+  useEffect(() => {
+    loadVenues();
+  }, []);
 
-      switch (dateFilter) {
-        case 'today':
-          return bookingDate.toDateString() === today.toDateString();
-        case 'tomorrow':
-          return bookingDate.toDateString() === tomorrow.toDateString();
-        case 'week':
-          return bookingDate >= today && bookingDate <= weekFromNow;
-        default:
-          return true;
+  useEffect(() => {
+    loadBookings();
+  }, [search, status, paymentStatus, venueId, startDate, endDate, currentPage]);
+
+  const loadVenues = async () => {
+    try {
+      const result = await getAllVenues();
+      if (result.success && result.data) {
+        setVenues(result.data);
       }
-    })();
-
-    return matchesSearch && matchesStatus && matchesDate;
-  });
-
-  const handleStatusChange = (bookingId: number, newStatus: string) => {
-    setBookings(bookings.map(booking => 
-      booking.id === bookingId 
-        ? { ...booking, status: newStatus }
-        : booking
-    ));
-  };
-
-  const exportCSV = () => {
-    const header = Object.keys(bookings[0]).join(',');
-    const rows = bookings.map(b => Object.values(b).join(','));
-    const csvContent = [header, ...rows].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'bookings.csv');
-    link.click();
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'confirmed': return 'bg-blue-100 text-blue-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+    } catch (error) {
+      console.error('Error loading venues:', error);
     }
   };
 
-  const getPaymentStatusColor = (status: string) => {
-    switch (status) {
-      case 'paid': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'refunded': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const loadBookings = async () => {
+    try {
+      setLoading(true);
+      
+      const params: any = {
+        page: currentPage,
+        per_page: 20,
+        sort_by: 'created_at',
+        sort_order: 'desc'
+      };
+
+      if (search) params.search = search;
+      if (status !== 'all') params.status = status;
+      if (paymentStatus !== 'all') params.payment_status = paymentStatus;
+      if (venueId) params.venue_id = Number(venueId);
+      if (startDate) params.start_date = startDate;
+      if (endDate) params.end_date = endDate;
+
+      const result = await getAdminBookings(params);
+      
+      if (result.success && result.data) {
+        setBookings(result.data);
+        setMeta(result.meta);
+      }
+    } catch (error) {
+      console.error('Error loading bookings:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleAddBooking = (e: any) => {
-    e.preventDefault();
-    const form = e.target;
-    const newBooking = {
-      id: bookings.length + 1,
-      customerName: form.customerName.value,
-      customerPhone: form.customerPhone.value,
-      customerEmail: form.customerEmail.value,
-      venueName: form.venueName.value,
-      fieldName: form.fieldName.value,
-      bookingDate: form.bookingDate.value,
-      startTime: form.startTime.value,
-      endTime: form.endTime.value,
-      totalPrice: parseInt(form.totalPrice.value),
-      status: 'pending',
-      notes: form.notes.value,
-      createdAt: new Date().toISOString(),
-      paymentStatus: 'pending'
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setCurrentPage(1);
+  };
+
+  const handleFilterChange = () => {
+    setCurrentPage(1);
+    loadBookings();
+  };
+
+  const clearFilters = () => {
+    setSearch('');
+    setStatus('all');
+    setPaymentStatus('all');
+    setVenueId('');
+    setStartDate('');
+    setEndDate('');
+    setCurrentPage(1);
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
+  const getStatusBadge = (status: string) => {
+    const badges: Record<string, { color: string; label: string; icon: any }> = {
+      pending: { color: 'bg-yellow-100 text-yellow-800', label: 'Pending', icon: Clock },
+      confirmed: { color: 'bg-green-100 text-green-800', label: 'Confirmed', icon: CheckCircle },
+      cancelled: { color: 'bg-red-100 text-red-800', label: 'Cancelled', icon: XCircle },
+      completed: { color: 'bg-blue-100 text-blue-800', label: 'Completed', icon: CheckCircle },
     };
-    setBookings([...bookings, newBooking]);
-    setShowForm(false);
+    
+    const badge = badges[status] || badges.pending;
+    const Icon = badge.icon;
+    
+    return (
+      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${badge.color}`}>
+        <Icon className="w-3 h-3" />
+        {badge.label}
+      </span>
+    );
+  };
+
+  const getPaymentStatusBadge = (status: string) => {
+    const badges: Record<string, { color: string; label: string }> = {
+      pending: { color: 'bg-yellow-100 text-yellow-800', label: 'Pending' },
+      verified: { color: 'bg-green-100 text-green-800', label: 'Verified' },
+      rejected: { color: 'bg-red-100 text-red-800', label: 'Rejected' },
+    };
+    
+    const badge = badges[status] || badges.pending;
+    
+    return (
+      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${badge.color}`}>
+        {badge.label}
+      </span>
+    );
   };
 
   return (
-    <AdminLayout>
-      <div className="py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">Booking Management</h1>
-              <p className="text-gray-600">Kelola semua booking dan reservasi</p>
+              <h1 className="text-3xl font-bold text-gray-900">Kelola Booking</h1>
+              <p className="text-gray-600 mt-1">Lihat dan kelola semua booking</p>
             </div>
-            <div className="flex space-x-3">
-              <Button variant="outline" onClick={exportCSV}>Export CSV</Button>
-              <Button onClick={() => setShowForm(true)}>Manual Booking</Button>
-            </div>
+            <button
+              onClick={() => router.push('/admin/dashboard')}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+            >
+              ← Kembali ke Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Filters */}
+        <div className="bg-white rounded-xl shadow p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Filter className="w-5 h-5 text-gray-500" />
+            <h3 className="text-lg font-semibold text-gray-900">Filter</h3>
           </div>
 
-          {/* Filters & Stats */}
-          {/* ... (sama seperti sebelumnya) */}
-
-          {/* Bookings Table */}
-          <Card className="overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Bookings ({filteredBookings.length})</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {/* Search */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Search
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  placeholder="Cari booking number, nama, email..."
+                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                />
+              </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Booking ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Venue & Field</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date & Time</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredBookings.map((booking) => (
-                    <tr key={booking.id}>
-                      <td className="px-6 py-4 text-sm text-gray-900">#{booking.id}</td>
-                      <td className="px-6 py-4">
-                        <p className="font-medium">{booking.customerName}</p>
-                        <p className="text-xs text-gray-500">{booking.customerPhone}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="font-medium">{booking.venueName}</p>
-                        <p className="text-xs text-gray-500">{booking.fieldName}</p>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-700">
-                        {formatTime(booking.bookingDate)} <br />
-                        {booking.startTime} - {booking.endTime}
-                      </td>
-                      <td className="px-6 py-4 text-sm font-medium">{formatCurrency(booking.totalPrice)}</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(booking.status)}`}>
-                          {booking.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPaymentStatusColor(booking.paymentStatus)}`}>
-                          {booking.paymentStatus}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => {setSelectedBooking(booking); setShowModal(true);}}>View</Button>
-                        <select
-                          value={booking.status}
-                          onChange={(e) => handleStatusChange(booking.id, e.target.value)}
-                          className="text-sm border rounded px-2 py-1"
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="confirmed">Confirmed</option>
-                          <option value="completed">Completed</option>
-                          <option value="cancelled">Cancelled</option>
-                        </select>
-                      </td>
+
+            {/* Status */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status Booking
+              </label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+              >
+                <option value="all">Semua Status</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+
+            {/* Payment Status */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status Payment
+              </label>
+              <select
+                value={paymentStatus}
+                onChange={(e) => setPaymentStatus(e.target.value)}
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+              >
+                <option value="all">Semua</option>
+                <option value="pending">Pending</option>
+                <option value="verified">Verified</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+
+            {/* Venue */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Venue
+              </label>
+              <select
+                value={venueId}
+                onChange={(e) => setVenueId(e.target.value)}
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+              >
+                <option value="">Semua Venue</option>
+                {venues.map((venue) => (
+                  <option key={venue.id} value={venue.id}>
+                    {venue.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Start Date */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tanggal Mulai
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+              />
+            </div>
+
+            {/* End Date */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tanggal Akhir
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-end gap-2 md:col-span-2">
+              <button
+                onClick={handleFilterChange}
+                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+              >
+                Terapkan Filter
+              </button>
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Results Info */}
+        {meta && (
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-gray-600">
+              Menampilkan {meta.from}-{meta.to} dari {meta.total} booking
+            </p>
+          </div>
+        )}
+
+        {/* Bookings Table */}
+        <div className="bg-white rounded-xl shadow overflow-hidden">
+          {loading ? (
+            <div className="p-12 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+              <p className="text-gray-600">Memuat data...</p>
+            </div>
+          ) : bookings.length === 0 ? (
+            <div className="p-12 text-center">
+              <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">Tidak ada booking ditemukan</p>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Booking #
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Customer
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Venue / Field
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Tanggal & Waktu
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Total
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Payment
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Actions
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {bookings.map((booking) => (
+                      <tr key={booking.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-medium text-gray-900">
+                            {booking.booking_number}
+                          </span>
+                          <div className="text-xs text-gray-500">
+                            {formatDate(booking.created_at)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {booking.customer_name}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {booking.customer_phone}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {booking.customer_email}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {booking.field?.venue?.name}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {booking.field?.name}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {formatDate(booking.booking_date)}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {booking.start_time.substring(0, 5)} - {booking.end_time.substring(0, 5)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-semibold text-gray-900">
+                            {formatCurrency(booking.total_amount)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {getStatusBadge(booking.status)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {getPaymentStatusBadge(booking.payment?.payment_status || 'pending')}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <button
+                            onClick={() => router.push(`/admin/bookings/${booking.id}`)}
+                            className="text-sm text-orange-600 hover:text-orange-700 font-medium"
+                          >
+                            Detail →
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-          {/* Booking Detail Modal */}
-          {showModal && selectedBooking && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6">
-                <h2 className="text-lg font-bold mb-4">Booking Details</h2>
-                <p><strong>Customer:</strong> {selectedBooking.customerName}</p>
-                <p><strong>Phone:</strong> {selectedBooking.customerPhone}</p>
-                <p><strong>Email:</strong> {selectedBooking.customerEmail}</p>
-                <p><strong>Venue:</strong> {selectedBooking.venueName} - {selectedBooking.fieldName}</p>
-                <p><strong>Date:</strong> {formatTime(selectedBooking.bookingDate)}</p>
-                <p><strong>Time:</strong> {selectedBooking.startTime} - {selectedBooking.endTime}</p>
-                <p><strong>Total:</strong> {formatCurrency(selectedBooking.totalPrice)}</p>
-                <p><strong>Status:</strong> {selectedBooking.status}</p>
-                <p><strong>Payment:</strong> {selectedBooking.paymentStatus}</p>
-                <p><strong>Notes:</strong> {selectedBooking.notes || '-'}</p>
-                <div className="mt-6 flex justify-end space-x-2">
-                  <Button variant="outline" onClick={() => setShowModal(false)}>Close</Button>
+              {/* Pagination */}
+              {meta && meta.last_page > 1 && (
+                <div className="px-6 py-4 border-t flex items-center justify-between">
+                  <button
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Previous
+                  </button>
+                  
+                  <span className="text-sm text-gray-600">
+                    Page {currentPage} of {meta.last_page}
+                  </span>
+
+                  <button
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={currentPage === meta.last_page}
+                    className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* Manual Booking Form */}
-          {showForm && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6">
-                <h2 className="text-lg font-bold mb-4">Manual Booking</h2>
-                <form onSubmit={handleAddBooking} className="space-y-3">
-                  <input name="customerName" placeholder="Customer Name" className="w-full border p-2 rounded" required />
-                  <input name="customerPhone" placeholder="Phone" className="w-full border p-2 rounded" required />
-                  <input name="customerEmail" placeholder="Email" className="w-full border p-2 rounded" required />
-                  <input name="venueName" placeholder="Venue" className="w-full border p-2 rounded" required />
-                  <input name="fieldName" placeholder="Field" className="w-full border p-2 rounded" required />
-                  <input type="date" name="bookingDate" className="w-full border p-2 rounded" required />
-                  <div className="flex space-x-2">
-                    <input type="time" name="startTime" className="w-1/2 border p-2 rounded" required />
-                    <input type="time" name="endTime" className="w-1/2 border p-2 rounded" required />
-                  </div>
-                  <input type="number" name="totalPrice" placeholder="Total Price" className="w-full border p-2 rounded" required />
-                  <textarea name="notes" placeholder="Notes" className="w-full border p-2 rounded" />
-                  <div className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
-                    <Button type="submit">Save</Button>
-                  </div>
-                </form>
-              </div>
-            </div>
+              )}
+            </>
           )}
         </div>
       </div>
-    </AdminLayout>
+    </div>
   );
 }

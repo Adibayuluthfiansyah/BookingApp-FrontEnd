@@ -1,83 +1,127 @@
 'use client';
 
-import React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, 
   Calendar, 
-  Building, 
-  Grid3x3, 
-  Settings 
+  MapPin, 
+  Users, 
+  Settings,
+  X,
+  Home
 } from 'lucide-react';
 
 interface AdminSidebarProps {
   isOpen: boolean;
+  onClose: () => void;
 }
 
 const menuItems = [
   {
-    href: '/admin/dashboard',
+    label: 'Dashboard',
     icon: LayoutDashboard,
-    label: 'Dashboard'
+    path: '/admin/dashboard',
   },
   {
-    href: '/admin/bookings',
+    label: 'Bookings',
     icon: Calendar,
-    label: 'Bookings'
+    path: '/admin/bookings',
   },
   {
-    href: '/admin/venues',
-    icon: Building,
-    label: 'Venues'
+    label: 'Venues',
+    icon: MapPin,
+    path: '/admin/venues',
   },
   {
-    href: '/admin/fields',
-    icon: Grid3x3,
-    label: 'Fields'
+    label: 'Customers',
+    icon: Users,
+    path: '/admin/customers',
   },
   {
-    href: '/admin/settings',
+    label: 'Settings',
     icon: Settings,
-    label: 'Settings'
-  }
+    path: '/admin/settings',
+  },
 ];
 
-export default function AdminSidebar({ isOpen }: AdminSidebarProps) {
+export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleNavigation = (path: string) => {
+    router.push(path);
+    onClose();
+  };
 
   return (
-    <aside
-      className={`fixed top-0 left-0 z-20 w-64 h-screen pt-20 transition-transform bg-white border-r border-gray-200 shadow-lg ${
-        isOpen ? 'translate-x-0' : '-translate-x-full'
-      } lg:translate-x-0 `}
-    >
-      <div className="h-full px-3 pb-4 overflow-y-auto">
-        <ul className="space-y-2 font-medium">
+    <>
+      {/* Overlay for mobile */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={onClose}
+        ></div>
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`
+          fixed top-0 left-0 h-full w-64 bg-white border-r z-50
+          transform transition-transform duration-300 ease-in-out
+          lg:translate-x-0 lg:top-[57px]
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+      >
+        {/* Mobile Header */}
+        <div className="lg:hidden flex items-center justify-between p-4 border-b">
+          <h2 className="text-lg font-bold text-gray-900">Menu</h2>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-gray-100 transition"
+            aria-label="Close menu"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Navigation */}
+        <nav className="p-4 space-y-2 overflow-y-auto h-[calc(100vh-57px)]">
+          {/* Back to Site */}
+          <button
+            onClick={() => handleNavigation('/')}
+            className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition group"
+          >
+            <Home className="w-5 h-5" />
+            <span className="font-medium">Back to Site</span>
+          </button>
+
+          <div className="border-t my-4"></div>
+
+          {/* Menu Items */}
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href;
-            
+            const isActive = pathname === item.path || pathname?.startsWith(item.path + '/');
+
             return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={`flex items-center p-3 rounded-lg transition-all duration-200 group ${
+              <button
+                key={item.path}
+                onClick={() => handleNavigation(item.path)}
+                className={`
+                  w-full flex items-center gap-3 px-4 py-3 rounded-lg transition group
+                  ${
                     isActive
-                      ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-500'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
-                >
-                  <Icon className={`w-5 h-5 transition-colors  ${
-                    isActive ? 'text-blue-600' : 'text-gray-500 group-hover:text-gray-700'
-                  }`} />
-                  <span className="ml-3 font-medium">{item.label}</span>
-                </Link>
-              </li>
+                      ? 'bg-orange-500 text-white'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }
+                `}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="font-medium">{item.label}</span>
+              </button>
             );
           })}
-        </ul>
-      </div>
-    </aside>
+        </nav>
+      </aside>
+    </>
   );
 }
