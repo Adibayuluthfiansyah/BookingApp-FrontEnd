@@ -91,7 +91,7 @@ export default function AdminDashboardPage() {
   if (loading) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center py-12">
+        <div className="flex items-center justify-center py-12 pt-50">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
             <p className="text-gray-600">Memuat dashboard...</p>
@@ -118,9 +118,9 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <AdminLayout title="Dashboard Admin" subtitle="Selamat datang kembali! Berikut ringkasan data Anda.">
+    <AdminLayout >
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 pt-20">
         <StatsCard
           title="Pendapatan Hari Ini"
           value={formatCurrency(stats.today.revenue)}

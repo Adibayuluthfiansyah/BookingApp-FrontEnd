@@ -32,6 +32,7 @@ export const clearAuthData = (): void => {
   localStorage.removeItem('user');
 };
 
+
 // ==================== Auth API Functions ====================
 
 export const login = async (email: string, password: string): Promise<LoginResponse> => {
