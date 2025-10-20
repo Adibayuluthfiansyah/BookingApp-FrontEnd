@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Menu, User, LogOut, Settings, ArrowDown } from 'lucide-react';
-import { getUser, logout } from '@/lib/api';
+import { getUser} from '@/lib/api';
 import { toast } from 'sonner';
 import { useAuth } from '@/app/contexts/AuthContext';
 
