@@ -6,6 +6,7 @@ import { getUser } from '@/lib/api';
 import AdminHeader from './AdminHeader';
 import AdminSidebar from './AdminSidebar';
 import { AlertCircle } from 'lucide-react';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ interface AdminLayoutProps {
 }
 
 export default function AdminLayout({ children, title, subtitle }: AdminLayoutProps) {
+  const { isAuthenticated, user } = useAuth();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -35,7 +37,7 @@ export default function AdminLayout({ children, title, subtitle }: AdminLayoutPr
 
     setIsAuthorized(true);
     setLoading(false);
-  }, [router]);
+  }, [isAuthenticated, user, router]);
 
   if (loading) {
     return (

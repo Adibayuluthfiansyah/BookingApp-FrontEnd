@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Menu, User, LogOut, Settings, ArrowDown } from 'lucide-react';
 import { getUser, logout } from '@/lib/api';
+import { toast } from 'sonner';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 
 interface AdminHeaderProps {
@@ -11,21 +13,25 @@ interface AdminHeaderProps {
 }
 
 export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
+  const {logout: logout} = useAuth();
   const router = useRouter();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const user = getUser();
 
   const handleLogout = async () => {
-    if (!confirm('Apakah Anda yakin ingin logout?')) return;
-
     try {
       setLoggingOut(true);
-      await logout();
+      await logout(); 
+      toast.success('Logout berhasil', {
+        description: 'Anda telah berhasil logout.',
+      });
       router.push('/login');
     } catch (error) {
       console.error('Logout error:', error);
-      alert('Gagal logout. Silakan coba lagi.');
+      toast.error('Logout gagal', {
+        description: 'Terjadi kesalahan saat mencoba keluar.',
+      });
     } finally {
       setLoggingOut(false);
     }
