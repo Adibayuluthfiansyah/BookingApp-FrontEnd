@@ -32,7 +32,6 @@ export const clearAuthData = (): void => {
   localStorage.removeItem('user');
 };
 
-
 // ==================== Auth API Functions ====================
 
 export const login = async (email: string, password: string): Promise<LoginResponse> => {
@@ -186,6 +185,133 @@ export const getVenue = async (identifier: string | number): Promise<ApiResponse
 
 export const getVenueBySlug = getVenue;
 export const getVenueById = getVenue;
+
+// ==================== Admin Venue Management ====================
+
+export const getAdminVenues = async (): Promise<ApiResponse<Venue[]>> => {
+  const token = getToken();
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/venues`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching admin venues:', error);
+    return {
+      success: false,
+      message: 'Gagal mengambil data venue',
+      data: []
+    };
+  }
+};
+
+export const getMyVenues = async (): Promise<ApiResponse<Array<{id: number, name: string}>>> => {
+  const token = getToken();
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/my-venues`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching my venues:', error);
+    return {
+      success: false,
+      message: 'Gagal mengambil venue',
+      data: []
+    };
+  }
+};
+
+export const createVenue = async (venueData: any): Promise<ApiResponse<Venue>> => {
+  const token = getToken();
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/venues`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(venueData),
+    });
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating venue:', error);
+    return {
+      success: false,
+      message: 'Gagal membuat venue',
+      data: null as any
+    };
+  }
+};
+
+export const updateVenue = async (id: number, venueData: any): Promise<ApiResponse<Venue>> => {
+  const token = getToken();
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/venues/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(venueData),
+    });
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating venue:', error);
+    return {
+      success: false,
+      message: 'Gagal mengupdate venue',
+      data: null as any
+    };
+  }
+};
+
+export const deleteVenue = async (id: number): Promise<ApiResponse> => {
+  const token = getToken();
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/venues/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting venue:', error);
+    return {
+      success: false,
+      message: 'Gagal menghapus venue'
+    };
+  }
+};
 
 // ==================== Get Available Slots with Status ====================
 export const getAvailableSlots = async (
