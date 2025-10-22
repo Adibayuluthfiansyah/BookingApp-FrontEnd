@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import * as api from '@/lib/api';
 
@@ -23,12 +22,14 @@ export const useAdminAuth = () => {
         return false;
       }
 
-      // Check if user is admin
-      if (response.data.user.role !== 'admin') {
+      // Check if user is admin or super_admin
+      // --- PERBAIKAN DI SINI ---
+      if (response.data.user.role !== 'admin' && response.data.user.role !== 'super_admin') {
         setError('Anda tidak memiliki akses admin');
         await api.logout(); // Clear any stored data
         return false;
       }
+      // --- AKHIR PERBAIKAN ---
 
       return true;
     } catch (err: any) {
@@ -114,3 +115,4 @@ export const useCustomerAuth = () => {
     clearError,
   };
 };
+

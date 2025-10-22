@@ -30,7 +30,8 @@ export default function AdminLayout({ children, title, subtitle }: AdminLayoutPr
       return;
     }
 
-    if (user.role !== 'admin') {
+   // Cek apakah rolenya 'admin' ATAU 'super_admin'
+    if (user.role !== 'admin' && user.role !== 'super_admin') {
       router.push('/');
       return;
     }
@@ -41,13 +42,14 @@ export default function AdminLayout({ children, title, subtitle }: AdminLayoutPr
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Memuat...</p>
-        </div>
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
+  }
+
+  if (!isAuthorized) {
+    return null; // or a redirect, but useEffect handles it
   }
 
   if (!isAuthorized) {
