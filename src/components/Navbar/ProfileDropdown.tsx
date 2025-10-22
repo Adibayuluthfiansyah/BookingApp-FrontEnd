@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ChevronDown, LayoutDashboard, Calendar, LogOut } from 'lucide-react'
+import { ChevronDown, LayoutDashboard, Calendar, LogOut, MapPin } from 'lucide-react' // Import MapPin
 import { useAuth } from '@/app/contexts/AuthContext'
 import { toast } from 'sonner'
 
@@ -20,6 +20,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ user, isScroll
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement
+      // --- PERBAIKAN: Tambahkan class 'profile-dropdown' ke div luar ---
       if (!target.closest('.profile-dropdown')) {
         setIsOpen(false)
       }
@@ -40,13 +41,17 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ user, isScroll
   }
 
   const getDashboardLink = () => {
-    if (user?.role === 'admin') return '/admin/dashboard'
-    if (user?.role === 'customer') return '/customer/dashboard'
+    // --- PERBAIKAN: Tambahkan 'super_admin' ---
+    if (user?.role === 'admin' || user?.role === 'super_admin') return '/admin/dashboard'
+    // --- AKHIR PERBAIKAN ---
+    if (user?.role === 'customer') return '/customer/dashboard' // Arahkan customer ke dashboard mereka
     return '#'
   }
 
   return (
-    <div className="relative">
+    // --- PERBAIKAN: Tambahkan class 'profile-dropdown' ---
+    <div className="relative profile-dropdown">
+    {/* --- AKHIR PERBAIKAN --- */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center gap-2 px-4 py-3 rounded-full font-medium transition-all duration-300 cursor-pointer transform hover:scale-105 border ${
@@ -72,11 +77,17 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ user, isScroll
             <p className="text-sm font-semibold text-gray-900">{user.name}</p>
             <p className="text-xs text-gray-500 truncate">{user.email}</p>
             <span className={`inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full ${
-              user.role === 'admin' 
+              // --- PERBAIKAN: Styling untuk 'super_admin' ---
+              user.role === 'super_admin'
+                ? 'bg-red-100 text-red-700'
+                : user.role === 'admin' 
                 ? 'bg-purple-100 text-purple-700' 
                 : 'bg-blue-100 text-blue-700'
+              // --- AKHIR PERBAIKAN ---
             }`}>
-              {user.role}
+              {/* --- PERBAIKAN: Tampilkan "Super Admin" --- */}
+              {user.role === 'super_admin' ? 'Super Admin' : user.role}
+              {/* --- AKHIR PERBAIKAN --- */}
             </span>
           </div>
           
@@ -90,6 +101,19 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ user, isScroll
               <span className="text-sm font-medium">Dashboard</span>
             </Link>
             
+            {/* --- TAMBAHAN: Link khusus Super Admin (Opsional) --- */}
+            {user.role === 'super_admin' && (
+              <Link
+                href="/admin/venues" // Contoh: Halaman manajemen semua venue
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <MapPin size={18} />
+                <span className="text-sm font-medium">Semua Venue</span>
+              </Link>
+            )}
+            {/* --- AKHIR TAMBAHAN --- */}
+
             {user.role === 'customer' && (
               <Link
                 href="/customer/bookings"

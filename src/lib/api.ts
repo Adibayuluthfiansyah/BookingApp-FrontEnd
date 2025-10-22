@@ -1,3 +1,5 @@
+// src/lib/api.ts
+
 import { ApiResponse, User, LoginResponse, Venue, TimeSlotWithStatus } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
@@ -365,15 +367,28 @@ export const createBooking = async (bookingData: {
   customer_email: string;
   notes?: string;
 }): Promise<ApiResponse<{ booking: any; snap_token: string }>> => {
+  
+  // ✅ Ambil token jika ada (optional)
+  const token = getToken();
+
   try {
     console.log('Creating booking with data:', bookingData);
+    console.log('User logged in:', !!token); // Log status login
+    
+    // ✅ Buat headers dasar
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+
+    // ✅ Tambahkan Authorization header HANYA jika user login
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     
     const response = await fetch(`${API_BASE_URL}/bookings`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
+      headers,
       body: JSON.stringify(bookingData),
     });
 
@@ -393,6 +408,8 @@ export const createBooking = async (bookingData: {
     };
   }
 };
+
+
 
 export const getBookingStatus = async (bookingNumber: string): Promise<ApiResponse<any>> => {
   try {
@@ -452,6 +469,12 @@ export const getAdminDashboardStats = async (): Promise<ApiResponse> => {
     });
 
     if (!response.ok) {
+      // --- PERBAIKAN: Tangani error 401/403 ---
+      if (response.status === 401 || response.status === 403) {
+        clearAuthData();
+        window.location.href = '/login'; // Paksa ke login
+      }
+      // --- AKHIR PERBAIKAN ---
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
@@ -604,3 +627,5 @@ export const getCustomerBookings = async (): Promise<ApiResponse> => {
     };
   }
 };
+
+

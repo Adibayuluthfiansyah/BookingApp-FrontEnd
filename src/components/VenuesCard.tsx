@@ -30,32 +30,37 @@ const VenuesCard: React.FC<VenuesCardProps> = ({ venue, viewMode = 'grid' }) => 
   // Get minimum price dari fields
   const getMinPrice = () => {
     // Debug log
-    console.log('Venue:', venue.name);
-    console.log('Fields:', venue.fields);
+    // console.log('Venue:', venue.name);
+    // console.log('Fields:', venue.fields);
     
     if (!venue.fields || venue.fields.length === 0) {
-      console.log('No fields found');
+      // console.log('No fields found');
       return 0;
     }
     
     let minPrice = Infinity;
     
     venue.fields.forEach(field => {
-      console.log('Field:', field.name, 'Time slots:', field.time_slots || field.time_slots);
+      // console.log('Field:', field.name, 'Time slots:', field.time_slots);
       
-      const slots = field.time_slots || field.time_slots || [];
+      // --- PERBAIKAN: Hapus duplikasi 'field.time_slots' ---
+      const slots = field.time_slots || [];
+      // --- AKHIR PERBAIKAN ---
       
       if (slots && slots.length > 0) {
         slots.forEach(slot => {
-          if (slot.price && slot.price < minPrice) {
-            minPrice = slot.price;
+          // --- PERBAIKAN: Konversi harga ke Angka dan cek validitasnya ---
+          const price = Number(slot.price);
+          if (!isNaN(price) && price < minPrice) {
+            minPrice = price;
           }
+          // --- AKHIR PERBAIKAN ---
         });
       }
     });
     
     const finalPrice = minPrice === Infinity ? 0 : minPrice;
-    console.log('Min price for', venue.name, ':', finalPrice);
+    // console.log('Min price for', venue.name, ':', finalPrice);
     
     return finalPrice;
   }

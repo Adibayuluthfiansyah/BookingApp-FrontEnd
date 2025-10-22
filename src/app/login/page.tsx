@@ -24,11 +24,13 @@ export default function UnifiedLoginPage() {
   // Redirect jika sudah login
   useEffect(() => {
     if (isAuthenticated && user) {
-      if (user.role === 'admin') {
+      // --- PERBAIKAN: Tambahkan cek 'super_admin' ---
+      if (user.role === 'admin' || user.role === 'super_admin') {
         router.push('/admin/dashboard');
       } else if (user.role === 'customer') {
         router.push('/');
       }
+      // --- AKHIR PERBAIKAN ---
     }
   }, [isAuthenticated, user, router]);
 
@@ -63,11 +65,13 @@ export default function UnifiedLoginPage() {
 
         // Redirect berdasarkan role
         setTimeout(() => {
-          if (loggedUser?.role === 'admin') {
+          // --- PERBAIKAN: Tambahkan cek 'super_admin' ---
+          if (loggedUser?.role === 'admin' || loggedUser?.role === 'super_admin') {
             router.push('/admin/dashboard');
           } else {
             router.push('/'); // Beranda untuk customer
           }
+          // --- AKHIR PERBAIKAN ---
         }, 1000);
       } else {
         // Toast error

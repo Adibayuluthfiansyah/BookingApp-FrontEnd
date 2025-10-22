@@ -8,7 +8,8 @@ import {
   TrendingUp, 
   Clock,
   CheckCircle,
-  XCircle
+  XCircle,
+  AlertCircle // <-- TAMBAHKAN INI
 } from 'lucide-react';
 import { getAdminDashboardStats } from '@/lib/api';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -21,12 +22,19 @@ interface DashboardStats {
   recent_bookings: any[];
   bookings_by_status: Record<string, number>;
   revenue_by_venue: Array<{ venue_name: string; revenue: number }>;
+  // --- TAMBAHAN (OPSIONAL): Untuk menampilkan info superadmin ---
+  user_role?: string;
+  managed_venues_count?: number | string;
+  // --- AKHIR TAMBAHAN ---
 }
 
 export default function AdminDashboardPage() {
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  // --- PERBAIKAN: Tambahkan state error ---
+  const [error, setError] = useState<string | null>(null);
+  // --- AKHIR PERBAIKAN ---
 
   useEffect(() => {
     loadDashboardStats();
@@ -35,13 +43,22 @@ export default function AdminDashboardPage() {
   const loadDashboardStats = async () => {
     try {
       setLoading(true);
+      setError(null); // Reset error
       const result = await getAdminDashboardStats();
       
       if (result.success && result.data) {
         setStats(result.data);
+      } else {
+        // --- PERBAIKAN: Set error jika API gagal ---
+        console.error("API Error:", result.message);
+        setError(result.message || 'Gagal mengambil data dashboard');
       }
-    } catch (err) {
+      // --- AKHIR PERBAIKAN ---
+    } catch (err: any) {
       console.error('Error loading dashboard:', err);
+      // --- PERBAIKAN: Set error jika terjadi exception ---
+      setError(err.message || 'Terjadi kesalahan saat memuat data');
+      // --- AKHIR PERBAIKAN ---
     } finally {
       setLoading(false);
     }
@@ -73,8 +90,9 @@ export default function AdminDashboardPage() {
     const badges: Record<string, { color: string; label: string; icon: any }> = {
       pending: { color: 'bg-yellow-100 text-yellow-800', label: 'Pending', icon: Clock },
       confirmed: { color: 'bg-green-100 text-green-800', label: 'Confirmed', icon: CheckCircle },
+      paid: { color: 'bg-blue-100 text-blue-800', label: 'Paid', icon: CheckCircle }, // Tambah status 'paid'
       cancelled: { color: 'bg-red-100 text-red-800', label: 'Cancelled', icon: XCircle },
-      completed: { color: 'bg-blue-100 text-blue-800', label: 'Completed', icon: CheckCircle },
+      completed: { color: 'bg-indigo-100 text-indigo-800', label: 'Completed', icon: CheckCircle },
     };
     
     const badge = badges[status] || badges.pending;
@@ -101,11 +119,31 @@ export default function AdminDashboardPage() {
     );
   }
 
+  // --- PERBAIKAN: Tampilkan pesan error ---
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="text-center py-12 pt-50">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-red-600 mb-2">Gagal Memuat Dashboard</p>
+          <p className="text-gray-600 mb-4 text-sm">{error}</p>
+          <button
+            onClick={loadDashboardStats}
+            className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+          >
+            Coba Lagi
+          </button>
+        </div>
+      </AdminLayout>
+    );
+  }
+  // --- AKHIR PERBAIKAN ---
+
   if (!stats) {
     return (
       <AdminLayout>
         <div className="text-center py-12">
-          <p className="text-gray-600">Gagal memuat data</p>
+          <p className="text-gray-600">Data tidak ditemukan</p>
           <button
             onClick={loadDashboardStats}
             className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
@@ -119,8 +157,24 @@ export default function AdminDashboardPage() {
 
   return (
     <AdminLayout >
+      {/* --- TAMBAHAN: Info Super Admin --- */}
+      {stats.user_role === 'super_admin' && (
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6 pt-20">
+          <p className="font-bold">Mode Super Admin</p>
+          <p>Anda melihat statistik gabungan dari {stats.managed_venues_count} venue.</p>
+        </div>
+      )}
+      {stats.user_role === 'admin' && (
+         <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded-lg mb-6 pt-20">
+          <p className="font-bold">Mode Admin</p>
+          <p>Anda melihat statistik untuk {stats.managed_venues_count} venue yang Anda kelola.</p>
+        </div>
+      )}
+      {/* --- AKHIR TAMBAHAN --- */}
+
+
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 pt-20">
+      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 ${stats.user_role ? '' : 'pt-20'}`}>
         <StatsCard
           title="Pendapatan Hari Ini"
           value={formatCurrency(stats.today.revenue)}
@@ -165,25 +219,29 @@ export default function AdminDashboardPage() {
         <div className="bg-white rounded-xl shadow p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Booking by Status</h3>
           <div className="space-y-3">
-            {Object.entries(stats.bookings_by_status).map(([status, count]) => {
-              const total = Object.values(stats.bookings_by_status).reduce((a, b) => a + b, 0);
-              const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : '0';
-              
-              return (
-                <div key={status}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-gray-700 capitalize">{status}</span>
-                    <span className="text-sm text-gray-600">{count} ({percentage}%)</span>
+            {Object.keys(stats.bookings_by_status).length > 0 ? (
+              Object.entries(stats.bookings_by_status).map(([status, count]) => {
+                const total = Object.values(stats.bookings_by_status).reduce((a, b) => a + b, 0);
+                const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : '0';
+                
+                return (
+                  <div key={status}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium text-gray-700 capitalize">{status}</span>
+                      <span className="text-sm text-gray-600">{count} ({percentage}%)</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-orange-500 h-2 rounded-full transition-all"
+                        style={{ width: `${percentage}%` }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-orange-500 h-2 rounded-full transition-all"
-                      style={{ width: `${percentage}%` }}
-                    ></div>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            ) : (
+              <p className="text-gray-500 text-sm">Belum ada data status booking.</p>
+            )}
           </div>
         </div>
 
@@ -191,19 +249,23 @@ export default function AdminDashboardPage() {
         <div className="bg-white rounded-xl shadow p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Top 5 Venue by Revenue</h3>
           <div className="space-y-3">
-            {stats.revenue_by_venue.map((venue, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-bold text-orange-600">#{index + 1}</span>
+            {stats.revenue_by_venue && stats.revenue_by_venue.length > 0 ? (
+              stats.revenue_by_venue.map((venue, index) => (
+                <div key={venue.venue_id || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-bold text-orange-600">#{index + 1}</span>
+                    </div>
+                    <span className="font-medium text-gray-900">{venue.venue_name}</span>
                   </div>
-                  <span className="font-medium text-gray-900">{venue.venue_name}</span>
+                  <span className="text-sm font-semibold text-green-600">
+                    {formatCurrency(venue.revenue)}
+                  </span>
                 </div>
-                <span className="text-sm font-semibold text-green-600">
-                  {formatCurrency(venue.revenue)}
-                </span>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-gray-500 text-sm">Belum ada data revenue per venue.</p>
+            )}
           </div>
         </div>
       </div>
