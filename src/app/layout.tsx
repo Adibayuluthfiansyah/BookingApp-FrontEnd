@@ -36,6 +36,7 @@ export default function RootLayout({
           theme="dark"
           richColors
           closeButton
+          duration={3000}
         />
             </ClientLayout>
       </body>

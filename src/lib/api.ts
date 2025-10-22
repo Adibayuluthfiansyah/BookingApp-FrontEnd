@@ -76,14 +76,14 @@ export const logout = async (): Promise<ApiResponse> => {
     });
 
     const data = await response.json();
-
-    if (data.success) {
-      clearAuthData();
-    }
+    
+    // ALWAYS clear auth data regardless of response
+    clearAuthData();
 
     return data;
   } catch (error) {
     console.error('Logout error:', error);
+    // Clear auth data even on error
     clearAuthData();
     return {
       success: true,
