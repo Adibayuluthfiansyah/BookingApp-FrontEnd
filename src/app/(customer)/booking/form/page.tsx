@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, User, Phone, Mail, MessageSquare, Calendar, Clock, AlertCircle, CheckCircle } from 'lucide-react'
 import { createBooking } from '@/lib/api'
 import Script from 'next/script'
+import { useAuth } from '@/app/contexts/AuthContext' // <-- 1. Import useAuth
 
 declare global {
   interface Window {
@@ -27,7 +28,8 @@ interface BookingData {
 export default function BookingFormPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  
+  const { user } = useAuth() // <-- 2. Gunakan hook useAuth
+
   const [bookingData, setBookingData] = useState<BookingData | null>(null)
   const [formData, setFormData] = useState({
     customerName: '',
@@ -42,7 +44,20 @@ export default function BookingFormPage() {
 
   useEffect(() => {
     loadBookingData()
-  }, [])
+
+    // --- 3. PERBAIKAN: Isi form jika user sudah login ---
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        customerName: user.name || '',
+        customerEmail: user.email || '',
+        // Pastikan model User Anda punya 'phone', jika tidak, hapus baris ini
+        customerPhone: user.phone || '' 
+      }))
+    }
+    // --- AKHIR PERBAIKAN ---
+
+  }, [user]) // <-- 4. Tambahkan 'user' sebagai dependency
 
   const loadBookingData = () => {
     try {
@@ -58,8 +73,8 @@ export default function BookingFormPage() {
       const data = JSON.parse(savedData)
       console.log('Loaded booking data:', data)
 
-      // Validate required fields
-      if (!data.timeSlotId || !data.fieldId || !data.date || !data.price) {
+      // Validate required fields (cek harga juga)
+      if (!data.timeSlotId || !data.fieldId || !data.date || data.price === undefined || data.price === null) {
         console.error('Invalid booking data:', data)
         setError('Data booking tidak lengkap. Silakan pilih slot lagi.')
         sessionStorage.removeItem('bookingData')
@@ -194,9 +209,14 @@ export default function BookingFormPage() {
         })
 
       } else {
+        // Tangani error dari API, termasuk jika token tidak valid
         const errorMessage = result.message || 'Gagal membuat booking. Silakan coba lagi.'
         console.error('=== BOOKING FAILED ===', errorMessage)
         setError(errorMessage)
+        // Jika error adalah autentikasi, mungkin perlu redirect ke login
+        if (errorMessage.includes('Autentikasi gagal')) {
+           // Contoh: setTimeout(() => router.push('/login'), 2000);
+        }
         setIsLoading(false)
       }
 
@@ -217,17 +237,23 @@ export default function BookingFormPage() {
   }
 
   const formatTime = (time: string) => {
-    return time.substring(0, 5)
+    return time ? time.substring(0, 5) : '-' // Tambah pengecekan null/undefined
   }
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return new Intl.DateTimeFormat('id-ID', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }).format(date)
+    if (!dateString) return '-' // Tambah pengecekan null/undefined
+    try {
+      const date = new Date(dateString)
+      return new Intl.DateTimeFormat('id-ID', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }).format(date)
+    } catch (e) {
+      console.error("Invalid date format:", dateString);
+      return 'Invalid Date';
+    }
   }
 
   // Loading or error state
@@ -247,13 +273,13 @@ export default function BookingFormPage() {
   if (!bookingData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
+        <div className="text-xl">Memuat data booking...</div>
       </div>
     )
   }
 
   const adminFee = 5000
-  const totalAmount = bookingData.price + adminFee
+  const totalAmount = (bookingData.price || 0) + adminFee // Pastikan price ada nilainya
 
   return (
     <>
@@ -261,22 +287,33 @@ export default function BookingFormPage() {
       <Script
         src={process.env.NEXT_PUBLIC_MIDTRANS_SNAP_URL || "https://app.sandbox.midtrans.com/snap/snap.js"}
         data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
-        strategy="afterInteractive"
+        // --- 5. PERBAIKAN: Gunakan strategy yang tepat ---
+        strategy="afterInteractive" 
+        // --- AKHIR PERBAIKAN ---
         onLoad={() => {
           console.log('=== MIDTRANS SCRIPT LOADED ===')
-          setTimeout(() => {
-            if (typeof window !== 'undefined' && window.snap) {
-              console.log('✅ window.snap is AVAILABLE')
-              setSnapLoaded(true)
-            } else {
-              console.error('❌ window.snap is NOT AVAILABLE')
-              setError('Gagal memuat sistem pembayaran. Silakan refresh halaman.')
-            }
-          }, 500)
+          // --- 6. PERBAIKAN: Hapus setTimeout, cek langsung ---
+          if (typeof window !== 'undefined' && window.snap) {
+            console.log('✅ window.snap is AVAILABLE')
+            setSnapLoaded(true)
+          } else {
+            console.error('❌ window.snap is NOT AVAILABLE after onLoad')
+            // Coba lagi setelah delay singkat, sebagai fallback
+            setTimeout(() => {
+              if (typeof window !== 'undefined' && window.snap) {
+                console.log('✅ window.snap is AVAILABLE after delay')
+                setSnapLoaded(true)
+              } else {
+                 console.error('❌ window.snap still NOT AVAILABLE')
+                 setError('Gagal memuat sistem pembayaran. Silakan refresh halaman.')
+              }
+            }, 300); // Delay singkat
+          }
+          // --- AKHIR PERBAIKAN ---
         }}
-        onError={() => {
-          console.error('=== MIDTRANS SCRIPT ERROR ===')
-          setError('Gagal memuat sistem pembayaran Midtrans')
+        onError={(e) => { // Tambah parameter error
+          console.error('=== MIDTRANS SCRIPT ERROR ===', e)
+          setError('Gagal memuat script pembayaran Midtrans. Periksa koneksi internet atau coba refresh.')
         }}
       />
 
@@ -348,6 +385,7 @@ export default function BookingFormPage() {
                           validationErrors.customerName ? 'border-red-300' : ''
                         }`}
                         placeholder="Masukkan nama lengkap"
+                        required // Tambah required HTML5
                       />
                     </div>
                     {validationErrors.customerName && (
@@ -371,6 +409,7 @@ export default function BookingFormPage() {
                           validationErrors.customerPhone ? 'border-red-300' : ''
                         }`}
                         placeholder="08xxxxxxxxxx"
+                        required // Tambah required HTML5
                       />
                     </div>
                     {validationErrors.customerPhone && (
@@ -394,6 +433,7 @@ export default function BookingFormPage() {
                           validationErrors.customerEmail ? 'border-red-300' : ''
                         }`}
                         placeholder="email@example.com"
+                        required // Tambah required HTML5
                       />
                     </div>
                     {validationErrors.customerEmail && (
@@ -464,12 +504,12 @@ export default function BookingFormPage() {
                 <div className="space-y-4 mb-6">
                   <div>
                     <div className="text-sm text-gray-600 mb-1">Venue</div>
-                    <div className="font-medium">{bookingData.venueName}</div>
+                    <div className="font-medium">{bookingData.venueName || '-'}</div>
                   </div>
 
                   <div>
                     <div className="text-sm text-gray-600 mb-1">Lapangan</div>
-                    <div className="font-medium">{bookingData.fieldName}</div>
+                    <div className="font-medium">{bookingData.fieldName || '-'}</div>
                   </div>
 
                   <div className="flex items-center gap-3">
@@ -494,7 +534,7 @@ export default function BookingFormPage() {
                 <div className="border-t pt-4 space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Harga Sewa</span>
-                    <span className="font-medium">{formatCurrency(bookingData.price)}</span>
+                    <span className="font-medium">{formatCurrency(bookingData.price || 0)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Biaya Admin</span>
