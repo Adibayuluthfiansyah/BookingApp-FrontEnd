@@ -22,19 +22,15 @@ interface DashboardStats {
   recent_bookings: any[];
   bookings_by_status: Record<string, number>;
   revenue_by_venue: Array<{ venue_name: string; revenue: number }>;
-  // --- TAMBAHAN (OPSIONAL): Untuk menampilkan info superadmin ---
   user_role?: string;
   managed_venues_count?: number | string;
-  // --- AKHIR TAMBAHAN ---
 }
 
 export default function AdminDashboardPage() {
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
-  // --- PERBAIKAN: Tambahkan state error ---
   const [error, setError] = useState<string | null>(null);
-  // --- AKHIR PERBAIKAN ---
 
   useEffect(() => {
     loadDashboardStats();
@@ -87,7 +83,7 @@ export default function AdminDashboardPage() {
     const badges: Record<string, { color: string; label: string; icon: any }> = {
       pending: { color: 'bg-yellow-100 text-yellow-800', label: 'Pending', icon: Clock },
       confirmed: { color: 'bg-green-100 text-green-800', label: 'Confirmed', icon: CheckCircle },
-      paid: { color: 'bg-blue-100 text-blue-800', label: 'Paid', icon: CheckCircle }, // Tambah status 'paid'
+      paid: { color: 'bg-blue-100 text-blue-800', label: 'Paid', icon: CheckCircle }, 
       cancelled: { color: 'bg-red-100 text-red-800', label: 'Cancelled', icon: XCircle },
       completed: { color: 'bg-indigo-100 text-indigo-800', label: 'Completed', icon: CheckCircle },
     };
@@ -134,7 +130,6 @@ export default function AdminDashboardPage() {
       </AdminLayout>
     );
   }
-  // --- AKHIR PERBAIKAN ---
 
   if (!stats) {
     return (
@@ -154,20 +149,21 @@ export default function AdminDashboardPage() {
 
   return (
     <AdminLayout >
-      {/* --- TAMBAHAN: Info Super Admin --- */}
-      {stats.user_role === 'super_admin' && (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6 pt-20">
-          <p className="font-bold">Mode Super Admin</p>
-          <p>Anda melihat statistik gabungan dari {stats.managed_venues_count} venue.</p>
+        {/* --- TAMBAHAN: Info Super Admin --- */}
+        <div className='pt-12  justify-center'>
+          {stats.user_role === 'super_admin' && (
+            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6 text-center">
+              <p className="font-bold">Mode Super Admin</p>
+              <p>Anda melihat statistik gabungan dari {stats.managed_venues_count} venue.</p>
+            </div>
+          )}
+          {stats.user_role === 'admin' && (
+            <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded-lg mb-6 text-center">
+              <p className="font-bold">Mode Admin</p>
+              <p>Anda melihat statistik untuk {stats.managed_venues_count} venue yang Anda kelola.</p>
+            </div>
+          )}
         </div>
-      )}
-      {stats.user_role === 'admin' && (
-         <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded-lg mb-6 pt-20">
-          <p className="font-bold">Mode Admin</p>
-          <p>Anda melihat statistik untuk {stats.managed_venues_count} venue yang Anda kelola.</p>
-        </div>
-      )}
-      {/* --- AKHIR TAMBAHAN --- */}
 
 
       {/* Stats Grid */}

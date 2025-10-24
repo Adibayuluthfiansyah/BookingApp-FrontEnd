@@ -345,6 +345,73 @@ export const getAdminFields = async (): Promise<ApiResponse<Field[]>> => {
   }
 };
 
+export const getAdminFieldDetail = async (id: number): Promise<ApiResponse<Field>> => {
+  const token = getToken();
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/fields/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) throw new Error('Gagal mengambil data lapangan');
+    return await response.json();
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+};
+
+export const createAdminField = async (data: {
+  name: string;
+  venue_id: number;
+  field_type: string;
+  description?: string;
+}): Promise<ApiResponse<Field>> => {
+  const token = getToken();
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/fields`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.message || 'Gagal membuat lapangan');
+    return result;
+  } catch (error: any) {
+    return { success: false, message: error.message, errors: error.errors };
+  }
+};
+
+export const updateAdminField = async (id: number, data: {
+  name: string;
+  field_type: string;
+  description?: string;
+}): Promise<ApiResponse<Field>> => {
+  const token = getToken();
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/fields/${id}`, {
+      method: 'PUT', // Gunakan PUT (sesuai apiResource)
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.message || 'Gagal mengupdate lapangan');
+    return result;
+  } catch (error: any) {
+    return { success: false, message: error.message, errors: error.errors };
+  }
+};
+
 export const deleteAdminField = async (id: number): Promise<ApiResponse> => {
   const token = getToken();
 
