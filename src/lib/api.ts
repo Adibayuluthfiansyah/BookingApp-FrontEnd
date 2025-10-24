@@ -1,6 +1,6 @@
 // src/lib/api.ts
 
-import { ApiResponse, User, LoginResponse, Venue, TimeSlotWithStatus } from "@/types";
+import { ApiResponse, User, LoginResponse, Venue, TimeSlotWithStatus , Field} from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
 
@@ -79,13 +79,11 @@ export const logout = async (): Promise<ApiResponse> => {
 
     const data = await response.json();
     
-    // ALWAYS clear auth data regardless of response
     clearAuthData();
 
     return data;
   } catch (error) {
     console.error('Logout error:', error);
-    // Clear auth data even on error
     clearAuthData();
     return {
       success: true,
@@ -311,6 +309,61 @@ export const deleteVenue = async (id: number): Promise<ApiResponse> => {
     return {
       success: false,
       message: 'Gagal menghapus venue'
+    };
+  }
+};
+
+
+
+// ==================== Admin Field Management ====================
+
+export const getAdminFields = async (): Promise<ApiResponse<Field[]>> => {
+  const token = getToken();
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/fields`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching admin fields:', error);
+    return {
+      success: false,
+      message: 'Gagal mengambil data lapangan',
+      data: []
+    };
+  }
+};
+
+export const deleteAdminField = async (id: number): Promise<ApiResponse> => {
+  const token = getToken();
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/fields/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting field:', error);
+    return {
+      success: false,
+      message: 'Gagal menghapus lapangan'
     };
   }
 };

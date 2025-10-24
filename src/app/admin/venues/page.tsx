@@ -1,22 +1,52 @@
-// app/admin/venues/page.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { MOCK_VENUES, formatCurrency } from '@/lib/utils';
+import { toast } from 'sonner';
+import { AlertCircle, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
+import { getAdminVenues, deleteVenue } from '@/lib/api';
+import { Venue } from '@/types'; 
+import Image from 'next/image';
 
 export default function AdminVenuesPage() {
-  const [venues, setVenues] = useState(MOCK_VENUES);
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [venueToDelete, setVenueToDelete] = useState<number | null>(null);
 
+  useEffect(() => {
+    loadVenues();
+  }, []);
+
+  const loadVenues = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await getAdminVenues(); 
+      if (result.success && result.data) {
+        setVenues(result.data);
+      } else {
+        setError(result.message || 'Gagal mengambil data venue.');
+        toast.error(result.message || 'Gagal mengambil data venue.');
+      }
+    } catch (err: any) {
+      const message = err.message || 'Terjadi kesalahan saat memuat data.';
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredVenues = venues.filter(venue =>
     venue.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    venue.address.toLowerCase().includes(searchTerm.toLowerCase())
+    (venue.address && venue.address.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleDeleteVenue = (venueId: number) => {
@@ -24,11 +54,21 @@ export default function AdminVenuesPage() {
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (venueToDelete) {
-      setVenues(venues.filter(v => v.id !== venueToDelete));
-      setShowDeleteModal(false);
-      setVenueToDelete(null);
+      try {
+        const result = await deleteVenue(venueToDelete); 
+        if (result.success) {
+          toast.success('Venue berhasil dihapus.');
+          setShowDeleteModal(false);
+          setVenueToDelete(null);
+          loadVenues(); // Muat ulang daftar venue
+        } else {
+          toast.error(result.message || 'Gagal menghapus venue.');
+        }
+      } catch (err: any) {
+        toast.error(err.message || 'Terjadi kesalahan saat menghapus.');
+      }
     }
   };
 
@@ -37,152 +77,140 @@ export default function AdminVenuesPage() {
       <div className="py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 pt-12">
             <div>
               <h1 className="text-2xl font-semibold text-gray-900">Venue Management</h1>
               <p className="text-gray-600">Kelola semua venue dan lapangan</p>
             </div>
-            <Button>
+            <Button asChild>
               <Link href="/admin/venues/create" className="flex items-center">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
+                <PlusCircle className="w-5 h-5 mr-2" />
                 Add New Venue
               </Link>
             </Button>
           </div>
 
-          {/* Search and Filters */}
+          {/* Search Card */}
           <Card className="p-6 mb-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  placeholder="Search venues..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div className="flex gap-2">
-                <select className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                  <option>All Status</option>
-                  <option>Active</option>
-                  <option>Inactive</option>
-                </select>
-                <select className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                  <option>All Types</option>
-                  <option>Futsal</option>
-                  <option>Mini Soccer</option>
-                </select>
-              </div>
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="Cari venue berdasarkan nama atau alamat..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
             </div>
           </Card>
 
           {/* Venues Table */}
           <Card className="overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">
-                All Venues ({filteredVenues.length})
-              </h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Venue
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Location
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Fields
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Price/Hour
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Rating
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredVenues.map((venue) => (
-                    <tr key={venue.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <img
-                            className="h-10 w-10 rounded-lg object-cover"
-                            src={venue.image}
-                            alt={venue.name}
-                          />
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {venue.name}
+            {loading ? (
+              <div className="text-center p-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+                <p className="text-gray-600">Memuat data venue...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center p-12 text-red-600">
+                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                <p className="font-semibold">Gagal Memuat Data</p>
+                <p className="text-sm text-gray-600 mb-4">{error}</p>
+                <Button onClick={loadVenues}>Coba Lagi</Button>
+              </div>
+            ) : (
+              <>
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-900">
+                    All Venues ({filteredVenues.length})
+                  </h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Venue
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Location
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Total Fields
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {filteredVenues.map((venue) => (
+                        <tr key={venue.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="h-10 w-10 rounded-xl overflow-hidden relative flex-shrink-0">
+                                <Image
+                                  src={venue.image_url || '/placeholder-image.jpg'}
+                                  alt={venue.name}
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {venue.name}
+                                </div>
+                                <div className="text-sm text-gray-500 truncate max-w-xs">
+                                  {venue.description || 'N/A'}
+                                </div>
+                              </div>
                             </div>
-                            <div className="text-sm text-gray-500 truncate max-w-xs">
-                              {venue.description}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900 max-w-xs truncate">
+                              {venue.address || 'N/A'}
                             </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 max-w-xs truncate">
-                          {venue.address}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {venue.fields.length} fields
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {venue.fields.filter(f => f.status === 'active').length} active
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {formatCurrency(venue.price_per_hour)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <span className="text-yellow-400 mr-1">★</span>
-                          <span className="text-sm text-gray-900">{venue.rating}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                          Active
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end space-x-2">
-                          <Link href={`/admin/venues/${venue.id}`}>
-                            <Button variant="outline" size="sm">
-                              Edit
-                            </Button>
-                          </Link>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteVenue(venue.id)}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                            <div className="text-sm text-gray-500">
+                              {venue.city || 'N/A'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {/* (PERBAIKAN) Hitung dari relasi 'fields' */}
+                              {venue.fields?.length || 0} fields
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {/* (Asumsi status, bisa disesuaikan jika ada di API) */}
+                            <span className="inline-flex px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                              Active
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex items-center justify-end space-x-2">
+                              <Button asChild variant="outline" size="sm">
+                                <Link href={`/admin/venues/${venue.id}`}>
+                                  Edit
+                                </Link>
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDeleteVenue(venue.id)}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
           </Card>
         </div>
       </div>
@@ -195,7 +223,7 @@ export default function AdminVenuesPage() {
               Delete Venue
             </h3>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to delete this venue? This action cannot be undone.
+              Apakah Anda yakin ingin menghapus venue ini? Tindakan ini akan menghapus semua lapangan dan data terkait.
             </p>
             <div className="flex justify-end space-x-3">
               <Button

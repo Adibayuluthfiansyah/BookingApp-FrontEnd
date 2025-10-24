@@ -4,11 +4,11 @@ import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, 
   Calendar, 
-  MapPin, 
-  Users, 
+  MapPin,  
   Settings,
   X,
-  Home
+  Home,
+  RectangleHorizontal 
 } from 'lucide-react';
 
 interface AdminSidebarProps {
@@ -33,9 +33,9 @@ const menuItems = [
     path: '/admin/venues',
   },
   {
-    label: 'Customers',
-    icon: Users,
-    path: '/admin/customers',
+    label: 'Fields',
+    icon: RectangleHorizontal, // Menggunakan icon baru
+    path: '/admin/fields',
   },
   {
     label: 'Settings',
@@ -100,7 +100,9 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           {/* Menu Items */}
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.path || pathname?.startsWith(item.path + '/');
+            const isActive = pathname === item.path || (pathname.startsWith(item.path) && item.path !== '/admin/dashboard');
+            const isDashboardActive = (pathname === '/admin/dashboard' && item.path === '/admin/dashboard');
+            const finalIsActive = (item.path === '/admin/dashboard') ? isDashboardActive : isActive;
 
             return (
               <button
@@ -109,7 +111,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 className={`
                   w-full flex items-center gap-3 px-4 py-3 rounded-lg transition group
                   ${
-                    isActive
+                    finalIsActive
                       ? 'bg-orange-500 text-white'
                       : 'text-gray-700 hover:bg-gray-100'
                   }
