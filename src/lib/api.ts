@@ -455,11 +455,14 @@ export const cancelBooking = async (bookingNumber: string): Promise<ApiResponse<
 
 // ==================== Admin API Functions ====================
 
-export const getAdminDashboardStats = async (): Promise<ApiResponse> => {
+export const getAdminDashboardStats = async (timezone:string): Promise<ApiResponse> => {
   const token = getToken();
 
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/dashboard`, {
+    const queryParams = new URLSearchParams();
+    queryParams.append('tz', timezone);
+    const url = `${API_BASE_URL}/admin/dashboard?${queryParams.toString()}`;
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -469,12 +472,10 @@ export const getAdminDashboardStats = async (): Promise<ApiResponse> => {
     });
 
     if (!response.ok) {
-      // --- PERBAIKAN: Tangani error 401/403 ---
       if (response.status === 401 || response.status === 403) {
         clearAuthData();
-        window.location.href = '/login'; // Paksa ke login
+        window.location.href = '/login'; 
       }
-      // --- AKHIR PERBAIKAN ---
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 

@@ -43,22 +43,19 @@ export default function AdminDashboardPage() {
   const loadDashboardStats = async () => {
     try {
       setLoading(true);
-      setError(null); // Reset error
-      const result = await getAdminDashboardStats();
+      setError(null); 
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const result = await getAdminDashboardStats(userTimezone);
       
       if (result.success && result.data) {
         setStats(result.data);
       } else {
-        // --- PERBAIKAN: Set error jika API gagal ---
         console.error("API Error:", result.message);
         setError(result.message || 'Gagal mengambil data dashboard');
       }
-      // --- AKHIR PERBAIKAN ---
     } catch (err: any) {
       console.error('Error loading dashboard:', err);
-      // --- PERBAIKAN: Set error jika terjadi exception ---
       setError(err.message || 'Terjadi kesalahan saat memuat data');
-      // --- AKHIR PERBAIKAN ---
     } finally {
       setLoading(false);
     }
