@@ -137,33 +137,36 @@ export default function AdminFieldsPage() {
         </div>
       </div>
 
-      {/* (PERBAIKAN) Modal Konfirmasi Delete */}
-      {showDeleteModal && fieldToDelete && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="p-6 max-w-md w-full">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Delete Field
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Apakah Anda yakin ingin menghapus lapangan <strong>{fieldToDelete.name}</strong>? Tindakan ini tidak dapat dibatalkan.
-            </p>
-            <div className="flex justify-end space-x-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowDeleteModal(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={confirmDelete}
-              >
-                Delete
-              </Button>
+            {/* Modal Konfirmasi Delete */}
+        {showDeleteModal && fieldToDelete && (
+          <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-2xl p-6 max-w-md w-full border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Delete Field
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Apakah Anda yakin ingin menghapus lapangan <strong>{fieldToDelete.name}</strong>? Tindakan ini tidak dapat dibatalkan.
+              </p>
+              <div className="flex justify-end space-x-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setFieldToDelete(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={confirmDelete}
+                >
+                  Delete
+                </Button>
+              </div>
             </div>
-          </Card>
-        </div>
-      )}
+          </div>
+        )}
     </AdminLayout>
   );
 }
