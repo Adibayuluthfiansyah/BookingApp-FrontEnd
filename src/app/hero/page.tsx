@@ -25,7 +25,7 @@ export default function Hero() {
             transition={{ duration: 0.8 }}
             className="font-bold text-5xl capitalize mb-10"
           >
-            Booking Lapangan Minisoccer Dan Futsal Mudah Dan Cepat
+            Lorem ipsum dolor, sit amet consectetur adipisicing elit.
           </motion.h1>
 
           <motion.p
