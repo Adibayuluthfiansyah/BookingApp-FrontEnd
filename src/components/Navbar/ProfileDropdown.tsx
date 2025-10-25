@@ -44,14 +44,12 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ user, isScroll
     // --- PERBAIKAN: Tambahkan 'super_admin' ---
     if (user?.role === 'admin' || user?.role === 'super_admin') return '/admin/dashboard'
     // --- AKHIR PERBAIKAN ---
-    if (user?.role === 'customer') return '/customer/dashboard' // Arahkan customer ke dashboard mereka
+    if (user?.role === 'customer') return '/dash-customer' // Arahkan customer ke dashboard mereka
     return '#'
   }
 
   return (
-    // --- PERBAIKAN: Tambahkan class 'profile-dropdown' ---
     <div className="relative profile-dropdown">
-    {/* --- AKHIR PERBAIKAN --- */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center gap-2 px-4 py-3 rounded-full font-medium transition-all duration-300 cursor-pointer transform hover:scale-105 border ${
@@ -77,17 +75,14 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ user, isScroll
             <p className="text-sm font-semibold text-gray-900">{user.name}</p>
             <p className="text-xs text-gray-500 truncate">{user.email}</p>
             <span className={`inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full ${
-              // --- PERBAIKAN: Styling untuk 'super_admin' ---
               user.role === 'super_admin'
                 ? 'bg-red-100 text-red-700'
                 : user.role === 'admin' 
                 ? 'bg-purple-100 text-purple-700' 
                 : 'bg-blue-100 text-blue-700'
-              // --- AKHIR PERBAIKAN ---
             }`}>
-              {/* --- PERBAIKAN: Tampilkan "Super Admin" --- */}
+              {/*Super Admin*/}
               {user.role === 'super_admin' ? 'Super Admin' : user.role}
-              {/* --- AKHIR PERBAIKAN --- */}
             </span>
           </div>
           
@@ -104,7 +99,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ user, isScroll
             {/* --- TAMBAHAN: Link khusus Super Admin (Opsional) --- */}
             {user.role === 'super_admin' && (
               <Link
-                href="/admin/venues" // Contoh: Halaman manajemen semua venue
+                href="/admin/venues" 
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
               >
@@ -116,7 +111,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ user, isScroll
 
             {user.role === 'customer' && (
               <Link
-                href="/customer/bookings"
+                href="/my-bookings"
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
               >
