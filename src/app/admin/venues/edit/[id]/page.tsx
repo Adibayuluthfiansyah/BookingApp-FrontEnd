@@ -8,14 +8,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { ArrowLeft, CheckCircle, AlertTriangle } from 'lucide-react'; // Ganti icon error
+import { ArrowLeft, CheckCircle, AlertTriangle } from 'lucide-react'; 
 import { getVenueById, updateVenue } from '@/lib/api'; 
 import { Venue } from '@/types';
 
 export default function EditVenuePage() {
   const router = useRouter();
   const params = useParams();
-  const id = params.id as string; // Ambil ID dari URL
+  const id = params.id as string; 
 
   const [venue, setVenue] = useState<Venue | null>(null);
   const [formData, setFormData] = useState({
@@ -24,18 +24,17 @@ export default function EditVenuePage() {
     address: '',
     city: '',
     province: '',
-    phone: '', // <-- Tambah state
-    email: '', // <-- Tambah state
+    phone: '', 
+    email: '', 
     image_url: '',
     facebook_url: '',
     instagram_url: '',
   });
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
-  const [errorLoad, setErrorLoad] = useState<string | null>(null); // State error load
+  const [errorLoad, setErrorLoad] = useState<string | null>(null); 
 
   useEffect(() => {
-    // Pastikan ID valid sebelum fetch
     if (!id || isNaN(Number(id))) {
       setErrorLoad("ID Venue tidak valid.");
       setLoadingData(false);
@@ -46,9 +45,9 @@ export default function EditVenuePage() {
 
     const loadVenueData = async () => {
       setLoadingData(true);
-      setErrorLoad(null); // Reset error
+      setErrorLoad(null); 
       try {
-        const result = await getVenueById(Number(id)); // Gunakan Number(id)
+        const result = await getVenueById(Number(id)); 
         if (result.success && result.data) {
           const venueData = result.data;
           setVenue(venueData);
@@ -93,14 +92,13 @@ export default function EditVenuePage() {
     setLoading(true);
 
     try {
-      // Panggil API update dengan ID dan data form
       const result = await updateVenue(Number(id), formData); 
 
       if (result.success) {
         toast.success('Venue berhasil diupdate!', {
           icon: <CheckCircle className="w-5 h-5" />,
         });
-        router.push('/admin/venues'); // Kembali ke daftar venue
+        router.push('/admin/venues'); 
       } else {
          const description = result.errors 
             ? Object.values(result.errors).flat().join(', ') 
@@ -116,7 +114,7 @@ export default function EditVenuePage() {
     }
   };
 
-  // Tampilan Loading Awal
+
   if (loadingData) {
     return (
       <AdminLayout>
@@ -127,7 +125,7 @@ export default function EditVenuePage() {
     );
   }
 
-  // Tampilan Jika Gagal Load Data Awal
+
   if (errorLoad) {
      return (
        <AdminLayout>
@@ -145,9 +143,8 @@ export default function EditVenuePage() {
      );
   }
 
-  // Tampilan Form Edit Jika Data Berhasil Dimuat
+
   if (!venue) {
-      // Seharusnya tidak terjadi jika errorLoad sudah ditangani, tapi sebagai fallback
       return <AdminLayout><div>Venue tidak ditemukan.</div></AdminLayout>;
   }
 
