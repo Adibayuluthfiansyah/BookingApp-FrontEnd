@@ -4,11 +4,13 @@ import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, 
   Calendar, 
-  MapPin,  
+  MapPin,   
   Settings,
   X,
   Home,
-  RectangleHorizontal 
+  RectangleHorizontal,
+  Clock, 
+  Sparkles 
 } from 'lucide-react';
 
 interface AdminSidebarProps {
@@ -34,9 +36,21 @@ const menuItems = [
   },
   {
     label: 'Fields',
-    icon: RectangleHorizontal, // Menggunakan icon baru
+    icon: RectangleHorizontal, 
     path: '/admin/fields',
   },
+  
+  {
+    label: 'Time Slots (Harga)',
+    icon: Clock,
+    path: '/admin/timeslots',
+  },
+  {
+    label: 'Facilities',
+    icon: Sparkles,
+    path: '/admin/facilities',
+  },
+
   {
     label: 'Settings',
     icon: Settings,
@@ -100,9 +114,9 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           {/* Menu Items */}
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.path || (pathname.startsWith(item.path) && item.path !== '/admin/dashboard');
-            const isDashboardActive = (pathname === '/admin/dashboard' && item.path === '/admin/dashboard');
-            const finalIsActive = (item.path === '/admin/dashboard') ? isDashboardActive : isActive;
+            const isActive = (item.path === '/admin/dashboard')
+              ? pathname === item.path
+              : pathname.startsWith(item.path);
 
             return (
               <button
@@ -111,7 +125,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 className={`
                   w-full flex items-center gap-3 px-4 py-3 rounded-lg transition group
                   ${
-                    finalIsActive
+                    isActive
                       ? 'bg-orange-500 text-white'
                       : 'text-gray-700 hover:bg-gray-100'
                   }

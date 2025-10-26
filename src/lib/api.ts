@@ -1,6 +1,4 @@
-// src/lib/api.ts
-
-import { ApiResponse, User, LoginResponse, Venue, TimeSlotWithStatus , Field} from "@/types";
+import { ApiResponse, User, LoginResponse, Venue, TimeSlotWithStatus, TimeSlot, SimpleField, Facility, Field} from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
 
@@ -722,6 +720,204 @@ export const updateAdminBookingStatus = async (
   }
 };
 
+// ========= TIME SLOT (HARGA) API (VERSI FETCH) =========
+
+// Helper untuk mendapatkan daftar field milik admin (untuk dropdown)
+export async function getMyFieldsList(): Promise<ApiResponse<SimpleField[]>> {
+  const token = getToken();
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/my-fields`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) throw new Error('Gagal mengambil daftar lapangan');
+    return await response.json();
+  } catch (error: any) {
+    return { success: false, message: error.message, data: [] };
+  }
+}
+
+// Get all time slots (bisa difilter)
+export async function getAdminTimeSlots(fieldId?: number): Promise<ApiResponse<TimeSlot[]>> {
+  const token = getToken();
+  try {
+    const queryParams = new URLSearchParams();
+    if (fieldId) queryParams.append('field_id', fieldId.toString());
+    
+    const url = `${API_BASE_URL}/admin/timeslots?${queryParams.toString()}`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) throw new Error('Gagal mengambil data time slot');
+    return await response.json();
+  } catch (error: any) {
+    return { success: false, message: error.message, data: [] };
+  }
+}
+
+// Get single time slot by ID
+export async function getTimeSlotById(id: number): Promise<ApiResponse<TimeSlot>> {
+  const token = getToken();
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/timeslots/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) throw new Error('Gagal mengambil detail time slot');
+    return await response.json();
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
+
+// Create new time slot
+export async function createTimeSlot(data: Partial<TimeSlot>): Promise<ApiResponse<TimeSlot>> {
+  const token = getToken();
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/timeslots`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+       // Kirim error validasi jika ada
+       return { success: false, message: result.message, errors: result.errors };
+    }
+    return result;
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
+
+// Update time slot
+export async function updateTimeSlot(id: number, data: Partial<TimeSlot>): Promise<ApiResponse<TimeSlot>> {
+  const token = getToken();
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/timeslots/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+       // Kirim error validasi jika ada
+       return { success: false, message: result.message, errors: result.errors };
+    }
+    return result;
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
+
+// Delete time slot
+export async function deleteTimeSlot(id: number): Promise<ApiResponse<null>> {
+  const token = getToken();
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/timeslots/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    return await response.json();
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
+
+
+// ========= FACILITY API (VERSI FETCH) =========
+
+// Get SEMUA master fasilitas (untuk checkbox)
+export async function getAllFacilities(): Promise<ApiResponse<Facility[]>> {
+  const token = getToken();
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/facilities`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`, // Admin route
+      },
+    });
+    if (!response.ok) throw new Error('Gagal mengambil daftar fasilitas');
+    return await response.json();
+  } catch (error: any) {
+    return { success: false, message: error.message, data: [] };
+  }
+}
+
+// Get fasilitas yang dimiliki SATU venue (berisi array ID)
+export async function getVenueFacilities(venueId: number): Promise<ApiResponse<number[]>> {
+  const token = getToken();
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/venues/${venueId}/facilities`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) throw new Error('Gagal mengambil fasilitas venue');
+    return await response.json();
+  } catch (error: any) {
+    return { success: false, message: error.message, data: [] };
+  }
+}
+
+// Update/sync fasilitas untuk satu venue
+export async function syncVenueFacilities(venueId: number, facilityIds: number[]): Promise<ApiResponse<any>> {
+  const token = getToken();
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/venues/${venueId}/facilities`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        facility_ids: facilityIds,
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+       return { success: false, message: result.message, errors: result.errors };
+    }
+    return result;
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
+
+// ==================== Customer Booking Functions ====================
+
 // Legacy admin functions (for backward compatibility)
 export const getAdminDashboard = getAdminDashboardStats;
 
@@ -748,5 +944,3 @@ export const getCustomerBookings = async (): Promise<ApiResponse> => {
     };
   }
 };
-
-

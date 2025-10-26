@@ -65,7 +65,7 @@ export default function CreateVenuePage() {
 
   return (
     <AdminLayout>
-      <div className="max-w-4xl mx-auto py-6 px-4 sm:px-6 md:px-8"> {/* Tambah padding */}
+      <div className="max-w-4xl mx-auto py-6 px-4 sm:px-6 md:px-8 mt-15"> 
         {/* Header Halaman */}
         <div className="flex items-center gap-4 mb-6">
           <Button variant="outline" size="icon" onClick={() => router.push('/admin/venues')}>

@@ -1,3 +1,5 @@
+// src/types/index.ts
+
 export interface User {
   id: number
   name: string
@@ -22,6 +24,8 @@ export interface Venue {
   image_url: string;
   facebook_url: string | null;
   instagram_url: string | null;
+  phone?: string; // Pastikan ini ada
+  email?: string; // Pastikan ini ada
   created_at: string;
   updated_at: string;
   facilities?: Facility[];
@@ -33,28 +37,35 @@ export interface Field {
   id: number;
   venue_id: number;
   name: string;
-  field_type: 'futsal' | 'minisoccer' | 'other';
-  description: string | null;
-  time_slots?: TimeSlot[];
-  venue?: Venue;
+  field_type: string;
+  created_at: string;
+  updated_at: string;
+  venue?: Venue; // Relasi
+  time_slots?: TimeSlot[]; // Relasi
+}
+
+// Tipe baru untuk dropdown field
+export interface SimpleField {
+  id: number;
+  name: string; // (Akan berisi "Nama Venue - Nama Lapangan")
 }
 
 export interface TimeSlot {
   id: number;
   field_id: number;
-  start_time: string;
-  end_time: string;
+  start_time: string; // "HH:mm:ss"
+  end_time: string; // "HH:mm:ss"
   price: number;
-  is_available?: boolean;
-  day_type: 'weekday' | 'weekend' | 'all';
   created_at?: string;
   updated_at?: string;
+  field?: Field; // Relasi
 }
 
-// NEW: TimeSlot with booking status
+// Tipe ini digunakan di halaman detail venue
 export interface TimeSlotWithStatus extends TimeSlot {
   is_available: boolean;
   booking_status: 'available' | 'booked';
+  is_past_slot: boolean;
   booking_info?: {
     booking_number: string;
     customer_name: string;

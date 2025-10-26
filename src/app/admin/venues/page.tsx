@@ -190,11 +190,13 @@ export default function AdminVenuesPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div className="flex items-center justify-end space-x-2">
+                              {/* === INI BAGIAN YANG DIPERBAIKI === */}
                               <Button asChild variant="outline" size="sm">
                                 <Link href={`/admin/venues/edit/${venue.id}`}>
                                   Edit
                                 </Link>
                               </Button>
+                              {/* === AKHIR PERBAIKAN === */}
                               <Button
                                 variant="destructive"
                                 size="sm"
