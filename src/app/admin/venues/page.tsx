@@ -191,7 +191,7 @@ export default function AdminVenuesPage() {
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div className="flex items-center justify-end space-x-2">
                               <Button asChild variant="outline" size="sm">
-                                <Link href={`/admin/venues/${venue.id}`}>
+                                <Link href={`/admin/venues/edit/${venue.id}`}>
                                   Edit
                                 </Link>
                               </Button>
