@@ -10,7 +10,7 @@ export default function Footer() {
           {/* Company Info */}
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
-              <span className="text-xl font-bold">KASHMIR BookingField</span>
+              <span className="text-xl font-bold">O7ONG CORP</span>
             </div>
             <p className="text-gray-300 mb-4 max-w-md">
               Platform booking lapangan mini soccer dan futsal terpercaya di Indonesia. 
