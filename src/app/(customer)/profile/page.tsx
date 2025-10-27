@@ -1,69 +1,21 @@
 "use client";
 
 import { useAuth } from "@/app/contexts/AuthContext";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import {Card,CardContent,CardDescription,CardHeader,CardTitle,} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
+import CustomerLayout from "@/components/customer/CustomerLayout"; 
 import { User, Mail } from "lucide-react"; 
 import { Badge } from "@/components/ui/badge"; 
 
-// Komponen Skeleton untuk loading state
-function ProfileSkeleton() {
-  return (
-    <div className="container mx-auto max-w-2xl py-10 ">
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <Skeleton className="h-8 w-1/3" />
-          </CardTitle>
-          <CardDescription>
-            <Skeleton className="h-4 w-2/3" />
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center space-x-4">
-            <Skeleton className="h-20 w-20 rounded-full" />
-            <div className="space-y-2">
-              <Skeleton className="h-6 w-48" />
-              <Skeleton className="h-4 w-56" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
 
 // Halaman Profil Pengguna
 export default function ProfilePage() {
-  const { user, isLoading } = useAuth();
-
-  if (isLoading) {
-    return <ProfileSkeleton />;
-  }
-
+  const { user } = useAuth();
   if (!user) {
-    return (
-      <div className="container mx-auto py-10 text-center">
-        <p>Gagal memuat profil. Silakan coba login kembali.</p>
-      </div>
-    );
+    // Tampilkan UI loading minimal selagi layout bekerja
+    return <CustomerLayout>{null}</CustomerLayout>;
   }
 
   const fallback =
@@ -75,8 +27,10 @@ export default function ProfilePage() {
       .toUpperCase() || <User className="h-4 w-4" />;
 
   return (
-    <div className="container mx-auto max-w-2xl py-10 mt-12">
-      <Card className="border-border">
+
+    <CustomerLayout>
+      <div className="pt-10">
+      <Card className="border-border pt-10">
         <CardHeader>
           <CardTitle className="text-2xl">Akun Saya</CardTitle>
           <CardDescription>
@@ -138,6 +92,8 @@ export default function ProfilePage() {
           */}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </CustomerLayout>
   );
 }
+

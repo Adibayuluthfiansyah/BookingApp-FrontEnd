@@ -59,7 +59,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               key={item.href}
               href={item.href}
               onClick={onClose}
-              className={`block px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`block px-4 py-3 rounded-lg text-sm font-medium cursor-pointer transition-all duration-200 ${
                 pathname === item.href
                   ? 'text-white bg-black'
                   : 'text-gray-700 hover:text-black hover:bg-gray-100'
