@@ -32,53 +32,53 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   const handleLogout = async () => {
     try {
       await logout()
-      toast.success('Logout berhasil')
+      toast.success('Berhasil keluar')
       router.push('/')
       onClose()
     } catch (error) {
-      toast.error('Logout gagal')
+      toast.error('Gagal keluar')
     }
   }
 
   const getDashboardLink = () => {
     if (user?.role === 'admin') return '/admin/dashboard'
-    if (user?.role === 'customer') return '/customer/dashboard'
+    if (user?.role === 'customer') return '/dash-customer'
     return '#'
   }
 
   return (
-    <div className={`md:hidden transition-all duration-500 ease-in-out ${
+    <div className={`md:hidden transition-all duration-300 ease-in-out ${
       isOpen 
         ? 'max-h-screen opacity-100' 
         : 'max-h-0 opacity-0'
     } overflow-hidden`}>
-      <div className="bg-white/98 backdrop-blur-xl shadow-2xl border-t border-black/5">
-        <div className="px-6 py-8 space-y-2">
+      <div className="bg-white border-t border-gray-200">
+        <div className="px-4 py-6 space-y-1">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               onClick={onClose}
-              className={`block px-6 py-4 rounded-2xl font-medium transition-all duration-300 transform hover:scale-[1.02] hover:translate-x-2 ${
+              className={`block px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                 pathname === item.href
-                  ? 'text-white bg-black shadow-lg shadow-black/10'
-                  : 'text-gray-700 hover:text-black hover:bg-gray-50'
+                  ? 'text-white bg-black'
+                  : 'text-gray-700 hover:text-black hover:bg-gray-100'
               }`}
             >
               {item.label}
             </Link>
           ))}
           
-          <div className="pt-4 border-t border-gray-200 space-y-2">
+          <div className="pt-4 border-t border-gray-200 space-y-1">
             {isAuthenticated && user ? (
               <>
-                <div className="px-6 py-3 bg-gray-50 rounded-2xl">
-                  <p className="text-sm font-semibold text-gray-900">{user.name}</p>
-                  <p className="text-xs text-gray-500">{user.email}</p>
-                  <span className={`inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-full ${
+                <div className="px-4 py-3 bg-gray-50 rounded-lg mb-2">
+                  <p className="text-sm font-semibold text-black">{user.name}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{user.email}</p>
+                  <span className={`inline-block mt-2 px-2 py-0.5 text-[10px] font-medium rounded uppercase ${
                     user.role === 'admin' 
-                      ? 'bg-purple-100 text-purple-700' 
-                      : 'bg-blue-100 text-blue-700'
+                      ? 'bg-black text-white' 
+                      : 'bg-gray-200 text-gray-900'
                   }`}>
                     {user.role}
                   </span>
@@ -87,39 +87,46 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                 <Link
                   href={getDashboardLink()}
                   onClick={onClose}
-                  className="flex items-center gap-3 px-6 py-4 rounded-2xl font-medium text-gray-700 hover:text-black hover:bg-gray-50 transition-all duration-300"
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-100 transition-all duration-200"
                 >
-                  <LayoutDashboard size={20} />
+                  <LayoutDashboard size={18} />
                   <span>Dashboard</span>
                 </Link>
                 
-                {user.role === 'customer' && (
-                  <Link
-                    href="/customer/bookings"
-                    onClick={onClose}
-                    className="flex items-center gap-3 px-6 py-4 rounded-2xl font-medium text-gray-700 hover:text-black hover:bg-gray-50 transition-all duration-300"
-                  >
-                    <Calendar size={20} />
-                    <span>Booking Saya</span>
-                  </Link>
-                )}
+                <Link
+                  href="/my-bookings"
+                  onClick={onClose}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-100 transition-all duration-200"
+                >
+                  <Calendar size={18} />
+                  <span>Booking Saya</span>
+                </Link>
+                
+                <Link
+                  href="/profile"
+                  onClick={onClose}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-100 transition-all duration-200"
+                >
+                  <User size={18} />
+                  <span>Profil</span>
+                </Link>
                 
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-6 py-4 rounded-2xl font-medium text-red-600 hover:text-white hover:bg-red-600 transition-all duration-300"
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:text-white hover:bg-red-600 transition-all duration-200"
                 >
-                  <LogOut size={20} />
-                  <span>LOGOUT</span>
+                  <LogOut size={18} />
+                  <span>Keluar</span>
                 </button>
               </>
             ) : (
               <Link
                 href="/login"
                 onClick={onClose}
-                className="flex items-center gap-3 px-6 py-4 rounded-2xl font-medium text-blue-600 hover:text-white hover:bg-blue-600 transition-all duration-300 transform hover:scale-[1.02] hover:translate-x-2"
+                className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-white bg-black hover:bg-gray-800 transition-all duration-200"
               >
-                <User size={20} />
-                <span>LOGIN</span>
+                <User size={18} />
+                <span>Masuk</span>
               </Link>
             )}
           </div>

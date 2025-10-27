@@ -9,7 +9,6 @@ import { AuthSection } from '@/components/Navbar/AuthSection'
 import { MobileMenu } from '@/components/Navbar/MobileMenu'
 import { NavLogo } from '@/components/Navbar/NavLogo'
 
-
 const navItems = [
   { label: 'Beranda', href: '/' },
   { label: 'Tentang Kami', href: '/about' },
@@ -24,24 +23,25 @@ const Navbar: React.FC = () => {
   const { user, isAuthenticated } = useAuth()
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 50)
+    const handleScroll = () => setIsScrolled(window.scrollY > 20)
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
   return (
     <nav
-      className={`fixed top-0 w-full z-50 transition-all duration-700 ease-in-out ${isScrolled
-          ? 'bg-white/95 backdrop-blur-xl shadow-2xl border-b border-black/5'
-          : 'bg-black/20 backdrop-blur-sm'
-        }`}
+      className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+        isScrolled
+          ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-200'
+          : 'bg-black/30 backdrop-blur-sm'
+      }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-18">
+        <div className="flex items-center justify-between h-16">
           <NavLogo isScrolled={isScrolled} />
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-1">
+          <div className="hidden md:flex items-center gap-2">
             <NavLinks
               items={navItems}
               pathname={pathname}
@@ -58,19 +58,14 @@ const Navbar: React.FC = () => {
           {/* Mobile Toggle */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className={`md:hidden focus:outline-none p-3 rounded-xl cursor-pointer transition-all duration-300 ${isScrolled
+            className={`md:hidden p-2 rounded-lg transition-all duration-200 ${
+              isScrolled
                 ? 'hover:bg-gray-100 text-black'
                 : 'hover:bg-white/10 text-white'
-              }`}
+            }`}
+            aria-label="Toggle menu"
           >
-            <div className="relative w-6 h-6">
-              <span className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 opacity-0' : 'rotate-0 opacity-100'}`}>
-                <Menu size={24} />
-              </span>
-              <span className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ${isMobileMenuOpen ? 'rotate-0 opacity-100' : '-rotate-45 opacity-0'}`}>
-                <X size={24} />
-              </span>
-            </div>
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { User } from 'lucide-react'
+import { LogIn } from 'lucide-react'
 import { ProfileDropdown } from './ProfileDropdown'
 
 interface AuthSectionProps {
@@ -14,20 +14,20 @@ export const AuthSection: React.FC<AuthSectionProps> = ({
   user 
 }) => {
   return (
-    <div className="relative ml-4 profile-dropdown">
+    <div className="ml-4">
       {isAuthenticated && user ? (
         <ProfileDropdown user={user} isScrolled={isScrolled} />
       ) : (
         <Link href="/login">
           <button
-            className={`flex items-center gap-2 px-4 py-3 rounded-full font-medium transition-all duration-300 cursor-pointer transform hover:scale-105 border ${
+            className={`flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-300 border ${
               isScrolled
-                ? 'text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100 hover:border-blue-300'
-                : 'text-white bg-white/10 border-white/20 hover:bg-white/20 hover:border-white/30'
+                ? 'text-white bg-black border-black hover:bg-gray-800'
+                : 'text-black bg-white border-white hover:bg-gray-100'
             }`}
           >
-            <User size={18} />
-            <span>Login</span>
+            <LogIn size={16} />
+            <span>Masuk</span>
           </button>
         </Link>
       )}

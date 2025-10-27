@@ -18,23 +18,21 @@ export const NavLinks: React.FC<NavLinksProps> = ({ items, pathname, isScrolled 
         <Link
           key={item.href}
           href={item.href}
-          className={`relative px-6 py-3 rounded-full font-medium transition-all duration-300 transform hover:scale-105 overflow-hidden group ${
+          className={`relative px-5 py-2.5 text-sm font-medium transition-all duration-300 rounded-lg ${
             pathname === item.href
               ? isScrolled
-                ? 'text-white bg-black shadow-lg shadow-black/20'
-                : 'text-black bg-white/95 backdrop-blur-sm shadow-lg shadow-white/10'
+                ? 'text-white bg-black'
+                : 'text-black bg-white'
               : isScrolled
               ? 'text-gray-700 hover:text-black hover:bg-gray-100'
               : 'text-white/90 hover:text-white hover:bg-white/10'
           }`}
         >
-          <span className="relative z-10">{item.label}</span>
-          {pathname !== item.href && (
-            <div className={`absolute inset-0 scale-0 group-hover:scale-100 transition-transform duration-300 rounded-full ${
-              isScrolled 
-                ? 'bg-gray-50' 
-                : 'bg-white/5 backdrop-blur-sm'
-            }`}></div>
+          {item.label}
+          {pathname === item.href && (
+            <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${
+              isScrolled ? 'bg-white' : 'bg-black'
+            }`} />
           )}
         </Link>
       ))}
