@@ -4,31 +4,29 @@ import { useAuth } from '@/app/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import {DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuLabel,DropdownMenuSeparator,DropdownMenuTrigger ,DropdownMenuPortal,} from '@/components/ui/dropdown-menu';
-import {Avatar,AvatarFallback,} from '@/components/ui/avatar';
-import {User,LogOut,CalendarDays,LayoutDashboard,Loader2, LogIn} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuPortal,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { User, LogOut, CalendarDays, LayoutDashboard, Loader2, LogIn } from 'lucide-react';
 import { toast } from 'sonner';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { cn } from '@/lib/utils'; 
 
-export default function AuthSection() {
-  const { isAuthenticated, user, logout, loading } = useAuth();
+interface AuthSectionProps {
+  isScrolled: boolean; 
+}
+
+export default function AuthSection({ isScrolled }: AuthSectionProps) { 
+  const { isAuthenticated, user, logout, loading: authLoading } = useAuth(); 
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
-
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -36,6 +34,7 @@ export default function AuthSection() {
       await logout();
     } catch (error) {
       toast.error('Logout gagal');
+    } finally {
       setLoggingOut(false);
     }
   };
@@ -44,82 +43,80 @@ export default function AuthSection() {
     router.push(path);
   };
 
-  if (loading) {
+  if (authLoading) {
     return (
-      <div className="flex items-center justify-center h-10 w-10">
-        <Loader2 className="h-5 w-5 animate-spin" />
+      <div className="flex items-center justify-center h-9 w-9">
+        <Loader2 className={cn("h-5 w-5 animate-spin", isScrolled ? "text-foreground" : "text-white")} />
       </div>
     );
   }
 
-
   if (!isAuthenticated || !user) {
     return (
-      <div className="flex items-center gap-2">
+      <Button asChild size="sm" variant={isScrolled ? "default" : "secondary"} className={cn(!isScrolled && "bg-white text-black hover:bg-gray-100")}>
         <Link href="/login">
-          <button
-            className={`flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-all duration-300 
-              ${scrolled
-                ? 'bg-black text-white border-black hover:bg-gray-800'
-                : 'bg-white text-black border-gray-300 hover:bg-gray-100'
-              }`}
-          >
-            <LogIn size={16} />
-            <span>Masuk</span>
-          </button>
+          <LogIn size={16} className="mr-2" />
+          Masuk
         </Link>
-      </div>
+      </Button>
     );
   }
 
   const isAdmin = user.role === 'admin' || user.role === 'super_admin';
   const userInitials = user.name
     ? user.name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()
-    : 'U';
+    : '?';
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <Avatar className="h-10 w-10">
-            <AvatarFallback>{userInitials}</AvatarFallback>
+        <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
+          <Avatar className="h-9 w-9 border-2 border-border hover:border-primary transition-colors">
+            {/* <AvatarImage src="/path-to-user-image.jpg" alt={user.name} /> */}
+            <AvatarFallback className="bg-muted text-muted-foreground">{userInitials}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      
+
       <DropdownMenuPortal>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>
-            <p className="text-sm font-medium truncate">{user.name}</p>
-            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+        <DropdownMenuContent align="end" className="w-56 bg-card border-border shadow-lg">
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium leading-none text-foreground truncate">{user.name}</p>
+              <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
+            </div>
           </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          
+          <DropdownMenuSeparator className="bg-border" />
+
           {isAdmin ? (
-            <DropdownMenuItem onClick={() => handleNavigate('/admin/dashboard')}>
-              <LayoutDashboard className="mr-2 h-4 w-4" />
+            <DropdownMenuItem onClick={() => handleNavigate('/admin/dashboard')} className="cursor-pointer">
+              <LayoutDashboard className="mr-2 h-4 w-4 text-muted-foreground" />
               <span>Admin Dashboard</span>
             </DropdownMenuItem>
           ) : (
-            <DropdownMenuItem onClick={() => handleNavigate('/my-bookings')}>
-              <CalendarDays className="mr-2 h-4 w-4" />
-              <span>My Bookings</span>
+            <DropdownMenuItem onClick={() => handleNavigate('/my-bookings')} className="cursor-pointer">
+              <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
+              <span>Booking Saya</span>
             </DropdownMenuItem>
           )}
 
-          <DropdownMenuItem onClick={() => handleNavigate('/profile')}>
-            <User className="mr-2 h-4 w-4" />
-            <span>Profile</span>
+          <DropdownMenuItem onClick={() => handleNavigate('/profile')} className="cursor-pointer">
+            <User className="mr-2 h-4 w-4 text-muted-foreground" />
+            <span>Profil Saya</span>
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
+          <DropdownMenuSeparator className="bg-border" />
 
           <DropdownMenuItem
             onClick={handleLogout}
             disabled={loggingOut}
-            className="text-destructive"
+            className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
           >
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>{loggingOut ? 'Logging out...' : 'Logout'}</span>
+            {loggingOut ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <LogOut className="mr-2 h-4 w-4" />
+            )}
+            <span>{loggingOut ? 'Keluar...' : 'Keluar'}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenuPortal>

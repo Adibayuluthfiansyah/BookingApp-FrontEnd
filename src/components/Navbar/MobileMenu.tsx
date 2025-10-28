@@ -1,21 +1,27 @@
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { LayoutDashboard, Calendar, LogOut, User } from 'lucide-react'
-import { useAuth } from '@/app/contexts/AuthContext'
-import { toast } from 'sonner'
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { LayoutDashboard, Calendar, LogOut, User, LogIn } from 'lucide-react';
+import { useAuth } from '@/app/contexts/AuthContext';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 interface NavItem {
-  label: string
-  href: string
+  label: string;
+  href: string;
 }
 
 interface MobileMenuProps {
-  isOpen: boolean
-  navItems: NavItem[]
-  pathname: string
-  isAuthenticated: boolean
-  user: any
-  onClose: () => void
+  isOpen: boolean;
+  navItems: NavItem[];
+  pathname: string;
+  isAuthenticated: boolean;
+  user: any; 
+  onClose: () => void;
+  isScrolled: boolean; 
 }
 
 export const MobileMenu: React.FC<MobileMenuProps> = ({
@@ -25,113 +31,144 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   isAuthenticated,
   user,
   onClose,
+  isScrolled, 
 }) => {
-  const router = useRouter()
-  const { logout } = useAuth()
+  const router = useRouter();
+  const { logout } = useAuth();
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const handleLogout = async () => {
+    setLoggingOut(true);
     try {
-      await logout()
-      toast.success('Berhasil keluar')
-      router.push('/')
-      onClose()
+      await logout();
+      toast.success('Berhasil keluar');
+      onClose(); 
     } catch (error) {
-      toast.error('Gagal keluar')
+      toast.error('Gagal keluar');
+    } finally {
+      setLoggingOut(false);
     }
-  }
+  };
 
   const getDashboardLink = () => {
-    if (user?.role === 'admin') return '/admin/dashboard'
-    if (user?.role === 'customer') return '/dash-customer'
-    return '#'
-  }
+    if (!user) return '/login'; 
+    if (user.role === 'admin' || user.role === 'super_admin') return '/admin/dashboard';
+    return '/my-bookings'; 
+  };
+
+  const userInitials = user?.name
+    ? user.name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()
+    : '?';
 
   return (
-    <div className={`md:hidden transition-all duration-300 ease-in-out ${
-      isOpen 
-        ? 'max-h-screen opacity-100' 
-        : 'max-h-0 opacity-0'
-    } overflow-hidden`}>
-      <div className="bg-white border-t border-gray-200">
-        <div className="px-4 py-6 space-y-1">
-          {navItems.map((item) => (
+    <div className={cn(
+      "md:hidden absolute top-full left-0 right-0 overflow-hidden transition-all duration-300 ease-in-out shadow-lg",
+      isScrolled ? "bg-background border-t border-border" : "bg-background border-t border-border", 
+      isOpen ? 'max-h-[80vh] opacity-100' : 'max-h-0 opacity-0'
+    )}>
+      <div className="px-4 py-6 space-y-2">
+        {/* Nav Items */}
+        {navItems.map((item) => {
+          const isActive = pathname === item.href;
+          return (
             <Link
               key={item.href}
               href={item.href}
               onClick={onClose}
-              className={`block px-4 py-3 rounded-lg text-sm font-medium cursor-pointer transition-all duration-200 ${
-                pathname === item.href
-                  ? 'text-white bg-black'
-                  : 'text-gray-700 hover:text-black hover:bg-gray-100'
-              }`}
+              className={cn(
+                'block px-4 py-3 rounded-md text-base font-medium transition-colors',
+                isActive
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-foreground hover:bg-accent hover:text-accent-foreground'
+              )}
             >
               {item.label}
             </Link>
-          ))}
-          
-          <div className="pt-4 border-t border-gray-200 space-y-1">
-            {isAuthenticated && user ? (
-              <>
-                <div className="px-4 py-3 bg-gray-50 rounded-lg mb-2">
-                  <p className="text-sm font-semibold text-black">{user.name}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{user.email}</p>
-                  <span className={`inline-block mt-2 px-2 py-0.5 text-[10px] font-medium rounded uppercase ${
-                    user.role === 'admin' 
-                      ? 'bg-black text-white' 
-                      : 'bg-gray-200 text-gray-900'
-                  }`}>
-                    {user.role}
-                  </span>
+          );
+        })}
+
+        {/* Auth Section */}
+        <div className="pt-4 mt-4 border-t border-border space-y-2">
+          {isAuthenticated && user ? (
+            <>
+              {/* User Info */}
+              <div className="flex items-center gap-3 px-4 py-3 mb-2">
+                <Avatar className="h-10 w-10 border">
+                   <AvatarFallback className="bg-muted text-muted-foreground">{userInitials}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm font-semibold text-foreground truncate">{user.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                   <span className={cn(
+                     "inline-block mt-1 px-2 py-0.5 text-[10px] font-medium rounded uppercase",
+                     (user.role === 'admin' || user.role === 'super_admin')
+                       ? 'bg-secondary text-secondary-foreground'
+                       : 'bg-muted text-muted-foreground'
+                   )}>
+                     {user.role}
+                   </span>
                 </div>
-                
-                <Link
-                  href={getDashboardLink()}
-                  onClick={onClose}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-100 transition-all duration-200"
-                >
-                  <LayoutDashboard size={18} />
-                  <span>Dashboard</span>
-                </Link>
-                
-                <Link
-                  href="/my-bookings"
-                  onClick={onClose}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-100 transition-all duration-200"
-                >
-                  <Calendar size={18} />
-                  <span>Booking Saya</span>
-                </Link>
-                
-                <Link
-                  href="/profile"
-                  onClick={onClose}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-100 transition-all duration-200"
-                >
-                  <User size={18} />
-                  <span>Profil</span>
-                </Link>
-                
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:text-white hover:bg-red-600 transition-all duration-200"
-                >
-                  <LogOut size={18} />
-                  <span>Keluar</span>
-                </button>
-              </>
-            ) : (
+              </div>
+
+              {/* Menu Links for Logged In User */}
               <Link
-                href="/login"
+                href={getDashboardLink()}
                 onClick={onClose}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-white bg-black hover:bg-gray-800 transition-all duration-200"
+                className="flex items-center gap-3 px-4 py-3 rounded-md text-base font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
               >
-                <User size={18} />
-                <span>Masuk</span>
+                <LayoutDashboard size={20} />
+                <span>Dashboard</span>
               </Link>
-            )}
-          </div>
+
+              <Link
+                href="/my-bookings"
+                onClick={onClose}
+                className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-md text-base font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors",
+                    pathname === '/my-bookings' && "bg-accent text-accent-foreground" 
+                )}
+              >
+                <Calendar size={20} />
+                <span>Booking Saya</span>
+              </Link>
+
+              <Link
+                href="/profile"
+                onClick={onClose}
+                className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-md text-base font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors",
+                     pathname === '/profile' && "bg-accent text-accent-foreground" 
+                )}              >
+                <User size={20} />
+                <span>Profil Saya</span>
+              </Link>
+
+              {/* Logout Button */}
+              <Button
+                variant="ghost"
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="w-full justify-start px-4 py-3 text-base font-medium text-destructive hover:bg-destructive/10 hover:text-destructive"
+              >
+                {loggingOut ? (
+                  <Loader2 size={20} className="mr-3 animate-spin" />
+                ) : (
+                  <LogOut size={20} className="mr-3" />
+                )}
+                <span>{loggingOut ? 'Keluar...' : 'Keluar'}</span>
+              </Button>
+            </>
+          ) : (
+             // Login Button
+             <Button asChild className="w-full bg-primary text-primary-foreground hover:bg-primary/90" size="lg">
+                 <Link href="/login" onClick={onClose}>
+                     <LogIn size={20} className="mr-2" />
+                     Masuk / Daftar
+                 </Link>
+             </Button>
+          )}
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
