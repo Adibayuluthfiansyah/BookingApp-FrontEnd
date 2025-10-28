@@ -2,18 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  DollarSign, 
-  Calendar, 
-  TrendingUp, 
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle // <-- TAMBAHKAN INI
-} from 'lucide-react';
+import { DollarSign, Calendar, TrendingUp, Clock,AlertCircle,Loader2} from 'lucide-react';
 import { getAdminDashboardStats } from '@/lib/api';
 import AdminLayout from '@/components/admin/AdminLayout';
-import StatsCard from '@/components/admin/AdminStatsCard';
+import {Card,CardContent,CardDescription,CardHeader,CardTitle,} from '@/components/ui/card';
+import {Table,TableBody,TableCell,TableHead,TableHeader,TableRow,} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import Link from 'next/link';
 
 interface DashboardStats {
   today: { bookings: number; revenue: number };
@@ -21,10 +18,32 @@ interface DashboardStats {
   overall: { total_bookings: number; total_revenue: number; pending_bookings: number };
   recent_bookings: any[];
   bookings_by_status: Record<string, number>;
-  revenue_by_venue: Array<{ venue_name: string; revenue: number }>;
+  revenue_by_venue: Array<{ venue_id?: string; venue_name: string; revenue: number }>;
   user_role?: string;
   managed_venues_count?: number | string;
 }
+
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+  }).format(amount);
+};
+
+const formatDate = (dateString: string) => {
+  if (!dateString) return '-';
+  return new Date(dateString).toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
+const formatTime = (time: string | undefined) => {
+  if (!time) return '-';
+  return time.substring(0, 5);
+};
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -46,291 +65,266 @@ export default function AdminDashboardPage() {
       if (result.success && result.data) {
         setStats(result.data);
       } else {
-        console.error("API Error:", result.message);
         setError(result.message || 'Gagal mengambil data dashboard');
       }
     } catch (err: any) {
-      console.error('Error loading dashboard:', err);
       setError(err.message || 'Terjadi kesalahan saat memuat data');
     } finally {
       setLoading(false);
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-  };
-
-  const formatTime = (time: string | undefined) => {
-    if (!time) return '-';
-    return time.substring(0, 5);
-  };
-
   const getStatusBadge = (status: string) => {
-    const badges: Record<string, { color: string; label: string; icon: any }> = {
-      pending: { color: 'bg-yellow-100 text-yellow-800', label: 'Pending', icon: Clock },
-      confirmed: { color: 'bg-green-100 text-green-800', label: 'Confirmed', icon: CheckCircle },
-      paid: { color: 'bg-blue-100 text-blue-800', label: 'Paid', icon: CheckCircle }, 
-      cancelled: { color: 'bg-red-100 text-red-800', label: 'Cancelled', icon: XCircle },
-      completed: { color: 'bg-indigo-100 text-indigo-800', label: 'Completed', icon: CheckCircle },
-    };
-    
-    const badge = badges[status] || badges.pending;
-    const Icon = badge.icon;
-    
-    return (
-      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${badge.color}`}>
-        <Icon className="w-3 h-3" />
-        {badge.label}
-      </span>
-    );
-  };
+  switch (status.toLowerCase()) {
+    case 'pending':
+      return (<Badge variant="secondary" className="bg-yellow-500 text-white">Pending</Badge>);
+    case 'confirmed':
+      return (<Badge variant="secondary" className="bg-blue-600 text-white">Confirmed</Badge>);
+    case 'paid':
+      return (<Badge variant="secondary" className="bg-green-600 text-white">Paid</Badge>);
+    case 'cancelled':
+      return (<Badge variant="destructive">Cancelled</Badge>);
+    case 'completed':
+      return (<Badge variant="secondary" className="bg-green-700 text-white">Completed</Badge>);
+    default:
+      return <Badge variant="outline">{status}</Badge>;
+  }
+};
 
-  if (loading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center py-12 pt-50">
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-[calc(100vh-200px)]">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Memuat dashboard...</p>
+            <Loader2 className="animate-spin h-12 w-12 text-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">Memuat dashboard...</p>
           </div>
         </div>
-      </AdminLayout>
-    );
-  }
+      );
+    }
 
-  // --- PERBAIKAN: Tampilkan pesan error ---
-  if (error) {
-    return (
-      <AdminLayout>
-        <div className="text-center py-12 pt-50">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <p className="text-red-600 mb-2">Gagal Memuat Dashboard</p>
-          <p className="text-gray-600 mb-4 text-sm">{error}</p>
-          <button
-            onClick={loadDashboardStats}
-            className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
-          >
-            Coba Lagi
-          </button>
+    if (error) {
+      return (
+        <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+          <Card className="max-w-lg mx-auto">
+            <CardHeader className="text-center">
+              <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+              <CardTitle className="text-destructive">Gagal Memuat Dashboard</CardTitle>
+              <CardDescription>{error}</CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <Button onClick={loadDashboardStats}>Coba Lagi</Button>
+            </CardContent>
+          </Card>
         </div>
-      </AdminLayout>
-    );
-  }
+      );
+    }
 
-  if (!stats) {
-    return (
-      <AdminLayout>
-        <div className="text-center py-12">
-          <p className="text-gray-600">Data tidak ditemukan</p>
-          <button
-            onClick={loadDashboardStats}
-            className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
-          >
-            Coba Lagi
-          </button>
+    if (!stats) {
+       return (
+        <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+            <Card className="max-w-lg mx-auto">
+                <CardHeader className="text-center">
+                    <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <CardTitle>Data Tidak Ditemukan</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center">
+                    <Button onClick={loadDashboardStats}>Coba Lagi</Button>
+                </CardContent>
+            </Card>
         </div>
-      </AdminLayout>
+      );
+    }
+    
+    const totalBookingsByStatus = Object.values(stats.bookings_by_status).reduce((a, b) => a + b, 0);
+
+    return (
+      <div className="flex flex-col gap-4 lg:gap-6">
+        {/* Info Admin */}
+        {stats.user_role && (
+          <div className={`border-l-4 p-4 rounded-md ${stats.user_role === 'super_admin' ? 'bg-destructive/10 border-destructive text-destructive' : 'bg-blue-100 border-blue-500 text-blue-700'}`}>
+            <p className="font-bold">{stats.user_role === 'super_admin' ? 'Mode Super Admin' : 'Mode Admin'}</p>
+            <p className="text-sm">
+              {stats.user_role === 'super_admin'
+                ? `Anda melihat statistik gabungan dari ${stats.managed_venues_count} venue.`
+                : `Anda melihat statistik untuk ${stats.managed_venues_count} venue yang Anda kelola.`
+              }
+            </p>
+          </div>
+        )}
+
+        {/* Stats Grid - Menggunakan Card dari shadcn/ui */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pendapatan Hari Ini</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(stats.today.revenue)}</div>
+              <p className="text-xs text-muted-foreground">{stats.today.bookings} booking hari ini</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pendapatan Bulan Ini</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(stats.monthly.revenue)}</div>
+              <p className="text-xs text-muted-foreground">{stats.monthly.bookings} booking bulan ini</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Booking</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.overall.total_bookings}</div>
+              <p className="text-xs text-muted-foreground">Semua waktu</p>
+            </CardContent>
+          </Card>
+          <Card 
+            className="hover:bg-muted/50 cursor-pointer"
+            onClick={() => router.push('/admin/bookings?status=pending')}
+          >
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Booking Pending</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.overall.pending_bookings}</div>
+              <p className="text-xs text-muted-foreground">Klik untuk melihat detail</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Charts Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Booking by Status</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {Object.keys(stats.bookings_by_status).length > 0 ? (
+                Object.entries(stats.bookings_by_status).map(([status, count]) => {
+                  const percentage = totalBookingsByStatus > 0 ? (count / totalBookingsByStatus) * 100 : 0;
+                  return (
+                    <div key={status}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium capitalize">{status}</span>
+                        <span className="text-sm text-muted-foreground">{count} ({percentage.toFixed(1)}%)</span>
+                      </div>
+                      <Progress value={percentage} className="h-2" />
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-muted-foreground text-sm">Belum ada data status booking.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Top 5 Venue by Revenue</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {stats.revenue_by_venue && stats.revenue_by_venue.length > 0 ? (
+                <div className="space-y-4">
+                  {stats.revenue_by_venue.map((venue, index) => (
+                    <div key={venue.venue_id || index} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                          <span className="text-sm font-bold text-muted-foreground">#{index + 1}</span>
+                        </div>
+                        <span className="font-medium truncate" title={venue.venue_name}>{venue.venue_name}</span>
+                      </div>
+                      <span className="text-sm font-semibold text-green-600 flex-shrink-0 ml-2">
+                        {formatCurrency(venue.revenue)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-sm">Belum ada data revenue per venue.</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Recent Bookings Table - Menggunakan Table dari shadcn/ui */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Recent Bookings</CardTitle>
+              <CardDescription>Daftar 5 booking terbaru.</CardDescription>
+            </div>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/admin/bookings">Lihat Semua</Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Booking #</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Venue & Field</TableHead>
+                    <TableHead>Tanggal</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {stats.recent_bookings && stats.recent_bookings.length > 0 ? (
+                    stats.recent_bookings.map((booking) => (
+                      <TableRow 
+                        key={booking.id}
+                        onClick={() => router.push(`/admin/bookings/${booking.id}`)}
+                        className="cursor-pointer"
+                      >
+                        <TableCell className="font-medium">{booking.booking_number || '-'}</TableCell>
+                        <TableCell>
+                          <div className="font-medium">{booking.customer_name || '-'}</div>
+                          <div className="text-xs text-muted-foreground">{booking.customer_phone || '-'}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium">{booking.field?.venue?.name || '-'}</div>
+                          <div className="text-xs text-muted-foreground">{booking.field?.name || '-'}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div>{formatDate(booking.booking_date)}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-semibold">{booking.total_amount ? formatCurrency(booking.total_amount) : '-'}</TableCell>
+                        <TableCell>{getStatusBadge(booking.status || 'pending')}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                        Belum ada booking terbaru.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
-  }
+  };
 
   return (
-    <AdminLayout >
-        {/* --- TAMBAHAN: Info Super Admin --- */}
-        <div className='pt-12  justify-center'>
-          {stats.user_role === 'super_admin' && (
-            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6 text-center">
-              <p className="font-bold">Mode Super Admin</p>
-              <p>Anda melihat statistik gabungan dari {stats.managed_venues_count} venue.</p>
-            </div>
-          )}
-          {stats.user_role === 'admin' && (
-            <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded-lg mb-6 text-center">
-              <p className="font-bold">Mode Admin</p>
-              <p>Anda melihat statistik untuk {stats.managed_venues_count} venue yang Anda kelola.</p>
-            </div>
-          )}
-        </div>
-
-
-      {/* Stats Grid */}
-      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 ${stats.user_role ? '' : 'pt-20'}`}>
-        <StatsCard
-          title="Pendapatan Hari Ini"
-          value={formatCurrency(stats.today.revenue)}
-          subtitle={`${stats.today.bookings} booking hari ini`}
-          icon={DollarSign}
-          iconBgColor="bg-green-100"
-          iconColor="text-green-600"
-        />
-
-        <StatsCard
-          title="Pendapatan Bulan Ini"
-          value={formatCurrency(stats.monthly.revenue)}
-          subtitle={`${stats.monthly.bookings} booking bulan ini`}
-          icon={TrendingUp}
-          iconBgColor="bg-blue-100"
-          iconColor="text-blue-600"
-        />
-
-        <StatsCard
-          title="Total Booking"
-          value={stats.overall.total_bookings}
-          subtitle="Semua waktu"
-          icon={Calendar}
-          iconBgColor="bg-purple-100"
-          iconColor="text-purple-600"
-        />
-
-        <StatsCard
-          title="Booking Pending"
-          value={stats.overall.pending_bookings}
-          subtitle="Lihat Detail →"
-          icon={Clock}
-          iconBgColor="bg-yellow-100"
-          iconColor="text-yellow-600"
-          onClick={() => router.push('/admin/bookings?status=pending')}
-        />
-      </div>
-
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Bookings by Status */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Booking by Status</h3>
-          <div className="space-y-3">
-            {Object.keys(stats.bookings_by_status).length > 0 ? (
-              Object.entries(stats.bookings_by_status).map(([status, count]) => {
-                const total = Object.values(stats.bookings_by_status).reduce((a, b) => a + b, 0);
-                const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : '0';
-                
-                return (
-                  <div key={status}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-gray-700 capitalize">{status}</span>
-                      <span className="text-sm text-gray-600">{count} ({percentage}%)</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-orange-500 h-2 rounded-full transition-all"
-                        style={{ width: `${percentage}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <p className="text-gray-500 text-sm">Belum ada data status booking.</p>
-            )}
-          </div>
-        </div>
-
-        {/* Revenue by Venue */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Top 5 Venue by Revenue</h3>
-          <div className="space-y-3">
-            {stats.revenue_by_venue && stats.revenue_by_venue.length > 0 ? (
-              stats.revenue_by_venue.map((venue, index) => (
-                <div key={venue.venue_id || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-bold text-orange-600">#{index + 1}</span>
-                    </div>
-                    <span className="font-medium text-gray-900">{venue.venue_name}</span>
-                  </div>
-                  <span className="text-sm font-semibold text-green-600">
-                    {formatCurrency(venue.revenue)}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-sm">Belum ada data revenue per venue.</p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Bookings */}
-      <div className="bg-white rounded-xl shadow">
-        <div className="p-6 border-b flex items-center justify-between">
-          <h3 className="text-lg font-bold text-gray-900">Recent Bookings</h3>
-          <button
-            onClick={() => router.push('/admin/bookings')}
-            className="text-sm text-orange-600 hover:text-orange-700 font-medium"
-          >
-            Lihat Semua →
-          </button>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Booking #</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Venue</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {stats.recent_bookings && stats.recent_bookings.length > 0 ? (
-                stats.recent_bookings.map((booking) => (
-                  <tr 
-                    key={booking.id}
-                    onClick={() => router.push(`/admin/bookings/${booking.id}`)}
-                    className="hover:bg-gray-50 cursor-pointer transition"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {booking.booking_number || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{booking.customer_name || '-'}</div>
-                      <div className="text-xs text-gray-500">{booking.customer_phone || '-'}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{booking.field?.venue?.name || '-'}</div>
-                      <div className="text-xs text-gray-500">{booking.field?.name || '-'}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{formatDate(booking.booking_date)}</div>
-                      <div className="text-xs text-gray-500">
-                        {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                      {booking.total_amount ? formatCurrency(booking.total_amount) : '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(booking.status || 'pending')}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                    Belum ada booking terbaru
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+    <AdminLayout>
+      {renderContent()}
     </AdminLayout>
   );
 }

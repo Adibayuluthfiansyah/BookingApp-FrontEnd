@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Eye, EyeOff, LogIn, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, LogIn, CheckCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/app/contexts/AuthContext';
 
@@ -21,16 +21,13 @@ export default function UnifiedLoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Redirect jika sudah login
   useEffect(() => {
     if (isAuthenticated && user) {
-      // --- PERBAIKAN: Tambahkan cek 'super_admin' ---
       if (user.role === 'admin' || user.role === 'super_admin') {
         router.push('/admin/dashboard');
       } else if (user.role === 'customer') {
         router.push('/');
       }
-      // --- AKHIR PERBAIKAN ---
     }
   }, [isAuthenticated, user, router]);
 
@@ -43,48 +40,30 @@ export default function UnifiedLoginPage() {
       const success = await login(formData.email, formData.password);
 
       if (success) {
-        // Tunggu sebentar agar context terupdate
         await new Promise(resolve => setTimeout(resolve, 100));
-        checkAuth(); // Force check auth
-        
-        // Get user from localStorage for immediate access
+        checkAuth();
         const userStr = localStorage.getItem('user');
         const loggedUser = userStr ? JSON.parse(userStr) : null;
-        
-        // Toast success
+
         toast.success('Login Berhasil!', {
           description: `Selamat datang, ${loggedUser?.name}`,
           duration: 3000,
           icon: <CheckCircle className="h-5 w-5" />,
-          style: {
-            background: 'rgba(34, 197, 94, 0.1)',
-            borderColor: 'rgba(34, 197, 94, 0.3)',
-            color: '#22c55e',
-          },
         });
 
-        // Redirect berdasarkan role
         setTimeout(() => {
-          // --- PERBAIKAN: Tambahkan cek 'super_admin' ---
           if (loggedUser?.role === 'admin' || loggedUser?.role === 'super_admin') {
             router.push('/admin/dashboard');
           } else {
-            router.push('/'); // Beranda untuk customer
+            router.push('/');
           }
-          // --- AKHIR PERBAIKAN ---
         }, 1000);
       } else {
-        // Toast error
         setError('Email atau password tidak valid');
         toast.error('Login Gagal', {
           description: 'Email atau password tidak valid',
           duration: 4000,
           icon: <AlertCircle className="h-5 w-5" />,
-          style: {
-            background: 'rgba(239, 68, 68, 0.1)',
-            borderColor: 'rgba(239, 68, 68, 0.3)',
-            color: '#ef4444',
-          },
         });
       }
     } catch (err) {
@@ -107,37 +86,27 @@ export default function UnifiedLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="max-w-md w-full relative z-10 pt-10">
-        <Link 
-          href="/"
-          className="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors duration-300 mb-8 group"
-        >
-          <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform duration-300" />
-          <span className="font-medium">Kembali ke Beranda</span>
-        </Link>
+    <div className="min-h-screen flex items-center justify-center bg-[url('/images/bg-field.jpg')] bg-cover bg-center relative">
+      {/* Overlay gelap transparan */}
+      <div className="absolute inset-0 bg-black/95 backdrop-blur-sm"></div>
+
+      <div className="max-w-md w-full relative z-10">
 
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">
-              KASHMIR
-            </h1>
-            <p className="text-lg font-medium text-gray-700 tracking-wider">
-              BOOKING
-            </p>
-            <div className="w-16 h-px bg-gray-900 mx-auto mt-2"></div>
-          </div>
-          <p className="text-gray-600">Masuk ke akun Anda</p>
+          <h1 className="text-4xl font-extrabold text-white mb-2 drop-shadow-lg">
+            O7ONG CORP
+          </h1>
+          <p className="text-gray-200 text-sm tracking-widest uppercase">Booking System</p>
+          <div className="w-16 h-[2px] bg-white/70 mx-auto mt-3"></div>
         </div>
 
-        {/* Login Form */}
-        <Card className="bg-white border border-gray-200 shadow-xl">
+        {/* Card login */}
+        <Card className="bg-white/10 backdrop-blur-lg border border-white/20 shadow-2xl rounded-2xl">
           <div className="p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Error Alert */}
               {error && (
-                <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+                <div className="mb-4 p-4 bg-red-500/10 border border-red-400/40 text-red-200 rounded-lg text-sm">
                   <div className="flex items-center gap-3">
                     <AlertCircle size={18} className="flex-shrink-0" />
                     <span>{error}</span>
@@ -145,9 +114,9 @@ export default function UnifiedLoginPage() {
                 </div>
               )}
 
-              {/* Email Field */}
+              {/* Email */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 uppercase tracking-wider">
+                <label className="block text-sm font-medium text-white/80 tracking-wider uppercase">
                   Email
                 </label>
                 <input
@@ -157,14 +126,14 @@ export default function UnifiedLoginPage() {
                   value={formData.email}
                   onChange={handleInputChange}
                   disabled={loading}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-white/40 transition-all duration-300 disabled:opacity-50"
                   placeholder="email@example.com"
                 />
               </div>
 
-              {/* Password Field */}
+              {/* Password */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 uppercase tracking-wider">
+                <label className="block text-sm font-medium text-white/80 tracking-wider uppercase">
                   Password
                 </label>
                 <div className="relative">
@@ -175,25 +144,25 @@ export default function UnifiedLoginPage() {
                     value={formData.password}
                     onChange={handleInputChange}
                     disabled={loading}
-                    className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 pr-12 rounded-xl bg-white/10 border border-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-white/40 transition-all duration-300 disabled:opacity-50"
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     disabled={loading}
-                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-500 hover:text-gray-900 transition-colors duration-300 disabled:cursor-not-allowed"
+                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-300 hover:text-white transition-colors duration-300"
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
               </div>
 
-              {/* Submit Button */}
+              {/* Tombol submit */}
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full cursor-pointer bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-300 font-semibold py-3 rounded-lg text-sm uppercase tracking-wider mt-8"
+                className="w-full mt-8 bg-gradient-to-r from-blue-700 via-blue-500 to-blue-700 hover:opacity-90 text-white font-semibold py-3 rounded-xl uppercase tracking-wider transition-all duration-300 shadow-lg shadow-white-500/30 disabled:opacity-50 cursor-pointer"
                 size="lg"
               >
                 {loading ? (
@@ -210,11 +179,11 @@ export default function UnifiedLoginPage() {
               </Button>
             </form>
 
-            {/* Info Text */}
+            {/* Info tambahan */}
             <div className="mt-6 text-center">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-300">
                 Belum punya akun?{' '}
-                <Link href="/register" className="text-gray-900 font-semibold hover:underline">
+                <Link href="/register" className="text-white font-semibold hover:underline">
                   Daftar Sekarang
                 </Link>
               </p>

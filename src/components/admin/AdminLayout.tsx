@@ -1,94 +1,85 @@
+// src/components/admin/AdminLayout.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getUser } from '@/lib/api';
+import { useAuth } from '@/app/contexts/AuthContext';
 import AdminHeader from './AdminHeader';
 import AdminSidebar from './AdminSidebar';
-import { AlertCircle } from 'lucide-react';
-import { useAuth } from '@/app/contexts/AuthContext';
+import { AlertCircle, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
-  title?: string;
-  subtitle?: string;
 }
 
-export default function AdminLayout({ children, title, subtitle }: AdminLayoutProps) {
+export default function AdminLayout({ children }: AdminLayoutProps) {
   const { isAuthenticated, user } = useAuth();
   const router = useRouter();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is admin
-    const user = getUser();
-    
-    if (!user) {
+    if (isAuthenticated === null) {
+      return; 
+    }
+
+    if (!isAuthenticated) {
       router.push('/login');
       return;
     }
 
-   // Cek apakah rolenya 'admin' ATAU 'super_admin'
-    if (user.role !== 'admin' && user.role !== 'super_admin') {
-      router.push('/');
-      return;
+    if (user) {
+      if (user.role !== 'admin' && user.role !== 'super_admin') {
+        router.push('/'); // Redirect jika bukan admin/super_admin
+        return;
+      }
+      setIsAuthorized(true);
     }
-
-    setIsAuthorized(true);
+    
     setLoading(false);
   }, [isAuthenticated, user, router]);
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
 
   if (!isAuthorized) {
-    return null; // or a redirect, but useEffect handles it
-  }
-
-  if (!isAuthorized) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <p className="text-gray-600">Unauthorized Access</p>
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center">
+            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+            <CardTitle className="text-2xl">Akses Ditolak</CardTitle>
+            <CardDescription>Anda tidak memiliki izin untuk melihat halaman ini.</CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Button onClick={() => router.push('/')}>Kembali ke Beranda</Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <AdminHeader onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-
-      {/* Sidebar & Main Content */}
-      <div className="flex">
-        {/* Sidebar */}
-        <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
-        {/* Main Content */}
-        <main className="flex-1 lg:ml-64">
-          {/* Page Header */}
-          {(title || subtitle) && (
-            <div className="bg-white shadow border-b">
-              <div className="max-w-7xl mx-auto px-4 py-6">
-                {title && <h1 className="text-3xl font-bold text-gray-900">{title}</h1>}
-                {subtitle && <p className="text-gray-600 mt-1">{subtitle}</p>}
-              </div>
-            </div>
-          )}
-
-          {/* Page Content */}
-          <div className="max-w-7xl mx-auto px-4 py-8">
-            {children}
-          </div>
+    <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+      
+      {/* Kolom 1: Sidebar (Hanya Desktop) */}
+      <AdminSidebar />
+      
+      {/* Kolom 2: Header & Main Content */}
+      <div className="flex flex-col">
+        {/* Header (termasuk tombol menu mobile) */}
+        <AdminHeader />
+        
+        {/* Konten Utama Halaman */}
+        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-muted/40">
+          {children}
         </main>
       </div>
     </div>

@@ -1,46 +1,61 @@
+// src/app/admin/venues/create/page.tsx
 'use client';
 
-import React, { useState } from 'react'; // Hapus useEffect jika tidak dipakai
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { Card } from '@/components/ui/card';
+import {Card,CardContent,CardDescription,CardFooter,CardHeader,CardTitle,} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {Form,FormControl,FormDescription,FormField,FormItem,FormLabel,FormMessage,} from '@/components/ui/form';
 import { toast } from 'sonner';
-import { ArrowLeft, CheckCircle } from 'lucide-react';
-import { createVenue } from '@/lib/api'; 
+import { ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
+import { createVenue } from '@/lib/api';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+const formSchema = z.object({
+  name: z.string().min(3, { message: 'Nama venue minimal 3 karakter' }),
+  description: z.string().min(10, { message: 'Deskripsi minimal 10 karakter' }),
+  address: z.string().min(5, { message: 'Alamat wajib diisi' }),
+  city: z.string().min(3, { message: 'Kota wajib diisi' }),
+  province: z.string().min(3, { message: 'Provinsi wajib diisi' }),
+  phone: z.string().optional(),
+  email: z.string().email({ message: 'Email tidak valid' }).optional().or(z.literal('')), 
+  image_url: z.string().url({ message: 'URL gambar tidak valid' }).min(1, { message: 'URL Gambar wajib diisi' }),
+  facebook_url: z.string().url({ message: 'URL Facebook tidak valid' }).optional().or(z.literal('')),
+  instagram_url: z.string().url({ message: 'URL Instagram tidak valid' }).optional().or(z.literal('')),
+});
+
+type VenueFormValues = z.infer<typeof formSchema>;
 
 export default function CreateVenuePage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    address: '',
-    city: '',
-    province: '',
-    phone: '', // <-- Tambahkan state phone
-    email: '', // <-- Tambahkan state email
-    image_url: '',
-    facebook_url: '',
-    instagram_url: '',
-  });
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+  // 2. Setup react-hook-form
+  const form = useForm<VenueFormValues>({
+    resolver: zodResolver(formSchema),
+defaultValues: {
+      name: '',
+      description: '',
+      address: '',
+      city: '',
+      province: '',
+      phone: '',
+      email: '',
+      image_url: '',
+      facebook_url: '',
+      instagram_url: '',
+    },
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: VenueFormValues) => {
     setLoading(true);
-
     try {
-      // Kirim semua data form ke API
-      const result = await createVenue(formData); 
+      const result = await createVenue(data);
 
       if (result.success) {
         toast.success('Venue baru berhasil dibuat!', {
@@ -48,10 +63,9 @@ export default function CreateVenuePage() {
         });
         router.push('/admin/venues');
       } else {
-        // Tampilkan error validasi atau error server
-         const description = result.errors 
-            ? Object.values(result.errors).flat().join(', ') // Gabungkan semua pesan error validasi
-            : result.message || 'Silakan cek kembali data Anda.';
+        const description = result.errors
+          ? Object.values(result.errors).flat().join(', ')
+          : result.message || 'Silakan cek kembali data Anda.';
         toast.error('Gagal membuat venue', { description });
       }
     } catch (error: any) {
@@ -65,95 +79,199 @@ export default function CreateVenuePage() {
 
   return (
     <AdminLayout>
-      <div className="max-w-4xl mx-auto py-6 px-4 sm:px-6 md:px-8 mt-15"> 
-        {/* Header Halaman */}
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="outline" size="icon" onClick={() => router.push('/admin/venues')}>
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Add New Venue</h1>
-            <p className="text-gray-600 text-sm">Isi detail untuk venue baru Anda.</p>
-          </div>
+      {/* Header Halaman */}
+      <div className="flex items-center gap-4 mb-6">
+        <Button type="button" variant="outline" size="icon" onClick={() => router.push('/admin/venues')}>
+          <ArrowLeft className="w-4 h-4" />
+          <span className="sr-only">Kembali</span>
+        </Button>
+        <div>
+          <h1 className="text-2xl font-semibold">Add New Venue</h1>
+          <p className="text-muted-foreground text-sm">Isi detail untuk venue baru Anda.</p>
         </div>
-        
-        <Card>
-          <form onSubmit={handleSubmit}>
-            <div className="p-6 space-y-6">
-              {/* Baris 1: Nama */}
-              <div>
-                <Label htmlFor="name">Nama Venue <span className="text-red-500">*</span></Label>
-                <Input id="name" name="name" value={formData.name} onChange={handleChange} placeholder="Contoh: GOR Senayan Futsal" required />
-              </div>
-
-              {/* Baris 2: Deskripsi */}
-              <div>
-                <Label htmlFor="description">Deskripsi <span className="text-red-500">*</span></Label>
-                <textarea id="description" name="description" rows={4} value={formData.description} onChange={handleChange} className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500" placeholder="Deskripsi singkat tentang venue..." required />
-              </div>
-
-              {/* Baris 3: Alamat */}
-              <div>
-                <Label htmlFor="address">Alamat Lengkap <span className="text-red-500">*</span></Label>
-                <Input id="address" name="address" value={formData.address} onChange={handleChange} placeholder="Jl. Asia Afrika No. 8" required />
-              </div>
-
-              {/* Baris 4: Kota & Provinsi */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="city">Kota <span className="text-red-500">*</span></Label>
-                  <Input id="city" name="city" value={formData.city} onChange={handleChange} placeholder="Jakarta Pusat" required />
-                </div>
-                <div>
-                  <Label htmlFor="province">Provinsi <span className="text-red-500">*</span></Label>
-                  <Input id="province" name="province" value={formData.province} onChange={handleChange} placeholder="DKI Jakarta" required />
-                </div>
-              </div>
-              
-              {/* Baris 5: Telepon & Email Venue */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="phone">Telepon Venue (Opsional)</Label>
-                  <Input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleChange} placeholder="08xxxxxxxxxx" />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email Venue (Opsional)</Label>
-                  <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="info@venue.com" />
-                </div>
-              </div>
-
-              {/* Baris 6: Image URL */}
-              <div>
-                <Label htmlFor="image_url">URL Gambar Utama <span className="text-red-500">*</span></Label>
-                <Input id="image_url" name="image_url" type="url" value={formData.image_url} onChange={handleChange} placeholder="https://..." required />
-                <p className="text-xs text-gray-500 mt-1">Gunakan link gambar publik (misal dari Unsplash, Imgur).</p>
-              </div>
-
-              {/* Baris 7: Social Media (Opsional) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="instagram_url">Instagram URL (Opsional)</Label>
-                  <Input id="instagram_url" name="instagram_url" type="url" value={formData.instagram_url} onChange={handleChange} placeholder="https://instagram.com/..." />
-                </div>
-                <div>
-                  <Label htmlFor="facebook_url">Facebook URL (Opsional)</Label>
-                  <Input id="facebook_url" name="facebook_url" type="url" value={formData.facebook_url} onChange={handleChange} placeholder="https://facebook.com/..." />
-                </div>
-              </div>
-            </div>
-
-            {/* Footer Form */}
-            <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t"> {/* Tambah border */}
-              <Button type="button" variant="outline" onClick={() => router.push('/admin/venues')}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? 'Menyimpan...' : 'Save Venue'}
-              </Button>
-            </div>
-          </form>
-        </Card>
       </div>
+
+      <Form {...form}>
+        <form id="venue-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Card className="max-w-4xl mx-auto">
+            <CardHeader>
+              <CardTitle>Informasi Venue</CardTitle>
+              <CardDescription>Detail dasar, alamat, dan kontak.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Nama Venue */}
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nama Venue <span className="text-red-500">*</span></FormLabel>
+                    <FormControl>
+                      <Input placeholder="Contoh: GOR Senayan Futsal" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Deskripsi */}
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Deskripsi <span className="text-red-500">*</span></FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Deskripsi singkat tentang venue..."
+                        className="min-h-[100px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Alamat */}
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Alamat Lengkap <span className="text-red-500">*</span></FormLabel>
+                    <FormControl>
+                      <Input placeholder="Jl. Asia Afrika No. 8" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Kota & Provinsi */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Kota <span className="text-red-500">*</span></FormLabel>
+                      <FormControl>
+                        <Input placeholder="Jakarta Pusat" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="province"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Provinsi <span className="text-red-500">*</span></FormLabel>
+                      <FormControl>
+                        <Input placeholder="DKI Jakarta" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Telepon & Email */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telepon Venue (Opsional)</FormLabel>
+                      <FormControl>
+                        <Input type="tel" placeholder="08xxxxxxxxxx" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email Venue (Opsional)</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="info@venue.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="max-w-4xl mx-auto">
+            <CardHeader>
+                <CardTitle>Media & Tautan</CardTitle>
+                <CardDescription>URL untuk gambar utama dan media sosial.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <FormField
+                    control={form.control}
+                    name="image_url"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>URL Gambar Utama <span className="text-red-500">*</span></FormLabel>
+                        <FormControl>
+                        <Input type="url" placeholder="https://..." {...field} />
+                        </FormControl>
+                        <FormDescription>Gunakan link gambar publik (misal dari Unsplash, Imgur).</FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                        control={form.control}
+                        name="instagram_url"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Instagram URL (Opsional)</FormLabel>
+                            <FormControl>
+                            <Input type="url" placeholder="https://instagram.com/..." {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="facebook_url"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Facebook URL (Opsional)</FormLabel>
+                            <FormControl>
+                            <Input type="url" placeholder="https://facebook.com/..." {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                </div>
+            </CardContent>
+            
+            <CardFooter className="flex justify-end gap-3 border-t pt-6">
+              <Button type="button" variant="outline" onClick={() => router.push('/admin/venues')}>
+                Batal
+              </Button>
+              <Button type="submit" form="venue-form" disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {loading ? 'Menyimpan...' : 'Simpan Venue'}
+              </Button>
+            </CardFooter>
+          </Card>
+        </form>
+      </Form>
     </AdminLayout>
   );
 }

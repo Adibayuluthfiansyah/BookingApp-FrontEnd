@@ -1,133 +1,95 @@
+// src/components/admin/AdminHeader.tsx
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Menu, User, LogOut, Settings, ArrowDown } from 'lucide-react';
-import { getUser} from '@/lib/api';
+import {Menu,LogOut,Settings,Bell,Package2} from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/app/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import {DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuLabel,DropdownMenuSeparator,DropdownMenuTrigger,} from '@/components/ui/dropdown-menu';
+import {Avatar,AvatarFallback,AvatarImage,} from '@/components/ui/avatar';
+import {Sheet,SheetContent,SheetTrigger,} from '@/components/ui/sheet';
+import { AdminNav } from './AdminNav'; 
 
-
-interface AdminHeaderProps {
-  onMenuClick: () => void;
-}
-
-export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
-  const {logout: logout} = useAuth();
+export default function AdminHeader() {
+  const { logout, user } = useAuth(); 
   const router = useRouter();
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const user = getUser();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
+    setLoggingOut(true);
     try {
-      setLoggingOut(true);
-      await logout(); 
-      toast.success('Logout berhasil', {
-        description: 'Anda telah berhasil logout.',
-      });
-      router.push('/login');
+      await logout();
     } catch (error) {
       console.error('Logout error:', error);
-      toast.error('Logout gagal', {
-        description: 'Terjadi kesalahan saat mencoba keluar.',
-      });
+      toast.error('Logout gagal');
     } finally {
       setLoggingOut(false);
     }
   };
 
+  const userInitials = user?.name
+    ? user.name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()
+    : 'A';
+
   return (
-    <header className="bg-white shadow-sm border-b fixed top-0 left-0 right-0 z-50">
-      <div className="flex items-center justify-between px-4 py-3">
-        {/* Left: Logo & Menu Toggle */}
-        <div className="flex items-center gap-4">
-          <button
-            onClick={onMenuClick}
-            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition"
-            aria-label="Toggle menu"
-          >
-            <Menu className="w-6 h-6 text-gray-600" />
-          </button>
-          
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">K</span>
-            </div>
-            <div className="hidden md:block">
-              <h1 className="text-xl font-bold text-gray-900">KASHMIR</h1>
-              <p className="text-xs text-gray-500">Admin Dashboard</p>
-            </div>
+    <header className="flex h-16 items-center justify-between gap-4 border-b bg-background px-4 md:px-6 sticky top-0 z-30">
+      {/* Mobile Menu (Sheet) */}
+      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+        <SheetTrigger asChild>
+          <Button variant="outline" size="icon" className="shrink-0 md:hidden">
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle navigation menu</span>
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="p-0 w-[280px]">
+          {/* Logo di dalam Sheet */}
+          <div className="flex h-16 items-center border-b px-6">
+            <Link href="/admin/dashboard" className="flex items-center gap-2 font-semibold">
+              <Package2 className="h-6 w-6 text-primary" />
+              <span>Admin Panel</span>
+            </Link>
           </div>
-        </div>
-
-        {/* Right: Notifications & Profile */}
-        <div className="flex items-center gap-3">
-          {/* Notifications */}
-          <button
-            className="relative p-2 rounded-lg hover:bg-gray-100 transition"
-            aria-label="Notifications"
-          >
-            <ArrowDown className="w-5 h-5 text-gray-600" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
-
-          {/* Profile Dropdown */}
-          <div className="relative">
-            <button            
-              onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition"  
-            >
-              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-orange-600" />
-                
-              </div>
-              <div className="hidden md:block text-left">
-                <p className="text-sm font-medium text-gray-900">{user?.name || 'Admin'}</p>
-                <p className="text-xs text-gray-500 capitalize">{user?.role || 'admin'}</p>
-              </div>
-            </button>
-
-            {/* Dropdown Menu */}
-            {showProfileMenu && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setShowProfileMenu(false)}
-                ></div>
-                
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-50">
-                  <div className="p-3 border-b">
-                    <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                    <p className="text-xs text-gray-500">{user?.email}</p>
-                  </div>
-                  
-                  <div className="p-2">
-                    <button
-                      onClick={() => {
-                        setShowProfileMenu(false);
-                        router.push('/admin/settings');
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition"
-                    >
-                      <Settings className="w-4 h-4" />
-                      Settings
-                    </button>
-                    
-                    <button
-                      onClick={handleLogout}
-                      disabled={loggingOut}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition disabled:opacity-50"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      {loggingOut ? 'Logging out...' : 'Logout'}
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
+          {/* Navigasi di dalam Sheet */}
+          <div className="p-4">
+            <AdminNav onLinkClick={() => setMobileMenuOpen(false)} />
           </div>
-        </div>
+        </SheetContent>
+      </Sheet>
+      <div className="hidden md:block flex-1">
+        {/* Anda bisa tambahkan Breadcrumbs di sini */}
+      </div>
+      <div className="flex items-center gap-3">
+        {/* Profile Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-9 w-9 rounded-full cursor-pointer">
+              <Avatar className="h-9 w-9">
+                {/* <AvatarImage src="/avatar-placeholder.jpg" alt={user?.name || 'Admin'} /> */}
+                <AvatarFallback>{userInitials}</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>
+              <p className="text-sm font-medium">{user?.name || 'Admin'}</p>
+              <p className="text-xs text-muted-foreground">{user?.email}</p>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => router.push('/admin/settings')}>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} disabled={loggingOut} className="text-destructive">
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>{loggingOut ? 'Logging out...' : 'Logout'}</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

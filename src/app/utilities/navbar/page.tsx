@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 import { useAuth } from '@/app/contexts/AuthContext'
 import { NavLinks } from '@/components/Navbar/NavLinks'
-import { AuthSection } from '@/components/Navbar/AuthSection'
+import AuthSection from '@/components/Navbar/AuthSection'
 import { MobileMenu } from '@/components/Navbar/MobileMenu'
 import { NavLogo } from '@/components/Navbar/NavLogo'
 
