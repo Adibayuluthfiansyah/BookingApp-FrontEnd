@@ -4,9 +4,12 @@ import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Eye, EyeOff, UserPlus, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Eye, EyeOff, UserPlus, ArrowLeft, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image'; 
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -21,88 +24,79 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [apiErrors, setApiErrors] = useState<Record<string, string[]>>({}); 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setApiErrors({});
 
-    // Validasi frontend sebelum request
     if (formData.password !== formData.confirmPassword) {
-      toast.error('Registrasi Gagal', {
-        description: 'Konfirmasi password tidak cocok',
-        duration: 4000,
-        icon: <AlertCircle className="h-5 w-5" />,
-        style: {
-          background: 'rgba(239, 68, 68, 0.1)',
-          borderColor: 'rgba(239, 68, 68, 0.3)',
-          color: '#ef4444',
-        },
-      });
+      setError('Konfirmasi password tidak cocok.');
+      toast.error('Registrasi Gagal', { description: 'Konfirmasi password tidak cocok.' });
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 8) { 
+      setError('Password minimal harus 8 karakter.');
+      toast.error('Registrasi Gagal', { description: 'Password minimal harus 8 karakter.' });
       setLoading(false);
       return;
     }
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/register', {
+      // Ambil base URL dari environment variable
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
+      const res = await fetch(`${API_BASE_URL}/register`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json', 
+        },
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
           password: formData.password,
-          password_confirmation: formData.confirmPassword,
+          password_confirmation: formData.confirmPassword, 
         }),
       });
 
+      const resData = await res.json(); 
+
       if (!res.ok) {
-        const errData = await res.json();
-
-        let errorMessage = 'Registrasi gagal';
-
-        if (errData.errors) {
-          // Ambil semua pesan error dari Laravel
-          const allErrors = Object.values(errData.errors)
-            .flat()
-            .join('\n');
-          errorMessage = allErrors;
-        } else if (errData.message) {
-          errorMessage = errData.message;
+        let errorMessage = 'Registrasi gagal. Silakan coba lagi.'; 
+        if (res.status === 422 && resData.errors) {
+            setApiErrors(resData.errors);
+            // Ambil pesan error pertama untuk ditampilkan secara umum
+            const firstErrorField = Object.keys(resData.errors)[0];
+            errorMessage = resData.errors[firstErrorField]?.[0] || errorMessage;
+            setError(`Terdapat error pada input: ${firstErrorField}`); 
+        } else if (resData.message) {
+            errorMessage = resData.message;
+            setError(errorMessage);
         }
-
-        throw new Error(errorMessage);
+        throw new Error(errorMessage); 
       }
 
-      // Toast sukses
       toast.success('Registrasi Berhasil!', {
-        description: `Akun ${formData.name} berhasil dibuat`,
-        duration: 3000,
+        description: `Akun untuk ${resData.data?.user?.name || formData.name} berhasil dibuat. Silakan login.`,
+        duration: 4000,
         icon: <CheckCircle className="h-5 w-5" />,
-        style: {
-          background: 'rgba(34, 197, 94, 0.1)',
-          borderColor: 'rgba(34, 197, 94, 0.3)',
-          color: '#22c55e',
-        },
       });
 
-      // Redirect ke login setelah delay singkat
       setTimeout(() => {
         router.push('/login');
-      }, 1500);
+      }, 2000);
 
     } catch (err: any) {
-      setError(err.message || 'Terjadi kesalahan');
-
+      if (!error) setError(err.message || 'Terjadi kesalahan tidak diketahui.'); 
       toast.error('Registrasi Gagal', {
-        description: err.message || 'Tidak dapat membuat akun',
-        duration: 4000,
+        description: err.message || 'Tidak dapat membuat akun saat ini.',
+        duration: 5000,
         icon: <AlertCircle className="h-5 w-5" />,
-        style: {
-          background: 'rgba(239, 68, 68, 0.1)',
-          borderColor: 'rgba(239, 68, 68, 0.3)',
-          color: '#ef4444',
-        },
       });
     } finally {
       setLoading(false);
@@ -113,173 +107,136 @@ export default function RegisterPage() {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (error) setError(null);
+    if (apiErrors[name]) {
+      setApiErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
+  // Helper untuk menampilkan error API per field
+  const getFieldError = (fieldName: keyof typeof formData) => {
+    return apiErrors[fieldName]?.[0]; 
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="max-w-md w-full relative z-10 pt-10">
-        <Link 
-          href="/"
-          className="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors duration-300 mb-8 group"
-        >
-          <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform duration-300" />
-          <span className="font-medium">Kembali ke Beranda</span>
-        </Link>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900 dark:to-black p-4 relative overflow-hidden">
+       {/* Background Image (Optional) */}
+       <Image
+          src="/jsminso.jpg" 
+          alt="Background"
+          fill
+          priority
+          className="object-cover object-center w-full h-full opacity-10 dark:opacity-5 pointer-events-none"
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+       />
 
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">
-              KASHMIR
-            </h1>
-            <p className="text-lg font-medium text-gray-700 tracking-wider">
-              BOOKING
-            </p>
-            <div className="w-16 h-px bg-gray-900 mx-auto mt-2"></div>
-          </div>
-          <p className="text-gray-600">Buat akun baru Anda</p>
-        </div>
-
-        {/* Register Form */}
-        <Card className="bg-white border border-gray-200 shadow-xl">
-          <div className="p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Error Alert */}
-              {error && (
-                <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm whitespace-pre-line">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
+      <div className="w-full max-w-md relative z-10 my-12 pt-5">
+        <Card className="bg-card border border-border shadow-lg rounded-lg">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold text-foreground tracking-tight">Buat Akun Baru</CardTitle>
+            <CardDescription className="text-muted-foreground">Isi data diri Anda untuk mendaftar.</CardDescription>
+          </CardHeader>
+          <CardContent className="p-6 sm:p-8">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {error && !Object.keys(apiErrors).length && (
+                <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 text-destructive rounded-md text-sm">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle size={16} className="flex-shrink-0" />
                     <span>{error}</span>
                   </div>
                 </div>
               )}
 
               {/* Name */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 uppercase tracking-wider">
-                  Nama Lengkap
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  required
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  disabled={loading}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  placeholder="Nama Anda"
+              <div className="space-y-1.5">
+                <Label htmlFor="name">Nama Lengkap</Label>
+                <Input
+                  id="name" type="text" name="name" required
+                  value={formData.name} onChange={handleInputChange} disabled={loading}
+                  placeholder="Nama Lengkap Anda"
+                  className={`h-11 ${getFieldError('name') ? 'border-destructive ring-destructive focus-visible:ring-destructive' : ''}`}
+                  aria-invalid={!!getFieldError('name')}
+                  aria-describedby="name-error"
                 />
+                {getFieldError('name') && <p id="name-error" className="text-xs text-destructive mt-1">{getFieldError('name')}</p>}
               </div>
 
               {/* Email */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 uppercase tracking-wider">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  disabled={loading}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              <div className="space-y-1.5">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email" type="email" name="email" required autoComplete="email"
+                  value={formData.email} onChange={handleInputChange} disabled={loading}
                   placeholder="email@example.com"
-                />
+                  className={`h-11 ${getFieldError('email') ? 'border-destructive ring-destructive focus-visible:ring-destructive' : ''}`}
+                  aria-invalid={!!getFieldError('email')}
+                  aria-describedby="email-error"
+               />
+                {getFieldError('email') && <p id="email-error" className="text-xs text-destructive mt-1">{getFieldError('email')}</p>}
               </div>
 
               {/* Phone */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 uppercase tracking-wider">
-                  Nomor Telepon
-                </label>
-                <input
-                  type="text"
-                  name="phone"
-                  required
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  disabled={loading}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              <div className="space-y-1.5">
+                <Label htmlFor="phone">Nomor Telepon</Label>
+                <Input
+                  id="phone" type="tel" name="phone" required autoComplete="tel"
+                  value={formData.phone} onChange={handleInputChange} disabled={loading}
                   placeholder="08xxxxxxxxxx"
-                />
+                  className={`h-11 ${getFieldError('phone') ? 'border-destructive ring-destructive focus-visible:ring-destructive' : ''}`}
+                  aria-invalid={!!getFieldError('phone')}
+                  aria-describedby="phone-error"
+              />
+                {getFieldError('phone') && <p id="phone-error" className="text-xs text-destructive mt-1">{getFieldError('phone')}</p>}
               </div>
 
               {/* Password */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 uppercase tracking-wider">
-                  Password
-                </label>
+              <div className="space-y-1.5">
+                <Label htmlFor="password">Password</Label>
                 <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    required
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    disabled={loading}
-                    className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="••••••••"
+                  <Input
+                    id="password" type={showPassword ? 'text' : 'password'} name="password" required autoComplete="new-password"
+                    value={formData.password} onChange={handleInputChange} disabled={loading}
+                    placeholder="Minimal 8 karakter"
+                    className={`h-11 pr-10 ${getFieldError('password') ? 'border-destructive ring-destructive focus-visible:ring-destructive' : ''}`}
+                    aria-invalid={!!getFieldError('password')}
+                    aria-describedby="password-error"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    disabled={loading}
-                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-500 hover:text-gray-900 transition-colors duration-300 disabled:cursor-not-allowed"
-                  >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} disabled={loading} className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground">
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
+                {getFieldError('password') && <p id="password-error" className="text-xs text-destructive mt-1">{getFieldError('password')}</p>}
               </div>
 
               {/* Confirm Password */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 uppercase tracking-wider">
-                  Konfirmasi Password
-                </label>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="confirmPassword"
-                  required
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  disabled={loading}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  placeholder="••••••••"
+              <div className="space-y-1.5">
+                <Label htmlFor="confirmPassword">Konfirmasi Password</Label>
+                <Input
+                  id="confirmPassword" type={showPassword ? 'text' : 'password'} name="confirmPassword" required autoComplete="new-password"
+                  value={formData.confirmPassword} onChange={handleInputChange} disabled={loading}
+                  placeholder="Ulangi password"
+                  className="h-11"
                 />
+                {formData.password !== formData.confirmPassword && formData.confirmPassword.length > 0 && (
+                    <p className="text-xs text-destructive mt-1">Konfirmasi password tidak cocok.</p>
+                )}
               </div>
 
               {/* Submit Button */}
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full cursor-pointer bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-300 font-semibold py-3 rounded-lg text-sm uppercase tracking-wider mt-8"
-                size="lg"
-              >
-                {loading ? (
-                  <div className="flex items-center justify-center gap-3">
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span>Memproses...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-3">
-                    <UserPlus size={18} />
-                    <span>Daftar</span>
-                  </div>
-                )}
+              <Button type="submit" disabled={loading} className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold" size="lg">
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <div className="flex items-center gap-2"><UserPlus size={18} /><span>Daftar</span></div>}
               </Button>
             </form>
-
-            {/* Info Text */}
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-500">
-                Sudah punya akun?{' '}
-                <Link href="/admin/login" className="text-gray-900 font-semibold hover:underline">
-                  Masuk Sekarang
-                </Link>
-              </p>
-            </div>
-          </div>
+          </CardContent>
+          <CardFooter className="text-center text-sm text-muted-foreground p-6 border-t border-border">
+            Sudah punya akun?{' '}
+            <Link href="/login" className="text-primary hover:underline font-medium ml-1 unstyled">
+              Masuk di sini
+            </Link>
+          </CardFooter>
         </Card>
       </div>
     </div>
