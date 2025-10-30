@@ -1,51 +1,54 @@
 'use client';
 
 import { LucideIcon } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 interface StatsCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
   icon: LucideIcon;
-  iconBgColor: string;
-  iconColor: string;
+  iconBgColor?: string;
+  iconColor?: string;
   onClick?: () => void;
 }
 
-export default function StatsCard({
+export default function AdminStatsCard({
   title,
   value,
   subtitle,
   icon: Icon,
-  iconBgColor,
-  iconColor,
+  iconBgColor = 'bg-primary/10',
+  iconColor = 'text-primary',
   onClick,
 }: StatsCardProps) {
   return (
-    <div
+    <Card
       onClick={onClick}
-      className={`
-        bg-white rounded-xl shadow p-6 transition-all duration-300
-        ${onClick ? 'cursor-pointer hover:shadow-xl hover:-translate-y-1' : ''}
-      `}
-    >
-      <div className="flex items-center justify-between mb-4">
-        <div className={`p-3 ${iconBgColor} rounded-lg`}>
-          <Icon className={`w-6 h-6 ${iconColor}`} />
-        </div>
-      </div>
-      
-      <h3 className="text-gray-600 text-sm font-medium">{title}</h3>
-      
-      <p className="text-2xl font-bold text-gray-900 mt-2">
-        {value}
-      </p>
-      
-      {subtitle && (
-        <p className="text-sm text-gray-500 mt-1">
-          {subtitle}
-        </p>
+      className={cn(
+        "border-border shadow-sm",
+        onClick ? 'cursor-pointer hover:bg-accent/50 transition-colors' : ''
       )}
-    </div>
+    >
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4 lg:p-6">
+        <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground truncate pr-2">
+          {title}
+        </CardTitle>
+        <div className={cn("p-1.5 sm:p-2 rounded-lg flex-shrink-0", iconBgColor)}>
+          <Icon className={cn("w-4 h-4 sm:w-5 sm:h-5", iconColor)} />
+        </div>
+      </CardHeader>
+      <CardContent className="p-3 sm:p-4 lg:p-6 pt-0">
+        <div className="text-xl sm:text-2xl font-bold text-foreground break-words">
+          {value}
+        </div>
+        {subtitle && (
+          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+            {subtitle}
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 }

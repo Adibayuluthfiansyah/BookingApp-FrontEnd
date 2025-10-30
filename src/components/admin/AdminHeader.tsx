@@ -1,20 +1,20 @@
-// src/components/admin/AdminHeader.tsx
 'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {Menu,LogOut,Settings,Bell,Package2} from 'lucide-react';
+import { Menu, LogOut, Settings, Bell, Package2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import {DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuLabel,DropdownMenuSeparator,DropdownMenuTrigger,} from '@/components/ui/dropdown-menu';
-import {Avatar,AvatarFallback,AvatarImage,} from '@/components/ui/avatar';
-import {Sheet,SheetContent,SheetTrigger,} from '@/components/ui/sheet';
-import { AdminNav } from './AdminNav'; 
+import {DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuLabel,DropdownMenuSeparator,DropdownMenuTrigger,DropdownMenuPortal,} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { AdminNav } from './AdminNav';
+import { cn } from '@/lib/utils';
 
 export default function AdminHeader() {
-  const { logout, user } = useAuth(); 
+  const { logout, user } = useAuth();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -23,6 +23,7 @@ export default function AdminHeader() {
     setLoggingOut(true);
     try {
       await logout();
+      toast.success('Logout berhasil');
     } catch (error) {
       console.error('Logout error:', error);
       toast.error('Logout gagal');
@@ -36,59 +37,84 @@ export default function AdminHeader() {
     : 'A';
 
   return (
-    <header className="flex h-16 items-center justify-between gap-4 border-b bg-background px-4 md:px-6 sticky top-0 z-30">
+    <header className="sticky top-0 z-30 flex h-14 sm:h-16 items-center justify-between gap-2 sm:gap-4 border-b bg-background px-3 sm:px-4 md:px-6">
+      
       {/* Mobile Menu (Sheet) */}
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <SheetTrigger asChild>
-          <Button variant="outline" size="icon" className="shrink-0 md:hidden">
-            <Menu className="h-5 w-5" />
+          <Button variant="outline" size="icon" className="shrink-0 md:hidden h-9 w-9">
+            <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
             <span className="sr-only">Toggle navigation menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="p-0 w-[280px]">
+        <SheetContent side="left" className="flex flex-col p-0 w-[280px] sm:w-[300px] bg-background">
           {/* Logo di dalam Sheet */}
-          <div className="flex h-16 items-center border-b px-6">
-            <Link href="/admin/dashboard" className="flex items-center gap-2 font-semibold">
-              <Package2 className="h-6 w-6 text-primary" />
-              <span>Admin Panel</span>
+          <div className="flex h-14 sm:h-16 items-center border-b px-4 sm:px-6">
+            <Link href="/admin/dashboard" className="flex items-center gap-2 font-semibold text-foreground">
+              <Package2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+              <span className="text-sm sm:text-base">Admin Panel</span>
             </Link>
           </div>
           {/* Navigasi di dalam Sheet */}
-          <div className="p-4">
-            <AdminNav onLinkClick={() => setMobileMenuOpen(false)} />
+          <div className="flex-1 overflow-y-auto py-3 sm:py-4">
+            <AdminNav className="px-3 sm:px-4" onLinkClick={() => setMobileMenuOpen(false)} />
           </div>
         </SheetContent>
       </Sheet>
-      <div className="hidden md:block flex-1">
-        {/* Anda bisa tambahkan Breadcrumbs di sini */}
+
+      {/* Logo untuk Mobile (ditampilkan di tengah) */}
+      <div className="flex md:hidden flex-1 justify-center">
+        <Link href="/admin/dashboard" className="flex items-center gap-2 font-semibold text-foreground">
+          <Package2 className="h-5 w-5 text-primary" />
+          <span className="text-sm">Admin Panel</span>
+        </Link>
       </div>
-      <div className="flex items-center gap-3">
-        {/* Profile Dropdown */}
+
+      {/* Breadcrumbs area untuk Desktop */}
+      <div className="hidden md:block flex-1">
+        {/* Breadcrumbs bisa ditambahkan di sini */}
+      </div>
+
+      {/* Profile Dropdown */}
+      <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
+        {/* Notifikasi */}
+        <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 sm:h-9 sm:w-9 text-muted-foreground hover:text-foreground">
+          <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
+          <span className="sr-only">Notifikasi</span>
+        </Button>
+        
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-9 w-9 rounded-full cursor-pointer">
-              <Avatar className="h-9 w-9">
-                {/* <AvatarImage src="/avatar-placeholder.jpg" alt={user?.name || 'Admin'} /> */}
-                <AvatarFallback>{userInitials}</AvatarFallback>
+            <Button variant="ghost" className="relative h-8 w-8 sm:h-9 sm:w-9 rounded-full p-0">
+              <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-border">
+                <AvatarFallback className="bg-muted text-muted-foreground text-xs sm:text-sm">{userInitials}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>
-              <p className="text-sm font-medium">{user?.name || 'Admin'}</p>
-              <p className="text-xs text-muted-foreground">{user?.email}</p>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push('/admin/settings')}>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} disabled={loggingOut} className="text-destructive">
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>{loggingOut ? 'Logging out...' : 'Logout'}</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
+          <DropdownMenuPortal>
+            <DropdownMenuContent align="end" className="w-48 sm:w-56 bg-card border-border shadow-lg">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-xs sm:text-sm font-medium leading-none text-foreground truncate">{user?.name || 'Admin'}</p>
+                  <p className="text-xs leading-none text-muted-foreground truncate">{user?.email}</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-border"/>
+              <DropdownMenuItem onClick={() => router.push('/admin/settings')} className="cursor-pointer text-xs sm:text-sm">
+                <Settings className="mr-2 h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+                <span>Pengaturan</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-border"/>
+              <DropdownMenuItem onClick={handleLogout} disabled={loggingOut} className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer text-xs sm:text-sm">
+                {loggingOut ? (
+                  <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                ) : (
+                  <LogOut className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                )}
+                <span>{loggingOut ? 'Keluar...' : 'Keluar'}</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenuPortal>
         </DropdownMenu>
       </div>
     </header>

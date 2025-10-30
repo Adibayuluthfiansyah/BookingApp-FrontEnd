@@ -1,4 +1,3 @@
-// src/components/admin/AdminLayout.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -6,23 +5,21 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/contexts/AuthContext';
 import AdminHeader from './AdminHeader';
 import AdminSidebar from './AdminSidebar';
-import { AlertCircle, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isAuthenticated === null) {
-      return; 
+    if (authLoading) {
+      return;
     }
 
     if (!isAuthenticated) {
@@ -31,54 +28,37 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
 
     if (user) {
-      if (user.role !== 'admin' && user.role !== 'super_admin') {
-        router.push('/'); // Redirect jika bukan admin/super_admin
-        return;
+      if (user.role === 'admin' || user.role === 'super_admin') {
+        setIsAuthorized(true);
+      } else {
+        setIsAuthorized(false);
+        router.push('/');
       }
-      setIsAuthorized(true);
     }
-    
-    setLoading(false);
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, user, authLoading, router]);
 
-  if (loading) {
+  if (authLoading || !isAuthorized) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!isAuthorized) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-            <CardTitle className="text-2xl">Akses Ditolak</CardTitle>
-            <CardDescription>Anda tidak memiliki izin untuk melihat halaman ini.</CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Button onClick={() => router.push('/')}>Kembali ke Beranda</Button>
-          </CardContent>
-        </Card>
+        <Loader2 className="h-10 w-10 sm:h-12 sm:w-12 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+    <div className={cn(
+      "grid min-h-screen w-full bg-background",
+      "md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]"
+    )}>
       
-      {/* Kolom 1: Sidebar (Hanya Desktop) */}
+      {/* Sidebar (Desktop) */}
       <AdminSidebar />
       
-      {/* Kolom 2: Header & Main Content */}
+      {/* Konten Utama */}
       <div className="flex flex-col">
-        {/* Header (termasuk tombol menu mobile) */}
         <AdminHeader />
         
-        {/* Konten Utama Halaman */}
-        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-muted/40">
+        <main className="flex flex-1 flex-col gap-3 p-3 sm:gap-4 sm:p-4 lg:gap-6 lg:p-6 bg-muted/30 dark:bg-muted/10">
           {children}
         </main>
       </div>

@@ -1,10 +1,12 @@
-'use client'
+'use client';
 
-import React from 'react'
-import Image from 'next/image'
-import { Mail, Phone, MapPin, Clock, Building2,CheckCircle,ExternalLink,Instagram,Facebook,Twitter
-} from 'lucide-react'
-import Footer from '../utilities/footer/page'
+import React from 'react';
+import Image from 'next/image';
+import { Mail, Phone, MapPin, Clock, Building2, CheckCircle, ExternalLink, Instagram, Facebook, Twitter } from 'lucide-react';
+import Footer from '../utilities/footer/page';
+import { Card, CardContent, CardHeader } from '@/components/ui/card'; 
+import { Button } from '@/components/ui/button'; 
+import { cn } from '@/lib/utils'; 
 
 const ContactPage = () => {
 
@@ -12,9 +14,9 @@ const ContactPage = () => {
     {
       icon: Mail,
       title: 'Email Bisnis',
-      value: 'kashmirsoccer@gmail.com',
+      value: 'O7Ongcorp@gmail.com',
       description: 'Untuk kerja sama dan partnership',
-      action: 'mailto:kashmirsoccer@gmail.com'
+      action: 'mailto:O7Ongcorpz@gmail.com'
     },
     {
       icon: Phone,
@@ -26,7 +28,7 @@ const ContactPage = () => {
     {
       icon: MapPin,
       title: 'Lokasi Kantor',
-      value: 'Jakarta Selatan',
+      value: 'Pontianak',
       description: 'Kunjungi kantor kami',
       action: '#'
     },
@@ -37,172 +39,181 @@ const ContactPage = () => {
       description: 'Senin - Minggu',
       action: null
     }
-  ]
-
+  ];
 
   const socialLinks = [
-    { icon: Instagram, name: 'Instagram', url: '#', handle: '@kashmirsoccer' },
-    { icon: Facebook, name: 'Facebook', url: '#', handle: 'Kashmir Soccer' },
-    { icon: Twitter, name: 'Twitter', url: '#', handle: '@kashmirsoccer' }
-  ]
+    { icon: Instagram, name: 'Instagram', url: '#', handle: '@O7OngCorp' },
+    { icon: Facebook, name: 'Facebook', url: '#', handle: 'O7ONG CORP' },
+    { icon: Twitter, name: 'Twitter', url: '#', handle: '@O7OngCorp' }
+  ];
+
+  const partnershipBenefits = [
+    'Akses ke ribuan pengguna aktif',
+    'Sistem booking digital terintegrasi',
+    'Marketing support untuk venue partners',
+    'Analytics dan reporting real-time',
+    'Technical support 24/7',
+    'Revenue sharing yang kompetitif'
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Hero Section */}
       <div className="relative h-80 md:h-96 overflow-hidden">
         <div className="absolute inset-0">
-          <Image 
-            src="/kontakpage.jpg" 
-            width={1920} 
-            height={1080} 
+          <Image
+            src="/kontakpage.jpg"
+            fill
+            priority
             alt="Contact image"
             className="object-cover w-full h-full"
+            onError={(e) => { e.currentTarget.src = `https://placehold.co/1920x400/111827/ffffff?text=Hubungi+Kami`; }}
           />
         </div>
-        <div className="absolute inset-0 bg-black/50"></div>
+        <div className="absolute inset-0 bg-black/60 "></div> 
         <div className="relative z-10 flex items-center justify-center h-full text-center text-white px-4">
-          <div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-4">Hubungi Kami</h1>
-            <p className="text-lg md:text-xl max-w-2xl mx-auto">
-              Mari berkolaborasi untuk mengembangkan ekosistem olahraga Indonesia
+          <div className="max-w-2xl">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">Hubungi Kami</h1>
+            <p className="text-lg md:text-xl text-gray-200">
+              Mari berkolaborasi untuk mengembangkan ekosistem olahraga Indonesia.
             </p>
           </div>
         </div>
       </div>
       
-
-      <div className="max-w-7xl mx-auto py-16 px-4">
+      {/* Konten Utama */}
+      <div className="container mx-auto py-12 md:py-20 px-4">
+        
         {/* Contact Info Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16 md:mb-24">
           {contactInfo.map((info, index) => {
-            const Icon = info.icon
+            const Icon = info.icon;
             return (
-              <div key={index} className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center">
-                    <Icon className="w-6 h-6 text-white" />
+              <Card key={index} className="border-border shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                <CardHeader className="flex flex-row items-center justify-between pb-4">
+                  <div className="w-12 h-12 bg-primary text-primary-foreground rounded-lg flex items-center justify-center">
+                    <Icon className="w-6 h-6" />
                   </div>
                   {info.action && (
-                    <a 
-                      href={info.action}
-                      className="text-blue-600 hover:text-blue-700"
-                      target={info.action.startsWith('http') ? '_blank' : '_self'}
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
+                    <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+                      <a
+                        href={info.action}
+                        target={info.action.startsWith('http') ? '_blank' : '_self'}
+                        rel="noopener noreferrer"
+                        aria-label={`Buka ${info.title}`}
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    </Button>
                   )}
-                </div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">{info.title}</h3>
-                <p className="text-blue-600 font-medium mb-1">{info.value}</p>
-                <p className="text-gray-600 text-sm">{info.description}</p>
-              </div>
-            )
+                </CardHeader>
+                <CardContent className="flex-grow">
+                  <h3 className="text-lg font-semibold text-foreground mb-2">{info.title}</h3>
+                  <p className="text-primary font-medium mb-1">{info.value}</p>
+                  <p className="text-muted-foreground text-sm">{info.description}</p>
+                </CardContent>
+              </Card>
+            );
           })}
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-12">
-          {/* Business Partnership Section */}
+        {/* Kolom untuk Partnership */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 xl:gap-16 items-start">
           <div className="space-y-8">
-            <div className="relative">
-              <Image 
-                src="/about.jpg" 
-                width={650} 
-                height={400} 
+            <div className="relative rounded-xl shadow-lg overflow-hidden aspect-video lg:aspect-[4/3]">
+              <Image
+                src="/about.jpg"
+                fill
                 alt="Business partnership"
-                className="rounded-xl shadow-lg w-full h-80 object-cover"
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                onError={(e) => { e.currentTarget.src = `https://placehold.co/650x400/111827/ffffff?text=Partnership`; }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-xl"></div>
-              <div className="absolute bottom-6 left-6 text-white">
-                <h3 className="text-2xl font-bold mb-2">Partnership Opportunities</h3>
-                <p className="text-white/90">Bergabunglah dengan ekosistem Kashmir Soccer</p>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+              <div className="absolute bottom-6 left-6 text-white p-4">
+                <h3 className="text-2xl font-bold mb-2">Peluang Partnership</h3>
+                <p className="text-white/90">Bergabunglah dengan ekosistem kami.</p>
               </div>
             </div>
 
             <div className="space-y-6">
               <div>
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6 flex items-center gap-3">
-                  <Building2 className="w-8 h-8" />
+                <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6 flex items-center gap-3">
+                  <Building2 className="w-8 h-8 text-primary" />
                   Bisnis & Kerja Sama
                 </h2>
-                <p className="text-gray-600 leading-relaxed mb-6">
-                  Kami membuka peluang kerja sama yang saling menguntungkan untuk memajukan industri 
+                <p className="text-muted-foreground leading-relaxed mb-6">
+                  Kami membuka peluang kerja sama yang saling menguntungkan untuk memajukan industri
                   olahraga Indonesia. Dari pemilik lapangan hingga sponsor, mari berkontribusi bersama.
                 </p>
               </div>
-               {/* Social Media */}
-              <div className="pt-3">
-                <h4 className="text-lg font-semibold text-gray-800 mb-4">Follow Kami:</h4>
-                <div className="flex gap-4">
+              {/* Social Media */}
+              <div>
+                <h4 className="text-lg font-semibold text-foreground mb-4">Follow Kami:</h4>
+                <div className="flex flex-col sm:flex-row gap-4">
                   {socialLinks.map((social, index) => {
-                    const Icon = social.icon
+                    const Icon = social.icon;
                     return (
                       <a
                         key={index}
                         href={social.url}
-                        className="flex items-center gap-3 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg transition-colors"
+                        className="flex items-center gap-3 bg-muted/50 hover:bg-accent px-4 py-3 rounded-lg transition-colors border border-border"
                       >
-                        <Icon className="w-5 h-5 text-gray-600" />
+                        <Icon className="w-5 h-5 text-primary" />
                         <div className="text-sm">
-                          <div className="font-medium text-gray-800">{social.name}</div>
-                          <div className="text-gray-600">{social.handle}</div>
+                          <div className="font-medium text-foreground">{social.name}</div>
+                          <div className="text-muted-foreground">{social.handle}</div>
                         </div>
                       </a>
-                    )
+                    );
                   })}
                 </div>
               </div>
             </div>
           </div>
 
-        {/* Call to Action */}
-        <div className="rounded-2xl p-5 text-center text-black">
-          <h3 className="text-2xl md:text-3xl font-bold mb-4">
-            Siap Memulai Partnership?
-          </h3>
-          <p className="text-lg opacity-90 mb-6 max-w-2xl mx-auto">
-            Bergabunglah dengan puluhan mitra yang telah merasakan manfaat ekosistem Kashmir Soccer
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <a 
-              href="https://wa.me/6284313546846" 
-              className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 rounded-full font-semibold transition-colors inline-flex items-center gap-2"
-            >
-              <Phone className="w-5 h-5" />
-              Hubungi WhatsApp
-            </a>
-            <a 
-              href="mailto:kashmirsoccer@gmail.com" 
-              className="bg-black backdrop-blur-sm hover:bg-black/50 px-8 py-3 rounded-full font-semibold  text-white transition-colors border border-white/30 inline-flex items-center gap-2"
-            >
-              <Mail className="w-5 h-5" />
-              Kirim Email
-            </a>
-          </div>
-          
-
+          {/* Kolom Kanan: Keuntungan & CTA */}
+          <Card className="border-border shadow-sm rounded-xl p-6 md:p-8 lg:sticky lg:top-24">
+            <h3 className="text-2xl md:text-3xl font-bold mb-4 text-center text-foreground">
+              Siap Memulai Partnership?
+            </h3>
+            <p className="text-muted-foreground mb-8 text-center max-w-lg mx-auto">
+              Bergabunglah dengan puluhan mitra yang telah merasakan manfaat ekosistem kami.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <Button asChild size="lg" className="w-full sm:w-auto">
+                <a href="https://wa.me/6284313546846" target="_blank" rel="noopener noreferrer">
+                  <Phone className="w-5 h-5 mr-2" />
+                  Hubungi WhatsApp
+                </a>
+              </Button>
+              <Button asChild size="lg" variant="secondary" className="w-full sm:w-auto">
+                <a href="mailto:kashmirsoccer@gmail.com">
+                  <Mail className="w-5 h-5 mr-2" />
+                  Kirim Email
+                </a>
+              </Button>
+            </div>
+            
             {/* Partnership Benefits */}
-              <div className="grid gap-4 mt-16">
-                <h4 className="text-xl font-semibold text-gray-800 mb-4">Keuntungan Bermitra dengan Kami:</h4>
-                {[
-                  'Akses ke ribuan pengguna aktif',
-                  'Sistem booking digital terintegrasi',
-                  'Marketing support untuk venue partners',
-                  'Analytics dan reporting real-time',
-                  'Technical support 24/7',
-                  'Revenue sharing yang kompetitif'
-                ].map((benefit, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                    <span className="text-gray-700">{benefit}</span>
+            <div className="mt-12 pt-8 border-t border-border">
+              <h4 className="text-xl font-semibold text-foreground mb-6">Keuntungan Bermitra dengan Kami:</h4>
+              <div className="space-y-4">
+                {partnershipBenefits.map((benefit, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-muted-foreground">{benefit}</span>
                   </div>
                 ))}
               </div>
-
+            </div>
+          </Card>
         </div>
       </div>
-      </div>
-      <Footer/>
+      <Footer />
     </div>
-  )
+  );
 }
 
-export default ContactPage
+export default ContactPage;

@@ -1,14 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader,CardContent} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import {Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle,DialogTrigger,DialogClose,} from "@/components/ui/dialog"; 
 import { toast } from 'sonner';
-import { AlertCircle, PlusCircle } from 'lucide-react';
+import { AlertCircle, PlusCircle, Loader2, Search, Edit, Trash2 , MapPin} from 'lucide-react';
 import Link from 'next/link';
 import { getAdminVenues, deleteVenue } from '@/lib/api';
-import { Venue } from '@/types'; 
+import { Venue } from '@/types';
 import Image from 'next/image';
 
 export default function AdminVenuesPage() {
@@ -18,7 +22,8 @@ export default function AdminVenuesPage() {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [venueToDelete, setVenueToDelete] = useState<number | null>(null);
+  const [venueToDelete, setVenueToDelete] = useState<Venue | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     loadVenues();
@@ -28,7 +33,7 @@ export default function AdminVenuesPage() {
     setLoading(true);
     setError(null);
     try {
-      const result = await getAdminVenues(); 
+      const result = await getAdminVenues();
       if (result.success && result.data) {
         setVenues(result.data);
       } else {
@@ -44,22 +49,23 @@ export default function AdminVenuesPage() {
     }
   };
 
-  const filteredVenues = venues.filter(venue =>
+  const filteredVenues = useMemo(() => venues.filter(venue =>
     venue.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (venue.address && venue.address.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  ), [venues, searchTerm]);
 
-  const handleDeleteVenue = (venueId: number) => {
-    setVenueToDelete(venueId);
+  const handleDeleteClick = (venue: Venue) => {
+    setVenueToDelete(venue);
     setShowDeleteModal(true);
   };
 
   const confirmDelete = async () => {
     if (venueToDelete) {
+      setIsDeleting(true);
       try {
-        const result = await deleteVenue(venueToDelete); 
+        const result = await deleteVenue(venueToDelete.id);
         if (result.success) {
-          toast.success('Venue berhasil dihapus.');
+          toast.success(`Venue "${venueToDelete.name}" berhasil dihapus.`);
           setShowDeleteModal(false);
           setVenueToDelete(null);
           loadVenues(); // Muat ulang daftar venue
@@ -68,182 +74,197 @@ export default function AdminVenuesPage() {
         }
       } catch (err: any) {
         toast.error(err.message || 'Terjadi kesalahan saat menghapus.');
+      } finally {
+        setIsDeleting(false);
       }
     }
   };
 
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center p-12">
+          <Loader2 className="animate-spin h-12 w-12 text-primary" />
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="text-center p-12 text-destructive">
+          <AlertCircle className="w-12 h-12 mx-auto mb-4" />
+          <p className="font-semibold mb-2">Gagal Memuat Data</p>
+          <p className="text-sm text-muted-foreground mb-4">{error}</p>
+          <Button onClick={loadVenues} variant="destructive" >Coba Lagi</Button>
+        </div>
+      );
+    }
+
+    if (venues.length === 0) {
+        return (
+             <div className="text-center p-12">
+                 <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                 <p className="text-muted-foreground mb-4">Belum ada venue yang ditambahkan.</p>
+                 <Button asChild>
+                   <Link href="/admin/venues/create">
+                     <PlusCircle className="w-4 h-4 mr-2" />
+                     Tambah Venue Pertama
+                   </Link>
+                 </Button>
+               </div>
+        );
+    }
+
+    return (
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="min-w-[250px]">Venue</TableHead>
+                <TableHead className="min-w-[200px]">Lokasi</TableHead>
+                <TableHead>Total Lapangan</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Aksi</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredVenues.length === 0 && (
+                <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                        Tidak ada venue yang cocok dengan pencarian {searchTerm}.
+                    </TableCell>
+                </TableRow>
+              )}
+              {filteredVenues.map((venue) => (
+                <TableRow key={venue.id} className="hover:bg-accent/50">
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-md overflow-hidden relative flex-shrink-0 bg-muted">
+                        <Image
+                          src={venue.image_url || '/placeholder.jpg'} 
+                          alt={venue.name}
+                          fill
+                          className="object-cover"
+                          onError={(e) => { e.currentTarget.src = `https://placehold.co/80x80/f0f0f0/999999?text=Img`; }}
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-foreground truncate">
+                          {venue.name}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate" title={venue.description}>
+                          {venue.description || 'Tanpa deskripsi'}
+                        </div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm text-foreground truncate" title={venue.address}>
+                      {venue.address || 'N/A'}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {venue.city || 'N/A'}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="border-border">
+                      {venue.fields?.length || 0} Lapangan
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {/* (Asumsi status, bisa disesuaikan jika ada di API) */}
+                    <Badge variant="secondary" className="bg-green-600/10 text-green-700 border-green-600/20">
+                      Aktif
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end space-x-2">
+                      <Button asChild variant="outline" size="icon" className="h-8 w-8">
+                        <Link href={`/admin/venues/edit/${venue.id}`}>
+                          <Edit className="w-4 h-4" />
+                          <span className="sr-only">Edit</span>
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleDeleteClick(venue)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span className="sr-only">Hapus</span>
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    );
+  };
+
   return (
     <AdminLayout>
-      <div className="py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6 pt-12">
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900">Venue Management</h1>
-              <p className="text-gray-600">Kelola semua venue dan lapangan</p>
-            </div>
-            <Button asChild>
-              <Link href="/admin/venues/create" className="flex items-center">
-                <PlusCircle className="w-5 h-5 mr-2" />
-                Add New Venue
-              </Link>
-            </Button>
-          </div>
-
-          {/* Search Card */}
-          <Card className="p-6 mb-6">
-            <div className="flex-1">
-              <input
-                type="text"
-                placeholder="Cari venue berdasarkan nama atau alamat..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-              />
-            </div>
-          </Card>
-
-          {/* Venues Table */}
-          <Card className="overflow-hidden">
-            {loading ? (
-              <div className="text-center p-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-                <p className="text-gray-600">Memuat data venue...</p>
-              </div>
-            ) : error ? (
-              <div className="text-center p-12 text-red-600">
-                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                <p className="font-semibold">Gagal Memuat Data</p>
-                <p className="text-sm text-gray-600 mb-4">{error}</p>
-                <Button onClick={loadVenues}>Coba Lagi</Button>
-              </div>
-            ) : (
-              <>
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <h3 className="text-lg font-medium text-gray-900">
-                    All Venues ({filteredVenues.length})
-                  </h3>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Venue
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Location
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Total Fields
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredVenues.map((venue) => (
-                        <tr key={venue.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="h-10 w-10 rounded-xl overflow-hidden relative flex-shrink-0">
-                                <Image
-                                  src={venue.image_url || '/placeholder-image.jpg'}
-                                  alt={venue.name}
-                                  fill
-                                  className="object-cover"
-                                />
-                              </div>
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {venue.name}
-                                </div>
-                                <div className="text-sm text-gray-500 truncate max-w-xs">
-                                  {venue.description || 'N/A'}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900 max-w-xs truncate">
-                              {venue.address || 'N/A'}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {venue.city || 'N/A'}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
-                              {/* (PERBAIKAN) Hitung dari relasi 'fields' */}
-                              {venue.fields?.length || 0} fields
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {/* (Asumsi status, bisa disesuaikan jika ada di API) */}
-                            <span className="inline-flex px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                              Active
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div className="flex items-center justify-end space-x-2">
-                              {/* === INI BAGIAN YANG DIPERBAIKI === */}
-                              <Button asChild variant="outline" size="sm">
-                                <Link href={`/admin/venues/edit/${venue.id}`}>
-                                  Edit
-                                </Link>
-                              </Button>
-                              {/* === AKHIR PERBAIKAN === */}
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleDeleteVenue(venue.id)}
-                              >
-                                Delete
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            )}
-          </Card>
+      {/* Header Halaman */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Manajemen Venue</h1>
+          <p className="text-muted-foreground text-sm">Kelola semua venue dan lapangan Anda.</p>
         </div>
+        <Button asChild>
+          <Link href="/admin/venues/create">
+            <PlusCircle className="w-4 h-4 mr-2" />
+            Tambah Venue Baru
+          </Link>
+        </Button>
       </div>
 
+      {/* Search & Konten */}
+      <Card className="border-border shadow-sm">
+         <CardHeader>
+           <div className="relative w-full md:max-w-sm">
+             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+             <Input
+               type="text"
+               placeholder="Cari venue berdasarkan nama atau alamat..."
+               value={searchTerm}
+               onChange={(e) => setSearchTerm(e.target.value)}
+               className="pl-9"
+             />
+           </div>
+         </CardHeader>
+         {renderContent()}
+      </Card>
+
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="p-6 max-w-md w-full">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Delete Venue
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Apakah Anda yakin ingin menghapus venue ini? Tindakan ini akan menghapus semua lapangan dan data terkait.
-            </p>
-            <div className="flex justify-end space-x-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowDeleteModal(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={confirmDelete}
-              >
-                Delete
-              </Button>
-            </div>
-          </Card>
-        </div>
-      )}
+      <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Hapus Venue?</DialogTitle>
+            <DialogDescription>
+              Apakah Anda yakin ingin menghapus venue <strong>{venueToDelete?.name}</strong>?
+              Tindakan ini akan menghapus semua lapangan, slot waktu, dan data booking terkait.
+              Tindakan ini tidak dapat dibatalkan.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <DialogClose asChild>
+              <Button variant="outline" onClick={() => setVenueToDelete(null)}>Batal</Button>
+            </DialogClose>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Ya, Hapus"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </AdminLayout>
   );
 }

@@ -71,7 +71,6 @@ export default function VenuesPage() {
 
   const renderContent = () => {
     if (loading) {
-      // Tampilkan 8 skeleton saat loading
       return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {Array.from({ length: 8 }).map((_, i) => (
