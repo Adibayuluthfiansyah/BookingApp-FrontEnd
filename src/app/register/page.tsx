@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -9,10 +9,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, UserPlus, ArrowLeft, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image'; 
+import Image from 'next/image';
+import { useAuth } from '@/app/contexts/AuthContext'; 
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { isAuthenticated, loading: authLoading } = useAuth(); 
 
   const [formData, setFormData] = useState({
     name: '',
@@ -24,7 +26,13 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [apiErrors, setApiErrors] = useState<Record<string, string[]>>({}); 
+  const [apiErrors, setApiErrors] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.push('/'); 
+    }
+  }, [authLoading, isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,12 +46,12 @@ export default function RegisterPage() {
       setLoading(false);
       return;
     }
-
-    if (formData.password.length < 8) { 
-      setError('Password minimal harus 8 karakter.');
-      toast.error('Registrasi Gagal', { description: 'Password minimal harus 8 karakter.' });
-      setLoading(false);
-      return;
+    
+    if (formData.password.length < 8) {
+        setError('Password minimal harus 8 karakter.');
+        toast.error('Registrasi Gagal', { description: 'Password minimal 8 karakter.' });
+        setLoading(false);
+        return;
     }
 
     try {
@@ -51,37 +59,36 @@ export default function RegisterPage() {
       const res = await fetch(`${API_BASE_URL}/register`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json', 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
           password: formData.password,
-          password_confirmation: formData.confirmPassword, 
+          password_confirmation: formData.confirmPassword,
         }),
       });
 
-      const resData = await res.json(); 
+      const resData = await res.json();
 
       if (!res.ok) {
-        let errorMessage = 'Registrasi gagal. Silakan coba lagi.'; 
+        let errorMessage = 'Registrasi gagal. Silakan coba lagi.';
         if (res.status === 422 && resData.errors) {
-            setApiErrors(resData.errors);
-            // Ambil pesan error pertama untuk ditampilkan secara umum
-            const firstErrorField = Object.keys(resData.errors)[0];
-            errorMessage = resData.errors[firstErrorField]?.[0] || errorMessage;
-            setError(`Terdapat error pada input: ${firstErrorField}`); 
+          setApiErrors(resData.errors);
+          const firstErrorField = Object.keys(resData.errors)[0];
+          errorMessage = resData.errors[firstErrorField]?.[0] || errorMessage;
+          setError(`Terdapat error pada input: ${firstErrorField}`);
         } else if (resData.message) {
-            errorMessage = resData.message;
-            setError(errorMessage);
+          errorMessage = resData.message;
+          setError(errorMessage);
         }
-        throw new Error(errorMessage); 
+        throw new Error(errorMessage);
       }
 
       toast.success('Registrasi Berhasil!', {
-        description: `Akun untuk ${resData.data?.user?.name || formData.name} berhasil dibuat. Silakan login.`,
+        description: `Akun untuk ${resData.data?.user?.name || formData.name} berhasil dibuat.`,
         duration: 4000,
         icon: <CheckCircle className="h-5 w-5" />,
       });
@@ -91,7 +98,7 @@ export default function RegisterPage() {
       }, 2000);
 
     } catch (err: any) {
-      if (!error) setError(err.message || 'Terjadi kesalahan tidak diketahui.'); 
+      if (!error) setError(err.message || 'Terjadi kesalahan tidak diketahui.');
       toast.error('Registrasi Gagal', {
         description: err.message || 'Tidak dapat membuat akun saat ini.',
         duration: 5000,
@@ -115,31 +122,46 @@ export default function RegisterPage() {
     }
   };
 
-  // Helper untuk menampilkan error API per field
-  const getFieldError = (fieldName: keyof typeof formData) => {
-    return apiErrors[fieldName]?.[0]; 
+  const getFieldError = (fieldName: keyof typeof formData | 'confirmPassword') => {
+      if (fieldName === 'confirmPassword' && formData.password !== formData.confirmPassword && formData.confirmPassword.length > 0) {
+        return 'Konfirmasi password tidak cocok.';
+      }
+      // Tampilkan error dari API
+      return apiErrors[fieldName]?.[0];
   };
+  
+  if (authLoading) {
+     return (
+       <div className="flex h-screen items-center justify-center bg-background">
+         <Loader2 className="h-12 w-12 animate-spin text-primary" />
+       </div>
+     );
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900 dark:to-black p-4 relative overflow-hidden">
-       {/* Background Image (Optional) */}
-       <Image
-          src="/jsminso.jpg" 
-          alt="Background"
-          fill
-          priority
-          className="object-cover object-center w-full h-full opacity-10 dark:opacity-5 pointer-events-none"
-          onError={(e) => { e.currentTarget.style.display = 'none'; }}
-       />
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+         <Image
+            src="/hero.jpg" 
+            alt="Background"
+            fill
+            priority
+            className="object-cover object-center w-full h-full opacity-10 dark:opacity-5 blur-sm"
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+         />
+         <div className="absolute inset-0 bg-background/50"></div>
+      </div>
 
-      <div className="w-full max-w-md relative z-10 my-12 pt-5">
-        <Card className="bg-card border border-border shadow-lg rounded-lg">
+      <div className="w-full max-w-md relative z-10 my-12">
+        <Card className="bg-card border-border shadow-xl rounded-lg">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold text-foreground tracking-tight">Buat Akun Baru</CardTitle>
             <CardDescription className="text-muted-foreground">Isi data diri Anda untuk mendaftar.</CardDescription>
           </CardHeader>
           <CardContent className="p-6 sm:p-8">
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* General Error  */}
               {error && !Object.keys(apiErrors).length && (
                 <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 text-destructive rounded-md text-sm">
                   <div className="flex items-center gap-2">
@@ -149,18 +171,18 @@ export default function RegisterPage() {
                 </div>
               )}
 
-              {/* Name */}
+              {/* Nama */}
               <div className="space-y-1.5">
                 <Label htmlFor="name">Nama Lengkap</Label>
                 <Input
                   id="name" type="text" name="name" required
                   value={formData.name} onChange={handleInputChange} disabled={loading}
                   placeholder="Nama Lengkap Anda"
-                  className={`h-11 ${getFieldError('name') ? 'border-destructive ring-destructive focus-visible:ring-destructive' : ''}`}
+                  className={getFieldError('name') ? 'border-destructive' : ''}
                   aria-invalid={!!getFieldError('name')}
                   aria-describedby="name-error"
                 />
-                {getFieldError('name') && <p id="name-error" className="text-xs text-destructive mt-1">{getFieldError('name')}</p>}
+                {getFieldError('name') && <p id="name-error" className="text-xs text-destructive">{getFieldError('name')}</p>}
               </div>
 
               {/* Email */}
@@ -170,11 +192,11 @@ export default function RegisterPage() {
                   id="email" type="email" name="email" required autoComplete="email"
                   value={formData.email} onChange={handleInputChange} disabled={loading}
                   placeholder="email@example.com"
-                  className={`h-11 ${getFieldError('email') ? 'border-destructive ring-destructive focus-visible:ring-destructive' : ''}`}
+                  className={getFieldError('email') ? 'border-destructive' : ''}
                   aria-invalid={!!getFieldError('email')}
                   aria-describedby="email-error"
                />
-                {getFieldError('email') && <p id="email-error" className="text-xs text-destructive mt-1">{getFieldError('email')}</p>}
+                {getFieldError('email') && <p id="email-error" className="text-xs text-destructive">{getFieldError('email')}</p>}
               </div>
 
               {/* Phone */}
@@ -184,11 +206,11 @@ export default function RegisterPage() {
                   id="phone" type="tel" name="phone" required autoComplete="tel"
                   value={formData.phone} onChange={handleInputChange} disabled={loading}
                   placeholder="08xxxxxxxxxx"
-                  className={`h-11 ${getFieldError('phone') ? 'border-destructive ring-destructive focus-visible:ring-destructive' : ''}`}
+                  className={getFieldError('phone') ? 'border-destructive' : ''}
                   aria-invalid={!!getFieldError('phone')}
                   aria-describedby="phone-error"
-              />
-                {getFieldError('phone') && <p id="phone-error" className="text-xs text-destructive mt-1">{getFieldError('phone')}</p>}
+               />
+                {getFieldError('phone') && <p id="phone-error" className="text-xs text-destructive">{getFieldError('phone')}</p>}
               </div>
 
               {/* Password */}
@@ -199,7 +221,7 @@ export default function RegisterPage() {
                     id="password" type={showPassword ? 'text' : 'password'} name="password" required autoComplete="new-password"
                     value={formData.password} onChange={handleInputChange} disabled={loading}
                     placeholder="Minimal 8 karakter"
-                    className={`h-11 pr-10 ${getFieldError('password') ? 'border-destructive ring-destructive focus-visible:ring-destructive' : ''}`}
+                    className={`pr-10 ${getFieldError('password') ? 'border-destructive' : ''}`}
                     aria-invalid={!!getFieldError('password')}
                     aria-describedby="password-error"
                   />
@@ -207,7 +229,7 @@ export default function RegisterPage() {
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
-                {getFieldError('password') && <p id="password-error" className="text-xs text-destructive mt-1">{getFieldError('password')}</p>}
+                {getFieldError('password') && <p id="password-error" className="text-xs text-destructive">{getFieldError('password')}</p>}
               </div>
 
               {/* Confirm Password */}
@@ -217,11 +239,11 @@ export default function RegisterPage() {
                   id="confirmPassword" type={showPassword ? 'text' : 'password'} name="confirmPassword" required autoComplete="new-password"
                   value={formData.confirmPassword} onChange={handleInputChange} disabled={loading}
                   placeholder="Ulangi password"
-                  className="h-11"
+                  className={getFieldError('confirmPassword') ? 'border-destructive' : ''}
+                  aria-invalid={!!getFieldError('confirmPassword')}
+                  aria-describedby="confirm-password-error"
                 />
-                {formData.password !== formData.confirmPassword && formData.confirmPassword.length > 0 && (
-                    <p className="text-xs text-destructive mt-1">Konfirmasi password tidak cocok.</p>
-                )}
+                {getFieldError('confirmPassword') && <p id="confirm-password-error" className="text-xs text-destructive">{getFieldError('confirmPassword')}</p>}
               </div>
 
               {/* Submit Button */}

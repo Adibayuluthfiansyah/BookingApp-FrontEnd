@@ -10,15 +10,15 @@ import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, LogIn, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/app/contexts/AuthContext';
-import Image from 'next/image'; 
+import Image from 'next/image';
 
 export default function UnifiedLoginPage() {
   const router = useRouter();
-  const { login, user, isAuthenticated, checkAuth, loading: authLoading } = useAuth();
+  const { login, user, isAuthenticated, loading: authLoading, checkAuth } = useAuth(); // Ganti nama loading
 
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false); 
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -40,13 +40,17 @@ export default function UnifiedLoginPage() {
       const success = await login(formData.email, formData.password);
 
       if (success) {
+        checkAuth(); 
+        
         toast.success('Login Berhasil!', {
-          description: `Selamat datang kembali!`, 
+          description: `Selamat datang kembali!`,
           duration: 3000,
           icon: <CheckCircle className="h-5 w-5" />,
         });
+        
       } else {
-        setError('Email atau password tidak valid.'); 
+        // Set error lokal untuk ditampilkan di form
+        setError('Email atau password tidak valid. Silakan coba lagi.');
       }
     } catch (err) {
       const errorMessage = 'Tidak dapat terhubung ke server.';
@@ -67,36 +71,41 @@ export default function UnifiedLoginPage() {
     if (error) setError(null);
   };
 
+
   if (authLoading || isAuthenticated) {
     return (
-       <div className="flex h-screen items-center justify-center bg-background">
-         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-       </div>
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900 dark:to-black p-4 relative overflow-hidden">
-       {/* Background Image (Optional) */}
-      <Image
-          src="/pangsuma.jpg" 
-          alt="Background"
-          fill
-          priority
-          className="object-cover object-center w-full h-full opacity-10 dark:opacity-5"
-          onError={(e) => { e.currentTarget.style.display = 'none'; }}
-      />
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+         <Image
+            src="/hero.jpg" 
+            alt="Background"
+            fill
+            priority
+            className="object-cover object-center w-full h-full opacity-90 dark:opacity-5 "
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+         />
+         <div className="absolute inset-0 bg-background/10"></div> {/* Overlay */}
+      </div>
 
       <div className="w-full max-w-md relative z-10">
         {/* Header */}
         <div className="text-center mb-8">
-           {/* Logo bisa ditambahkan di sini */}
-          <h1 className='text-3xl font-bold text-foreground mb-2 tracking-tight'>Selamat Datang Kembali</h1>
-          <p className="text-muted-foreground">Masuk ke akun Anda</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2 tracking-tight">
+            Selamat Datang Kembali
+          </h1>
+          <p className=" text-black">Masuk ke akun O7ONG CORP Anda</p>
         </div>
 
         {/* Card login */}
-        <Card className="bg-card border border-border shadow-lg rounded-lg">
+        <Card className="bg-card border-border shadow-xl rounded-lg">
           <CardContent className="p-6 sm:p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
@@ -129,9 +138,9 @@ export default function UnifiedLoginPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                  {/* FITUR BELUM DIIMPLEMENTASIKAN   
+                  {/* FITUR MASIH PERLU DIIMPLEMENTASIKAN 
                   <Link href="/forgot-password" className="text-xs text-primary hover:underline unstyled">
-                      Lupa Password?
+                       Lupa Password?
                    </Link> */}
                 </div>
                 <div className="relative">
@@ -177,12 +186,12 @@ export default function UnifiedLoginPage() {
               </Button>
             </form>
           </CardContent>
-           <CardFooter className="text-center text-sm text-muted-foreground p-6 border-t border-border">
-             Belum punya akun?{' '}
-             <Link href="/register" className="text-primary hover:underline font-medium ml-1 unstyled">
-               Daftar Sekarang
-             </Link>
-           </CardFooter>
+          <CardFooter className="text-center text-sm text-muted-foreground p-6 border-t border-border">
+            Belum punya akun?{' '}
+            <Link href="/register" className="text-primary hover:underline font-medium ml-1 unstyled">
+              Daftar Sekarang
+            </Link>
+          </CardFooter>
         </Card>
       </div>
     </div>

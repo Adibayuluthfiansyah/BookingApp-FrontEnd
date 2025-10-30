@@ -23,7 +23,6 @@ export default function AdminHeader() {
     setLoggingOut(true);
     try {
       await logout();
-      toast.success('Logout berhasil');
     } catch (error) {
       console.error('Logout error:', error);
       toast.error('Logout gagal');
