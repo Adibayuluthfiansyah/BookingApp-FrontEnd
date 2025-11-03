@@ -43,8 +43,9 @@ export default function EditFieldPage() {
           toast.error(result.message || 'Gagal memuat data lapangan.');
           router.push('/admin/fields');
         }
-      } catch (error: any) {
-        toast.error(error.message);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Terjadi kesalahan.';
+        toast.error(message);
       } finally {
         setLoadingData(false);
       }
@@ -77,8 +78,9 @@ export default function EditFieldPage() {
       } else {
         toast.error(result.message || 'Gagal mengupdate lapangan.');
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Terjadi kesalahan.');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Terjadi kesalahan.';
+      toast.error(message);
     } finally {
       setLoading(false);
     }

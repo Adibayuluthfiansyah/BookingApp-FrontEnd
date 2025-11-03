@@ -11,6 +11,7 @@ import { Eye, EyeOff, UserPlus, CheckCircle, AlertCircle, Loader2 } from 'lucide
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/app/contexts/AuthContext'; 
+import { Spinner } from '@/components/ui/spinner';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -131,26 +132,26 @@ export default function RegisterPage() {
   };
   
   if (authLoading) {
-     return (
-       <div className="flex h-screen items-center justify-center bg-background">
-         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-       </div>
-     );
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Spinner className="h-12 w-12 " />
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
-         <Image
+        <Image
             src="/hero.jpg" 
             alt="Background"
             fill
             priority
-            className="object-cover object-center w-full h-full opacity-10 dark:opacity-5 blur-sm"
+            className="object-cover object-center w-full h-full opacity-90 dark:opacity-5"
             onError={(e) => { e.currentTarget.style.display = 'none'; }}
-         />
-         <div className="absolute inset-0 bg-background/50"></div>
+        />
+        <div className="absolute inset-0 bg-background/50"></div>
       </div>
 
       <div className="w-full max-w-md relative z-10 my-12 pt-5">
@@ -195,7 +196,7 @@ export default function RegisterPage() {
                   className={getFieldError('email') ? 'border-destructive' : ''}
                   aria-invalid={!!getFieldError('email')}
                   aria-describedby="email-error"
-               />
+              />
                 {getFieldError('email') && <p id="email-error" className="text-xs text-destructive">{getFieldError('email')}</p>}
               </div>
 
@@ -209,7 +210,7 @@ export default function RegisterPage() {
                   className={getFieldError('phone') ? 'border-destructive' : ''}
                   aria-invalid={!!getFieldError('phone')}
                   aria-describedby="phone-error"
-               />
+              />
                 {getFieldError('phone') && <p id="phone-error" className="text-xs text-destructive">{getFieldError('phone')}</p>}
               </div>
 
@@ -247,7 +248,7 @@ export default function RegisterPage() {
               </div>
 
               {/* Submit Button */}
-              <Button type="submit" disabled={loading} className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold" size="lg">
+              <Button type="submit" disabled={loading} className="w-full h-11 bg-primary hover:bg-primary/80 cursor-pointer text-primary-foreground font-semibold" size="lg">
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <div className="flex items-center gap-2"><UserPlus size={18} /><span>Daftar</span></div>}
               </Button>
             </form>

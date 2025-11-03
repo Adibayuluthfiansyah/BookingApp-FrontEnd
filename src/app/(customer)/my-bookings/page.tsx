@@ -1,24 +1,25 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getCustomerBookings } from '@/lib/api'; 
-import { Booking } from '@/types'; 
-import { Card,  CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { AlertCircle, Clock, CheckCircle, XCircle, Search } from 'lucide-react';
-import { format } from 'date-fns'; 
+import { useState, useEffect, useMemo, useCallback } from 'react'; 
+import { getCustomerBookings } from '@/lib/api';
+import { Booking } from '@/types';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { AlertCircle, Clock, CheckCircle, XCircle, Search, Calendar, MapPin } from 'lucide-react'; 
 import { id as indonesianLocale } from 'date-fns/locale';
 import Link from 'next/link';
-import CustomerLayout from '@/components/customer/CustomerLayout'; 
-import { Button } from '@/components/ui/button'; 
+import CustomerLayout from '@/components/customer/CustomerLayout';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge'; 
+import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
+import { format } from 'date-fns';
 
 // Helper format tanggal
 const formatDate = (dateString: string) => {
   if (!dateString) return '-';
   try {
-    return format(new Date(dateString), 'eeee, dd MMMM yyyy', { 
-      locale: indonesianLocale 
+    return format(new Date(dateString), 'eeee, dd MMMM yyyy', {
+      locale: indonesianLocale,
     });
   } catch (error) {
     console.error("Invalid date format:", dateString, error);
@@ -32,21 +33,24 @@ const formatTime = (time: string | undefined) => {
   return time.substring(0, 5); // Ambil HH:MM
 };
 
-// Helper untuk badge status (Menggunakan Shadcn Badge)
+// Helper untuk badge status
 const getStatusBadge = (status: string) => {
-  const statuses: Record<string, { variant: "default" | "destructive" | "outline" | "secondary"; label: string; icon: React.ElementType }> = {
+  const statuses: Record<
+    string,
+    { variant: "default" | "destructive" | "outline" | "secondary"; label: string; icon: React.ElementType }
+  > = {
     pending: { variant: 'secondary', label: 'Pending', icon: Clock },
-    confirmed: { variant: 'default', label: 'Confirmed', icon: CheckCircle }, 
+    confirmed: { variant: 'default', label: 'Confirmed', icon: CheckCircle },
     paid: { variant: 'default', label: 'Paid', icon: CheckCircle },
     cancelled: { variant: 'destructive', label: 'Cancelled', icon: XCircle },
     completed: { variant: 'outline', label: 'Completed', icon: CheckCircle },
   };
-  
+
   const badge = statuses[status] || statuses.pending;
   const Icon = badge.icon;
-  
+
   return (
-    <Badge variant={badge.variant} className="inline-flex items-center gap-1.5">
+    <Badge variant={badge.variant} className="inline-flex items-center gap-1.5 shadow-sm">
       <Icon className="w-3.5 h-3.5" />
       {badge.label}
     </Badge>
@@ -56,57 +60,70 @@ const getStatusBadge = (status: string) => {
 // Komponen Skeleton untuk Card Booking
 function BookingCardSkeleton() {
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-5 space-y-3">
-        <div className="flex justify-between items-start mb-2">
-          <div className="space-y-2">
-            <Skeleton className="h-6 w-48" />
-            <Skeleton className="h-4 w-32" />
+    <Card className="overflow-hidden border-border shadow-sm">
+      <CardContent className="p-5 md:p-6">
+        <div className="flex justify-between items-start gap-3 mb-4">
+          <div className="flex-1 flex items-start gap-3">
+            <Skeleton className="h-12 w-12 rounded-lg flex-shrink-0" />
+            <div className="flex-1 space-y-2 pt-1">
+              <Skeleton className="h-5 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
           </div>
-          <Skeleton className="h-6 w-24 rounded-full" />
+          <Skeleton className="h-7 w-24 rounded-full flex-shrink-0" />
         </div>
-        <div className="border-t border-border pt-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-            <div className="space-y-1">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-5 w-32" />
-            </div>
-            <div className="space-y-1">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-5 w-40" />
-            </div>
-            <div className="space-y-1">
-              <Skeleton className="h-4 w-12" />
-              <Skeleton className="h-5 w-24" />
-            </div>
+        <div className="border-t border-border pt-4 mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-start gap-3">
+                <Skeleton className="h-8 w-8 rounded-md flex-shrink-0" />
+                <div className="flex-1 space-y-1.5 pt-1">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-4 w-32" />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </CardContent>
-      <CardFooter className="bg-muted/50 px-5 py-3 flex justify-between items-center">
-        <Skeleton className="h-6 w-28" />
-        <Skeleton className="h-4 w-32" />
+      <CardFooter className="bg-muted/30 px-5 md:px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-t border-border">
+        <Skeleton className="h-7 w-32" />
+        <Skeleton className="h-4 w-36" />
       </CardFooter>
     </Card>
   );
 }
 
+// === Tipe untuk Filter ===
+type FilterStatus = 'all' | 'pending' | 'confirmed' | 'paid' | 'cancelled' | 'completed';
+
+const filterTabs: Array<{ value: FilterStatus; label: string; icon: React.ElementType | null }> = [
+  { value: 'all', label: 'Semua', icon: null },
+  { value: 'pending', label: 'Pending', icon: Clock },
+  { value: 'confirmed', label: 'Confirmed', icon: CheckCircle },
+  { value: 'paid', label: 'Paid', icon: CheckCircle },
+  { value: 'cancelled', label: 'Cancelled', icon: XCircle },
+  { value: 'completed', label: 'Completed', icon: CheckCircle },
+];
 
 export default function MyBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
 
-  useEffect(() => {
-    loadBookings();
-  }, []);
-
-  const loadBookings = async () => {
+  //  Gunakan useCallback untuk loadBookings
+  const loadBookings = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const result = await getCustomerBookings(); 
+      const result = await getCustomerBookings();
       if (result.success && Array.isArray(result.data)) {
-        setBookings(result.data);
+        //  Urutkan booking terbaru di atas
+        const sortedBookings = result.data.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        setBookings(sortedBookings);
       } else if (!result.success) {
         setError(result.message || 'Gagal mengambil data booking.');
       } else {
@@ -119,108 +136,251 @@ export default function MyBookingsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []); 
+
+  useEffect(() => {
+    loadBookings();
+  }, [loadBookings]); // Panggil loadBookings saat komponen mount
+
+  // Gunakan useMemo untuk performa filter
+  const filteredBookings = useMemo(() => {
+    if (filterStatus === 'all') return bookings;
+    return bookings.filter(b => b.status === filterStatus);
+  }, [bookings, filterStatus]);
+
+  const bookingCounts = useMemo(() => {
+    return filterTabs.reduce((acc, tab) => {
+      if (tab.value === 'all') {
+        acc[tab.value] = bookings.length;
+      } else {
+        acc[tab.value] = bookings.filter(b => b.status === tab.value).length;
+      }
+      return acc;
+    }, {} as Record<FilterStatus, number>);
+  }, [bookings]);
 
   // --- RENDER CONTENT ---
   const renderContent = () => {
     if (loading) {
-      // Tampilkan 3 Skeleton
       return (
-        <div className="space-y-6">
-          <BookingCardSkeleton />
+        <div className="grid grid-cols-1 gap-4 md:gap-6">
           <BookingCardSkeleton />
           <BookingCardSkeleton />
         </div>
       );
     }
-  
+
     if (error) {
       return (
-        <div className="text-center py-12">
-          <Card className="inline-block p-6 border-destructive/50 bg-destructive/10">
-            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-            <p className="font-semibold text-destructive-foreground">Gagal Memuat Data</p>
-            <p className="text-sm text-muted-foreground mb-4">{error}</p>
-            <Button variant="destructive" onClick={loadBookings}>
-              Coba Lagi
-            </Button>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Card className="max-w-md w-full border-destructive/20 bg-destructive/5 shadow-lg">
+            <CardContent className="p-8 text-center">
+              <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10">
+                <AlertCircle className="w-8 h-8 text-destructive" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">Gagal Memuat Data</h3>
+              <p className="text-sm text-muted-foreground mb-6">{error}</p>
+              <Button variant="destructive" onClick={loadBookings} className="w-full">
+                Coba Lagi
+              </Button>
+            </CardContent>
           </Card>
         </div>
       );
     }
 
-    if (bookings.length === 0) {
+    if (filteredBookings.length === 0) {
       return (
-        <Card className="text-center p-12 border-border">
-          <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground mb-4">Anda belum memiliki riwayat booking.</p>
-          <Button asChild>
-            <Link href="/venues">
-              Cari Lapangan Sekarang
-            </Link>
-          </Button>
-        </Card>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Card className="max-w-md w-full border-border shadow-lg">
+            <CardContent className="p-8 text-center">
+              <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted">
+                <Search className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                {filterStatus === 'all' ? 'Belum Ada Booking' : 'Tidak Ada Hasil'}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                {filterStatus === 'all'
+                  ? 'Anda belum memiliki riwayat booking. Mulai pesan lapangan sekarang!'
+                  : `Tidak ada booking dengan status "${filterStatus}"`}
+              </p>
+              {filterStatus === 'all' ? (
+                <Button asChild className="w-full">
+                  <Link href="/venues">Cari Lapangan Sekarang</Link>
+                </Button>
+              ) : (
+                <Button variant="outline" onClick={() => setFilterStatus('all')} className="w-full">
+                  Lihat Semua Booking
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       );
     }
 
     return (
-      <div className="space-y-6">
-        {bookings.map((booking) => (
-          <Card key={booking.id} className="overflow-hidden border-border">
-            <CardContent className="p-5">
-              <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-3">
-                <div>
-                  <CardTitle className="text-lg">
-                    {booking.field?.venue?.name || 'Venue Tidak Tersedia'}
-                  </CardTitle>
-                  <CardDescription className="text-sm">
-                    {booking.field?.name || 'Lapangan Tidak Tersedia'}
-                  </CardDescription>
-                </div>
-                {getStatusBadge(booking.status)}
-              </div>
+      <div className="grid grid-cols-1 gap-4 md:gap-6">
+        {filteredBookings.map((booking) => {
+          // Ambil image_url dari data
+          const imageUrl = booking.field?.venue?.image_url;
 
-              <div className="border-t border-border pt-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-3 gap-x-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground text-xs uppercase font-medium">No. Booking</p>
-                    <p className="font-medium text-foreground break-words">{booking.booking_number}</p>
+          return (
+            <Card key={booking.id} className="overflow-hidden border-border hover:shadow-lg transition-all duration-300 hover:border-primary/30">
+              <CardContent className="p-5 md:p-6">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-3 mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-start gap-4">
+                      
+                      {/* PERBAIKAN: Tampilkan Gambar di Sini */}
+                      <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-muted flex items-center justify-center relative overflow-hidden border">
+                        {imageUrl ? (
+                          <Image
+                            src={imageUrl}
+                            alt={booking.field?.venue?.name || 'Venue'}
+                            fill
+                            sizes="48px"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <MapPin className="w-5 h-5 text-muted-foreground" />
+                        )}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base md:text-lg font-bold text-foreground line-clamp-1">
+                          {booking.field?.venue?.name || 'Venue Tidak Tersedia'}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          {booking.field?.name || 'Lapangan Tidak Tersedia'}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-muted-foreground text-xs uppercase font-medium">Tanggal Main</p>
-                    <p className="font-medium text-foreground">{formatDate(booking.booking_date)}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-xs uppercase font-medium">Jam</p>
-                    <p className="font-medium text-foreground">
-                      {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
-                    </p>
+                  <div className="flex-shrink-0">
+                    {getStatusBadge(booking.status)}
                   </div>
                 </div>
-              </div>
-            </CardContent>
-            <CardFooter className="bg-muted/50 px-5 py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center">
-              <span className="text-lg font-bold text-primary mb-2 sm:mb-0">
-                {new Intl.NumberFormat('id-ID', {
-                  style: 'currency',
-                  currency: 'IDR',
-                  minimumFractionDigits: 0,
-                }).format(booking.total_amount)}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                Dipesan pada: {format(new Date(booking.created_at), 'dd/MM/yy HH:mm')}
-              </span>
-            </CardFooter>
-          </Card>
-        ))}
+
+                <div className="border-t border-border pt-4 mt-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-2"> 
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-md bg-muted flex items-center justify-center">
+                        <svg className="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground uppercase font-medium tracking-wide">No. Booking</p>
+                        <p className="font-semibold text-sm text-foreground mt-1 break-all">{booking.booking_number}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-md bg-muted flex items-center justify-center">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground uppercase font-medium tracking-wide">Tanggal Main</p>
+                        <p className="font-semibold text-sm text-foreground mt-1">{formatDate(booking.booking_date)}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-md bg-muted flex items-center justify-center">
+                        <Clock className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground uppercase font-medium tracking-wide">Jam Main</p>
+                        <p className="font-semibold text-sm text-foreground mt-1">
+                          {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="bg-muted/30 px-5 md:px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-t border-border">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xl md:text-2xl font-bold text-primary">
+                    {new Intl.NumberFormat('id-ID', {
+                      style: 'currency',
+                      currency: 'IDR',
+                      minimumFractionDigits: 0,
+                    }).format(booking.total_amount)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>Dipesan: {format(new Date(booking.created_at), 'dd/MM/yy HH:mm')}</span>
+                </div>
+              </CardFooter>
+            </Card>
+          );
+        })}
       </div>
     );
   };
 
   return (
     <CustomerLayout>
-      <h1 className="text-2xl font-bold text-foreground mb-6 pt-8">Booking Saya</h1>
-      {renderContent()}
+      <div className="space-y-6 pb-8">
+        {/* Header Section */}
+        <div className="pt-6 md:pt-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between items-start gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-3">
+                Booking Saya
+              </h1>
+              <p className="text-sm text-muted-foreground mt-2">
+                Kelola dan pantau semua riwayat booking Anda
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-sm font-medium px-3 py-1.5 border-border">
+                Total: {bookings.length} Booking
+              </Badge>
+            </div>
+          </div>
+        </div>
+
+        {/* Filter Tabs */}
+        {!loading && bookings.length > 0 && (
+          <Card className="border-border shadow-sm">
+            <CardContent className="p-3 md:p-4">
+              {/* PERBAIKAN: Buat filter bisa di-scroll di HP */}
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {filterTabs.map((filter) => {
+                  const count = bookingCounts[filter.value];
+                  // Jangan tampilkan filter jika count 0 (kecuali 'all')
+                  if (count === 0 && filter.value !== 'all') return null;
+
+                  return (
+                    <Button
+                      key={filter.value}
+                      variant={filterStatus === filter.value ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setFilterStatus(filter.value)}
+                      className="flex items-center gap-1.5 flex-shrink-0"
+                    >
+                      {filter.icon && <filter.icon className="w-3.5 h-3.5" />}
+                      {filter.label}
+                      <Badge
+                        variant={filterStatus === filter.value ? 'secondary' : 'outline'}
+                        className="ml-1 text-xs px-1.5 py-0"
+                      >
+                        {count}
+                      </Badge>
+                    </Button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Content */}
+        {renderContent()}
+      </div>
     </CustomerLayout>
   );
 }

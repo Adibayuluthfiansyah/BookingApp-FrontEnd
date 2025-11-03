@@ -31,8 +31,9 @@ export default function AdminFieldsPage() {
       } else {
         setError(result.message || 'Gagal mengambil data lapangan.');
       }
-    } catch (err: any) {
-      setError(err.message || 'Terjadi kesalahan.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -52,8 +53,9 @@ export default function AdminFieldsPage() {
       } else {
         toast.error(result.message || 'Gagal menghapus lapangan.');
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Terjadi kesalahan saat menghapus.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Terjadi kesalahan saat menghapus.';
+      toast.error(message);
     } finally {
       setShowDeleteModal(false);
       setFieldToDelete(null);

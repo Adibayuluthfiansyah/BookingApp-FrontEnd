@@ -79,7 +79,7 @@ export default function CreateTimeSlotPage() {
     }
 
     try {
-      const result = await createTimeSlot(dataToSubmit as any); 
+      const result = await createTimeSlot(dataToSubmit as unknown as {field_id: number; start_time: string; end_time: string; price: number;}); 
 
       if (result.success) {
         toast.success('Time slot berhasil dibuat!', {
@@ -92,10 +92,9 @@ export default function CreateTimeSlotPage() {
             : result.message || 'Silakan cek kembali data Anda.';
         toast.error('Gagal membuat time slot', { description });
       }
-    } catch (error: any) {
-      toast.error('Terjadi Kesalahan', {
-        description: error.message || 'Tidak dapat terhubung ke server.',
-      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Terjadi kesalahan.';
+      toast.error(message);
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -10,7 +10,6 @@ import Link from 'next/link';
 import { getAdminTimeSlots, deleteTimeSlot, getMyFieldsList } from '@/lib/api';
 import { TimeSlot, SimpleField } from '@/types';
 import { Label } from '@/components/ui/label';
-// Asumsi Anda punya komponen Select dari shadcn/ui
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; 
 
 // Helper format harga
@@ -38,15 +37,10 @@ export default function AdminTimeSlotsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [slotToDelete, setSlotToDelete] = useState<number | null>(null);
 
-  useEffect(() => {
-    loadInitialData();
-  }, []);
-
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // Ambil data slot dan data field secara paralel
       const [slotsResult, fieldsResult] = await Promise.all([
         getAdminTimeSlots(),
         getMyFieldsList(),
@@ -62,18 +56,20 @@ export default function AdminTimeSlotsPage() {
         setFields(fieldsResult.data);
       } else {
         setError(
-          (error ? error + ' ' : '') +
-            (fieldsResult.message || 'Gagal mengambil data lapangan.')
-        );
+          (prevError) => (prevError ? prevError + ' ' : '') + (fieldsResult.message || 'Gagal mengambil data lapangan.'));
       }
-    } catch (err: any) {
-      const message = err.message || 'Terjadi kesalahan saat memuat data.';
+    } catch (err: unknown) { 
+      const message = err instanceof Error ? err.message : 'Terjadi kesalahan saat memuat data.';
       setError(message);
       toast.error(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, []); 
+
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
   
   // Gunakan useMemo agar filtering tidak berjalan di setiap render
   const filteredSlots = useMemo(() => {
@@ -103,8 +99,9 @@ export default function AdminTimeSlotsPage() {
         } else {
           toast.error(result.message || 'Gagal menghapus slot.');
         }
-      } catch (err: any) {
-        toast.error(err.message || 'Terjadi kesalahan saat menghapus.');
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Terjadi kesalahan saat menghapus.';
+        toast.error(message);
       }
     }
   };

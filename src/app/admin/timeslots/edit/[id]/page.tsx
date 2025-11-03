@@ -11,7 +11,6 @@ import { toast } from 'sonner';
 import { ArrowLeft, CheckCircle, AlertTriangle } from 'lucide-react'; 
 import { getTimeSlotById, updateTimeSlot, getMyFieldsList } from '@/lib/api'; 
 import { SimpleField, TimeSlot } from '@/types';
-// Asumsi Anda punya komponen Select dari shadcn/ui
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; 
 
 export default function EditTimeSlotPage() {
@@ -33,9 +32,9 @@ export default function EditTimeSlotPage() {
 
   useEffect(() => {
     if (!id || isNaN(Number(id))) {
-       setErrorLoad("ID Time Slot tidak valid.");
-       setLoadingData(false);
-       return;
+      setErrorLoad("ID Time Slot tidak valid.");
+      setLoadingData(false);
+      return;
     }
 
     const loadData = async () => {
@@ -43,14 +42,14 @@ export default function EditTimeSlotPage() {
       setErrorLoad(null); 
       try {
         const [slotResult, fieldsResult] = await Promise.all([
-           getTimeSlotById(Number(id)),
-           getMyFieldsList()
+          getTimeSlotById(Number(id)),
+          getMyFieldsList()
         ]);
         
         if (fieldsResult.success && fieldsResult.data) {
-           setFields(fieldsResult.data);
+          setFields(fieldsResult.data);
         } else {
-           toast.error('Gagal memuat daftar lapangan', { description: fieldsResult.message });
+          toast.error('Gagal memuat daftar lapangan', { description: fieldsResult.message });
         }
 
         if (slotResult.success && slotResult.data) {
@@ -66,9 +65,10 @@ export default function EditTimeSlotPage() {
           setErrorLoad(slotResult.message || 'Gagal memuat data slot.');
           toast.error('Gagal memuat data slot', { description: slotResult.message });
         }
-      } catch (error: any) {
-        setErrorLoad(error.message || 'Terjadi kesalahan saat memuat data.');
-        toast.error('Error', { description: error.message });
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Terjadi kesalahan saat memuat data.';
+        setErrorLoad(message);
+        toast.error('Error', { description: message });
       } finally {
         setLoadingData(false);
       }
@@ -96,8 +96,8 @@ export default function EditTimeSlotPage() {
       ...formData,
       field_id: parseInt(formData.field_id, 10),
       price: parseFloat(formData.price),
-      start_time: formData.start_time + ':00', // Tambah detik
-      end_time: formData.end_time + ':00', // Tambah detik
+      start_time: formData.start_time + ':00', 
+      end_time: formData.end_time + ':00',
     };
     
     // Validasi sederhana
@@ -108,13 +108,13 @@ export default function EditTimeSlotPage() {
     }
     
     if (dataToSubmit.start_time >= dataToSubmit.end_time) {
-         toast.error('Jam selesai harus setelah jam mulai.');
-         setLoading(false);
-         return;
+        toast.error('Jam selesai harus setelah jam mulai.');
+        setLoading(false);
+        return;
     }
 
     try {
-      const result = await updateTimeSlot(Number(id), dataToSubmit as any); 
+      const result = await updateTimeSlot(Number(id), dataToSubmit as unknown as {field_id: number; start_time: string; end_time: string; price: number;}); 
 
       if (result.success) {
         toast.success('Time slot berhasil diupdate!', {
@@ -122,14 +122,15 @@ export default function EditTimeSlotPage() {
         });
         router.push('/admin/timeslots');
       } else {
-         const description = result.errors 
+        const description = result.errors 
             ? Object.values(result.errors).flat().join(', ') 
             : result.message || 'Silakan cek kembali data Anda.';
         toast.error('Gagal mengupdate slot', { description });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Terjadi kesalahan saat mengupdate slot.';
       toast.error('Terjadi Kesalahan', {
-        description: error.message || 'Tidak dapat terhubung ke server.',
+        description: message,
       });
     } finally {
       setLoading(false);
@@ -148,20 +149,20 @@ export default function EditTimeSlotPage() {
   }
 
   if (errorLoad) {
-     return (
-       <AdminLayout>
-         <div className="max-w-4xl mx-auto py-6 px-4 sm:px-6 md:px-8 text-center">
+    return (
+      <AdminLayout>
+        <div className="max-w-4xl mx-auto py-6 px-4 sm:px-6 md:px-8 text-center">
             <Card className="inline-block p-8 border-red-200 bg-red-50">
-               <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-               <p className="font-semibold text-red-700 mb-2">Gagal Memuat Time Slot</p>
-               <p className="text-sm text-red-600 mb-6">{errorLoad}</p>
-               <Button onClick={() => router.push('/admin/timeslots')}>
+              <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+              <p className="font-semibold text-red-700 mb-2">Gagal Memuat Time Slot</p>
+              <p className="text-sm text-red-600 mb-6">{errorLoad}</p>
+              <Button onClick={() => router.push('/admin/timeslots')}>
                   Kembali ke Daftar
-               </Button>
+              </Button>
             </Card>
-         </div>
-       </AdminLayout>
-     );
+        </div>
+      </AdminLayout>
+    );
   }
 
   if (!slot) {

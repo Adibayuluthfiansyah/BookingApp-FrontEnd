@@ -1,88 +1,103 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { 
-  Search, 
-  Filter, 
-  Download,
-  ChevronLeft,
-  ChevronRight,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Calendar
-} from 'lucide-react';
-import { getAdminBookings, getAllVenues } from '@/lib/api';
-import { Booking, Venue } from '@/types';
+import { useState, useEffect, useCallback } from "react"; // PERBAIKAN: Impor useCallback
+import { useRouter, useSearchParams } from "next/navigation";
+import {Search,Filter,ChevronLeft,ChevronRight,CheckCircle,XCircle,Clock,Calendar,} from "lucide-react";
+import type { LucideIcon } from "lucide-react"; 
+import { getAdminBookings, getAllVenues } from "@/lib/api";
+import { Booking, Venue } from "@/types";
+
+interface PaginationMeta {
+  from: number;
+  to: number;
+  total: number;
+  last_page: number;
+  current_page: number;
+  per_page: number;
+}
 
 export default function AdminBookingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState(true);
-  const [meta, setMeta] = useState<any>(null);
-  
-  // Filters
-  const [search, setSearch] = useState(searchParams.get('search') || '');
-  const [status, setStatus] = useState(searchParams.get('status') || 'all');
-  const [paymentStatus, setPaymentStatus] = useState(searchParams.get('payment_status') || 'all');
-  const [venueId, setVenueId] = useState(searchParams.get('venue_id') || '');
-  const [startDate, setStartDate] = useState(searchParams.get('start_date') || '');
-  const [endDate, setEndDate] = useState(searchParams.get('end_date') || '');
-  const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
+  const [meta, setMeta] = useState<PaginationMeta | null>(null);
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [status, setStatus] = useState(searchParams.get("status") || "all");
+  const [paymentStatus, setPaymentStatus] = useState(
+    searchParams.get("payment_status") || "all",
+  );
+  const [venueId, setVenueId] = useState(searchParams.get("venue_id") || "");
+  const [startDate, setStartDate] = useState(
+    searchParams.get("start_date") || "",
+  );
+  const [endDate, setEndDate] = useState(searchParams.get("end_date") || "");
+  const [currentPage, setCurrentPage] = useState(
+    Number(searchParams.get("page")) || 1,
+  );
 
-  useEffect(() => {
-    loadVenues();
-  }, []);
-
-  useEffect(() => {
-    loadBookings();
-  }, [search, status, paymentStatus, venueId, startDate, endDate, currentPage]);
-
-  const loadVenues = async () => {
+  const loadVenues = useCallback(async () => {
     try {
       const result = await getAllVenues();
       if (result.success && result.data) {
         setVenues(result.data);
       }
-    } catch (error) {
-      console.error('Error loading venues:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      console.error("Error loading venues:", message);
     }
-  };
+  }, []);
 
-  const loadBookings = async () => {
+  const loadBookings = useCallback(async () => {
     try {
       setLoading(true);
-      
-      const params: any = {
+      const params: {
+        page: number;
+        per_page: number;
+        sort_by: string;
+        sort_order: "asc" | "desc";
+        search?: string;
+        status?: string;
+        payment_status?: string;
+        venue_id?: number;
+        start_date?: string;
+        end_date?: string;
+      } = {
         page: currentPage,
         per_page: 20,
-        sort_by: 'created_at',
-        sort_order: 'desc'
+        sort_by: "created_at",
+        sort_order: "desc",
       };
 
       if (search) params.search = search;
-      if (status !== 'all') params.status = status;
-      if (paymentStatus !== 'all') params.payment_status = paymentStatus;
+      if (status !== "all") params.status = status;
+      if (paymentStatus !== "all") params.payment_status = paymentStatus;
       if (venueId) params.venue_id = Number(venueId);
       if (startDate) params.start_date = startDate;
       if (endDate) params.end_date = endDate;
 
       const result = await getAdminBookings(params);
-      
+
       if (result.success && result.data) {
         setBookings(result.data);
-        setMeta(result.meta);
+        setMeta((result.meta as unknown as PaginationMeta) || null);
       }
-    } catch (error) {
-      console.error('Error loading bookings:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      console.error("Error loading bookings:", message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, endDate, paymentStatus, search, startDate, status, venueId]);
+
+  useEffect(() => {
+    loadVenues();
+  }, [loadVenues]);
+
+  useEffect(() => {
+    loadBookings();
+  }, [loadBookings]);
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -95,44 +110,65 @@ export default function AdminBookingsPage() {
   };
 
   const clearFilters = () => {
-    setSearch('');
-    setStatus('all');
-    setPaymentStatus('all');
-    setVenueId('');
-    setStartDate('');
-    setEndDate('');
+    setSearch("");
+    setStatus("all");
+    setPaymentStatus("all");
+    setVenueId("");
+    setStartDate("");
+    setEndDate("");
     setCurrentPage(1);
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
     }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
+    return new Date(dateString).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
     });
   };
 
   const getStatusBadge = (status: string) => {
-    const badges: Record<string, { color: string; label: string; icon: any }> = {
-      pending: { color: 'bg-yellow-100 text-yellow-800', label: 'Pending', icon: Clock },
-      confirmed: { color: 'bg-green-100 text-green-800', label: 'Confirmed', icon: CheckCircle },
-      cancelled: { color: 'bg-red-100 text-red-800', label: 'Cancelled', icon: XCircle },
-      completed: { color: 'bg-blue-100 text-blue-800', label: 'Completed', icon: CheckCircle },
+    const badges: Record<
+      string,
+      { color: string; label: string; icon: LucideIcon }
+    > = {
+      pending: {
+        color: "bg-yellow-100 text-yellow-800",
+        label: "Pending",
+        icon: Clock,
+      },
+      confirmed: {
+        color: "bg-green-100 text-green-800",
+        label: "Confirmed",
+        icon: CheckCircle,
+      },
+      cancelled: {
+        color: "bg-red-100 text-red-800",
+        label: "Cancelled",
+        icon: XCircle,
+      },
+      completed: {
+        color: "bg-blue-100 text-blue-800",
+        label: "Completed",
+        icon: CheckCircle,
+      },
     };
-    
+
     const badge = badges[status] || badges.pending;
     const Icon = badge.icon;
-    
+
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${badge.color}`}>
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${badge.color}`}
+      >
         <Icon className="w-3 h-3" />
         {badge.label}
       </span>
@@ -141,15 +177,17 @@ export default function AdminBookingsPage() {
 
   const getPaymentStatusBadge = (status: string) => {
     const badges: Record<string, { color: string; label: string }> = {
-      pending: { color: 'bg-yellow-100 text-yellow-800', label: 'Pending' },
-      verified: { color: 'bg-green-100 text-green-800', label: 'Verified' },
-      rejected: { color: 'bg-red-100 text-red-800', label: 'Rejected' },
+      pending: { color: "bg-yellow-100 text-yellow-800", label: "Pending" },
+      verified: { color: "bg-green-100 text-green-800", label: "Verified" },
+      rejected: { color: "bg-red-100 text-red-800", label: "Rejected" },
     };
-    
+
     const badge = badges[status] || badges.pending;
-    
+
     return (
-      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${badge.color}`}>
+      <span
+        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${badge.color}`}
+      >
         {badge.label}
       </span>
     );
@@ -162,11 +200,15 @@ export default function AdminBookingsPage() {
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Kelola Booking</h1>
-              <p className="text-gray-600 mt-1">Lihat dan kelola semua booking</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Kelola Booking
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Lihat dan kelola semua booking
+              </p>
             </div>
             <button
-              onClick={() => router.push('/admin/dashboard')}
+              onClick={() => router.push("/admin/dashboard")}
               className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
             >
               ← Kembali ke Dashboard
@@ -303,6 +345,7 @@ export default function AdminBookingsPage() {
         {meta && (
           <div className="mb-4 flex items-center justify-between">
             <p className="text-gray-600">
+              {/* Error akan hilang karena 'meta' sekarang bertipe 'PaginationMeta' */}
               Menampilkan {meta.from}-{meta.to} dari {meta.total} booking
             </p>
           </div>
@@ -389,7 +432,8 @@ export default function AdminBookingsPage() {
                             {formatDate(booking.booking_date)}
                           </div>
                           <div className="text-xs text-gray-500">
-                            {booking.start_time.substring(0, 5)} - {booking.end_time.substring(0, 5)}
+                            {booking.start_time.substring(0, 5)} -{" "}
+                            {booking.end_time.substring(0, 5)}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -401,11 +445,15 @@ export default function AdminBookingsPage() {
                           {getStatusBadge(booking.status)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          {getPaymentStatusBadge(booking.payment?.payment_status || 'pending')}
+                          {getPaymentStatusBadge(
+                            booking.payment?.payment_status || "pending",
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <button
-                            onClick={() => router.push(`/admin/bookings/${booking.id}`)}
+                            onClick={() =>
+                              router.push(`/admin/bookings/${booking.id}`)
+                            }
                             className="text-sm text-orange-600 hover:text-orange-700 font-medium"
                           >
                             Detail →
@@ -428,7 +476,7 @@ export default function AdminBookingsPage() {
                     <ChevronLeft className="w-4 h-4" />
                     Previous
                   </button>
-                  
+
                   <span className="text-sm text-gray-600">
                     Page {currentPage} of {meta.last_page}
                   </span>

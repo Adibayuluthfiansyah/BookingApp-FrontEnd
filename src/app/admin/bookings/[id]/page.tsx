@@ -1,23 +1,11 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { 
-  ArrowLeft, 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  User, 
-  Phone, 
-  Mail,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  DollarSign,
-  FileText
-} from 'lucide-react';
-import { getAdminBookingDetail, updateAdminBookingStatus } from '@/lib/api';
-import { Booking } from '@/types';
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useRouter } from "next/navigation";
+import {ArrowLeft,Calendar,Clock,MapPin,User,Phone,Mail,CheckCircle,XCircle,AlertCircle,DollarSign,FileText,} from "lucide-react";
+import type { LucideIcon } from "lucide-react"; 
+import { getAdminBookingDetail, updateAdminBookingStatus } from "@/lib/api";
+import { Booking } from "@/types";
 
 export default function AdminBookingDetailPage() {
   const params = useParams();
@@ -25,99 +13,132 @@ export default function AdminBookingDetailPage() {
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-  const [showStatusModal, setShowStatusModal] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState('');
-  const [adminNotes, setAdminNotes] = useState('');
+  const [_error, setError] = useState<string | null>(null);
+  const [_showStatusModal, setShowStatusModal] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [adminNotes, setAdminNotes] = useState("");
+
+  // Bungkus dengan useCallback
+  const loadBookingDetail = useCallback(async () => {
+    try {
+      setLoading(true);
+      // Pastikan params.id ada sebelum memanggil API
+      if (params.id) {
+        const result = await getAdminBookingDetail(Number(params.id));
+        if (result.success && result.data) {
+          setBooking(result.data);
+          setSelectedStatus(result.data.status);
+        }
+      } else {
+        setError('Booking ID tidak ditemukan');
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      console.error("Error loading booking detail:", message);
+    } finally {
+      setLoading(false);
+    }
+  }, [params.id]);
 
   useEffect(() => {
     if (params.id) {
       loadBookingDetail();
     }
-  }, [params.id]);
-
-  const loadBookingDetail = async () => {
-    try {
-      setLoading(true);
-      const result = await getAdminBookingDetail(Number(params.id));
-      
-      if (result.success && result.data) {
-        setBooking(result.data);
-        setSelectedStatus(result.data.status);
-      }
-    } catch (error) {
-      console.error('Error loading booking detail:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [params.id, loadBookingDetail]);
 
   const handleUpdateStatus = async () => {
     if (!booking) return;
 
     try {
       setUpdating(true);
-      
+
       const result = await updateAdminBookingStatus(booking.id, {
         status: selectedStatus,
-        notes: adminNotes
+        notes: adminNotes,
       });
 
       if (result.success) {
-        alert('Status booking berhasil diupdate!');
+        alert("Status booking berhasil diupdate!");
         setShowStatusModal(false);
-        setAdminNotes('');
+        setAdminNotes("");
         loadBookingDetail(); // Reload data
       } else {
-        alert('Gagal update status: ' + result.message);
+        alert("Gagal update status: " + result.message);
       }
-    } catch (error) {
-      console.error('Error updating status:', error);
-      alert('Terjadi kesalahan saat update status');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      console.error("Error updating status:", message);
+      alert("Terjadi kesalahan saat update status");
     } finally {
       setUpdating(false);
     }
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
     }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
+    return new Date(dateString).toLocaleDateString("id-ID", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
     });
   };
 
   const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const getStatusBadge = (status: string) => {
-    const badges: Record<string, { color: string; bg: string; label: string; icon: any }> = {
-      pending: { color: 'text-yellow-800', bg: 'bg-yellow-100', label: 'Pending', icon: Clock },
-      confirmed: { color: 'text-green-800', bg: 'bg-green-100', label: 'Confirmed', icon: CheckCircle },
-      cancelled: { color: 'text-red-800', bg: 'bg-red-100', label: 'Cancelled', icon: XCircle },
-      completed: { color: 'text-blue-800', bg: 'bg-blue-100', label: 'Completed', icon: CheckCircle },
+    const badges: Record<
+      string,
+      { color: string; bg: string; label: string; icon: LucideIcon }
+    > = {
+      pending: {
+        color: "text-yellow-800",
+        bg: "bg-yellow-100",
+        label: "Pending",
+        icon: Clock,
+      },
+      confirmed: {
+        color: "text-green-800",
+        bg: "bg-green-100",
+        label: "Confirmed",
+        icon: CheckCircle,
+      },
+      cancelled: {
+        color: "text-red-800",
+        bg: "bg-red-100",
+        label: "Cancelled",
+        icon: XCircle,
+      },
+      completed: {
+        color: "text-blue-800",
+        bg: "bg-blue-100",
+        label: "Completed",
+        icon: CheckCircle,
+      },
     };
-    
+
     const badge = badges[status] || badges.pending;
     const Icon = badge.icon;
-    
+
     return (
-      <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ${badge.bg} ${badge.color}`}>
+      <span
+        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ${badge.bg} ${badge.color}`}
+      >
         <Icon className="w-5 h-5" />
         {badge.label}
       </span>
@@ -142,7 +163,7 @@ export default function AdminBookingDetailPage() {
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <p className="text-gray-600">Booking tidak ditemukan</p>
           <button
-            onClick={() => router.push('/admin/bookings')}
+            onClick={() => router.push("/admin/bookings")}
             className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
           >
             Kembali ke List
@@ -160,7 +181,7 @@ export default function AdminBookingDetailPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => router.push('/admin/bookings')}
+                onClick={() => router.push("/admin/bookings")}
                 className="p-2 hover:bg-gray-100 rounded-lg transition"
               >
                 <ArrowLeft className="w-5 h-5" />
@@ -192,7 +213,9 @@ export default function AdminBookingDetailPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm text-gray-600">Nama Lengkap</label>
-                  <p className="font-medium text-gray-900 mt-1">{booking.customer_name}</p>
+                  <p className="font-medium text-gray-900 mt-1">
+                    {booking.customer_name}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">No. Telepon</label>
@@ -221,7 +244,9 @@ export default function AdminBookingDetailPage() {
                 <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
                   <MapPin className="w-5 h-5 text-gray-400 mt-1" />
                   <div className="flex-1">
-                    <label className="text-sm text-gray-600">Venue & Lapangan</label>
+                    <label className="text-sm text-gray-600">
+                      Venue & Lapangan
+                    </label>
                     <p className="font-medium text-gray-900 mt-1">
                       {booking.field?.venue?.name}
                     </p>
@@ -234,7 +259,9 @@ export default function AdminBookingDetailPage() {
                 <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
                   <Calendar className="w-5 h-5 text-gray-400 mt-1" />
                   <div className="flex-1">
-                    <label className="text-sm text-gray-600">Tanggal Main</label>
+                    <label className="text-sm text-gray-600">
+                      Tanggal Main
+                    </label>
                     <p className="font-medium text-gray-900 mt-1">
                       {formatDate(booking.booking_date)}
                     </p>
@@ -246,7 +273,8 @@ export default function AdminBookingDetailPage() {
                   <div className="flex-1">
                     <label className="text-sm text-gray-600">Waktu Main</label>
                     <p className="font-medium text-gray-900 mt-1">
-                      {booking.start_time.substring(0, 5)} - {booking.end_time.substring(0, 5)} WIB
+                      {booking.start_time.substring(0, 5)} -{" "}
+                      {booking.end_time.substring(0, 5)} WIB
                     </p>
                   </div>
                 </div>
@@ -274,14 +302,20 @@ export default function AdminBookingDetailPage() {
               <div className="space-y-3">
                 <div className="flex justify-between py-2 border-b">
                   <span className="text-gray-600">Harga Sewa</span>
-                  <span className="font-medium">{formatCurrency(booking.subtotal)}</span>
+                  <span className="font-medium">
+                    {formatCurrency(booking.subtotal)}
+                  </span>
                 </div>
                 <div className="flex justify-between py-2 border-b">
                   <span className="text-gray-600">Biaya Admin</span>
-                  <span className="font-medium">{formatCurrency(booking.admin_fee)}</span>
+                  <span className="font-medium">
+                    {formatCurrency(booking.admin_fee)}
+                  </span>
                 </div>
                 <div className="flex justify-between py-3 pt-4 border-t-2">
-                  <span className="text-lg font-semibold text-gray-900">Total</span>
+                  <span className="text-lg font-semibold text-gray-900">
+                    Total
+                  </span>
                   <span className="text-lg font-bold text-orange-600">
                     {formatCurrency(booking.total_amount)}
                   </span>
@@ -291,16 +325,23 @@ export default function AdminBookingDetailPage() {
               {/* Payment Status */}
               <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Status Pembayaran:</span>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    booking.payment?.payment_status === 'verified' 
-                      ? 'bg-green-100 text-green-800'
-                      : booking.payment?.payment_status === 'rejected'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {booking.payment?.payment_status === 'verified' ? 'Terbayar' :
-                     booking.payment?.payment_status === 'rejected' ? 'Ditolak' : 'Pending'}
+                  <span className="text-sm font-medium text-gray-700">
+                    Status Pembayaran:
+                  </span>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      booking.payment?.payment_status === "verified"
+                        ? "bg-green-100 text-green-800"
+                        : booking.payment?.payment_status === "rejected"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-yellow-100 text-yellow-800"
+                    }`}
+                  >
+                    {booking.payment?.payment_status === "verified"
+                      ? "Terbayar"
+                      : booking.payment?.payment_status === "rejected"
+                      ? "Ditolak"
+                      : "Pending"}
                   </span>
                 </div>
                 {booking.payment?.paid_at && (
@@ -309,7 +350,7 @@ export default function AdminBookingDetailPage() {
                   </p>
                 )}
                 <p className="text-xs text-gray-500 mt-1">
-                  Metode: {booking.payment?.payment_method || 'N/A'}
+                  Metode: {booking.payment?.payment_method || "N/A"}
                 </p>
               </div>
             </div>
@@ -357,13 +398,15 @@ export default function AdminBookingDetailPage() {
                   disabled={updating || selectedStatus === booking.status}
                   className="w-full py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {updating ? 'Mengupdate...' : 'Update Status'}
+                  {updating ? "Mengupdate..." : "Update Status"}
                 </button>
 
                 {selectedStatus !== booking.status && (
                   <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <p className="text-xs text-yellow-800">
-                      Status akan berubah dari <strong>{booking.status}</strong> ke <strong>{selectedStatus}</strong>
+                      Status akan berubah dari{" "}
+                      <strong>{booking.status}</strong> ke{" "}
+                      <strong>{selectedStatus}</strong>
                     </p>
                   </div>
                 )}
@@ -372,7 +415,9 @@ export default function AdminBookingDetailPage() {
               {/* Quick Info */}
               <div className="mt-6 pt-6 border-t space-y-3">
                 <div>
-                  <label className="text-xs text-gray-500">Booking Number</label>
+                  <label className="text-xs text-gray-500">
+                    Booking Number
+                  </label>
                   <p className="text-sm font-mono font-medium text-gray-900">
                     {booking.booking_number}
                   </p>
@@ -384,7 +429,9 @@ export default function AdminBookingDetailPage() {
                   </p>
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500">Update Terakhir</label>
+                  <label className="text-xs text-gray-500">
+                    Update Terakhir
+                  </label>
                   <p className="text-sm text-gray-900">
                     {formatDateTime(booking.updated_at)}
                   </p>

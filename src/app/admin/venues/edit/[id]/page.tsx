@@ -12,7 +12,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { ArrowLeft, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { getVenueById, updateVenue } from '@/lib/api';
-import { Venue } from '@/types';
 
 // Komponen Skeleton untuk Form Loading
 function EditVenueSkeleton() {
@@ -122,9 +121,9 @@ export default function EditVenuePage() {
           setErrorLoad(result.message || 'Gagal memuat data venue.');
           toast.error('Gagal memuat data venue', { description: result.message });
         }
-      } catch (error: any) {
-        setErrorLoad(error.message || 'Terjadi kesalahan saat memuat data.');
-        toast.error('Error', { description: error.message });
+      } catch (error: unknown) {
+        setErrorLoad((error as Error).message || 'Terjadi kesalahan saat memuat data.');
+        toast.error('Error', { description: (error as Error).message });
       } finally {
         setLoadingData(false);
       }
@@ -158,9 +157,9 @@ export default function EditVenuePage() {
           : result.message || 'Silakan cek kembali data Anda.';
         toast.error('Gagal mengupdate venue', { description });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Terjadi Kesalahan', {
-        description: error.message || 'Tidak dapat terhubung ke server.',
+        description: (error as Error).message || 'Tidak dapat terhubung ke server.',
       });
     } finally {
       setLoading(false);

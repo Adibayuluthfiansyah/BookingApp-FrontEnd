@@ -14,7 +14,7 @@ import Image from 'next/image';
 
 export default function UnifiedLoginPage() {
   const router = useRouter();
-  const { login, user, isAuthenticated, loading: authLoading, checkAuth } = useAuth(); // Ganti nama loading
+  const { login, user, isAuthenticated, loading: authLoading, checkAuth } = useAuth();
 
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
@@ -84,14 +84,14 @@ export default function UnifiedLoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
-         <Image
+        <Image
             src="/hero.jpg" 
             alt="Background"
             fill
             priority
-            className="object-cover object-center w-full h-full opacity-90 dark:opacity-5 "
+            className="object-cover object-center w-full h-full opacity-90 dark:opacity-5"
             onError={(e) => { e.currentTarget.style.display = 'none'; }}
-         />
+        />
          <div className="absolute inset-0 bg-background/10"></div> {/* Overlay */}
       </div>
 
@@ -140,7 +140,7 @@ export default function UnifiedLoginPage() {
                   <Label htmlFor="password">Password</Label>
                   {/* FITUR MASIH PERLU DIIMPLEMENTASIKAN 
                   <Link href="/forgot-password" className="text-xs text-primary hover:underline unstyled">
-                       Lupa Password?
+                      Lupa Password?
                    </Link> */}
                 </div>
                 <div className="relative">
@@ -172,7 +172,7 @@ export default function UnifiedLoginPage() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                className="w-full h-11 bg-primary hover:bg-primary/80 cursor-pointer text-primary-foreground font-semibold"
                 size="lg"
               >
                 {isSubmitting ? (

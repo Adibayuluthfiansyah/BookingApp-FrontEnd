@@ -66,8 +66,9 @@ export default function CreateFieldPage() {
       } else {
         toast.error(result.message || 'Gagal membuat lapangan.');
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Terjadi kesalahan.');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Terjadi kesalahan.';
+      toast.error(message);
     } finally {
       setLoading(false);
     }

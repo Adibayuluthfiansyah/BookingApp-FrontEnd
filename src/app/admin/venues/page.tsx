@@ -7,7 +7,7 @@ import { Card, CardHeader,CardContent} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import {Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle,DialogTrigger,DialogClose,} from "@/components/ui/dialog"; 
+import {Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle,DialogClose,} from "@/components/ui/dialog"; 
 import { toast } from 'sonner';
 import { AlertCircle, PlusCircle, Loader2, Search, Edit, Trash2 , MapPin} from 'lucide-react';
 import Link from 'next/link';
@@ -40,8 +40,8 @@ export default function AdminVenuesPage() {
         setError(result.message || 'Gagal mengambil data venue.');
         toast.error(result.message || 'Gagal mengambil data venue.');
       }
-    } catch (err: any) {
-      const message = err.message || 'Terjadi kesalahan saat memuat data.';
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Terjadi kesalahan saat memuat data.';
       setError(message);
       toast.error(message);
     } finally {
@@ -72,8 +72,8 @@ export default function AdminVenuesPage() {
         } else {
           toast.error(result.message || 'Gagal menghapus venue.');
         }
-      } catch (err: any) {
-        toast.error(err.message || 'Terjadi kesalahan saat menghapus.');
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : 'Terjadi kesalahan saat menghapus.');
       } finally {
         setIsDeleting(false);
       }
@@ -102,16 +102,16 @@ export default function AdminVenuesPage() {
 
     if (venues.length === 0) {
         return (
-             <div className="text-center p-12">
-                 <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                 <p className="text-muted-foreground mb-4">Belum ada venue yang ditambahkan.</p>
-                 <Button asChild>
-                   <Link href="/admin/venues/create">
-                     <PlusCircle className="w-4 h-4 mr-2" />
-                     Tambah Venue Pertama
-                   </Link>
-                 </Button>
-               </div>
+            <div className="text-center p-12">
+                <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground mb-4">Belum ada venue yang ditambahkan.</p>
+                <Button asChild>
+                  <Link href="/admin/venues/create">
+                    <PlusCircle className="w-4 h-4 mr-2" />
+                    Tambah Venue Pertama
+                  </Link>
+                </Button>
+              </div>
         );
     }
 
@@ -224,19 +224,19 @@ export default function AdminVenuesPage() {
 
       {/* Search & Konten */}
       <Card className="border-border shadow-sm">
-         <CardHeader>
-           <div className="relative w-full md:max-w-sm">
-             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-             <Input
-               type="text"
-               placeholder="Cari venue berdasarkan nama atau alamat..."
-               value={searchTerm}
-               onChange={(e) => setSearchTerm(e.target.value)}
-               className="pl-9"
-             />
-           </div>
-         </CardHeader>
-         {renderContent()}
+        <CardHeader>
+          <div className="relative w-full md:max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Cari venue berdasarkan nama atau alamat..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+        </CardHeader>
+        {renderContent()}
       </Card>
 
       {/* Delete Confirmation Modal */}

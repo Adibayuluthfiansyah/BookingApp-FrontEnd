@@ -39,6 +39,7 @@ export interface Field {
   field_type: string;
   created_at: string;
   updated_at: string;
+  description?: string | null;
   venue?: Venue; 
   time_slots?: TimeSlot[]; 
 }

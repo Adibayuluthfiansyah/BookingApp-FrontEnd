@@ -274,19 +274,19 @@ export default function CreateVenuePage() {
             {/* Kolom Aksi Kanan (1/3) */}
             <div className="lg:col-span-1">
                <Card className="border-border shadow-sm sticky top-24"> {/* Dibuat sticky */}
-                 <CardHeader>
-                   <CardTitle>Aksi</CardTitle>
-                 </CardHeader>
-                 <CardFooter className="flex flex-col gap-3">
-                   <Button type="submit" disabled={loading} className="w-full">
-                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                     {loading ? 'Menyimpan...' : 'Simpan Venue'}
-                   </Button>
-                   <Button type="button" variant="outline" onClick={() => router.push('/admin/venues')} className="w-full">
-                     Batal
-                   </Button>
-                 </CardFooter>
-               </Card>
+                <CardHeader>
+                  <CardTitle>Aksi</CardTitle>
+                </CardHeader>
+                <CardFooter className="flex flex-col gap-3">
+                  <Button type="submit" disabled={loading} className="w-full">
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {loading ? 'Menyimpan...' : 'Simpan Venue'}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => router.push('/admin/venues')} className="w-full">
+                    Batal
+                  </Button>
+                </CardFooter>
+              </Card>
             </div>
           </div>
         </form>

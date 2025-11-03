@@ -6,16 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { AlertCircle, Check, CheckCheck, Loader2 } from 'lucide-react';
-// --- PERBAIKAN DI SINI ---
 import { getMyVenues, getAllFacilities, getVenueFacilities, syncVenueFacilities } from '@/lib/api';
-// --- AKHIR PERBAIKAN ---
-import { Facility } from '@/types'; // Asumsi Facility ada di types
+import { Facility } from '@/types'; 
 import { Label } from '@/components/ui/label';
-// Asumsi Anda punya komponen Select dan Checkbox dari shadcn/ui
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox'; 
 
-// Tipe SimpleVenue dari getMyVenuesList
+
 interface SimpleVenue {
   id: number;
   name: string;
@@ -26,49 +23,45 @@ export default function AdminFacilitiesPage() {
   const [allFacilities, setAllFacilities] = useState<Facility[]>([]);
   
   const [selectedVenueId, setSelectedVenueId] = useState<string>('');
-  const [venueFacilities, setVenueFacilities] = useState<number[]>([]); // Array of IDs [1, 3, 5]
+  const [venueFacilities, setVenueFacilities] = useState<number[]>([]); 
   
   const [loading, setLoading] = useState(true);
   const [loadingVenueFacilities, setLoadingVenueFacilities] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Load data master (venues dan facilities) saat halaman pertama kali dibuka
+ useEffect(() => {
     const loadMasterData = async () => {
       setLoading(true);
       setError(null);
       try {
-        // --- PERBAIKAN DI SINI ---
         const [venuesResult, facilitiesResult] = await Promise.all([
           getMyVenues(),
           getAllFacilities(),
         ]);
-        // --- AKHIR PERBAIKAN ---
-
+        const errorMessages: string[] = [];
         if (venuesResult.success && venuesResult.data) {
           setVenues(venuesResult.data);
         } else {
-          setError(venuesResult.message || 'Gagal mengambil data venue.');
+          errorMessages.push(venuesResult.message || 'Gagal mengambil data venue.');
         }
-
         if (facilitiesResult.success && facilitiesResult.data) {
           setAllFacilities(facilitiesResult.data);
         } else {
-          setError(
-            (error ? error + ' ' : '') +
-              (facilitiesResult.message || 'Gagal mengambil data fasilitas.')
-          );
+          errorMessages.push(facilitiesResult.message || 'Gagal mengambil data fasilitas.');
         }
-      } catch (err: any) {
-        setError(err.message || 'Terjadi kesalahan saat memuat data master.');
+        if (errorMessages.length > 0) {
+          setError(errorMessages.join(' '));
+        }
+      } catch (err: unknown) { 
+        const message = err instanceof Error ? err.message : 'Terjadi kesalahan saat memuat data master.';
+        setError(message);
       } finally {
         setLoading(false);
       }
     };
-
     loadMasterData();
-  }, []); // Dependency array kosong sudah benar
+  }, []);
 
   useEffect(() => {
     // Load fasilitas milik venue SETELAH venue dipilih
@@ -86,15 +79,16 @@ export default function AdminFacilitiesPage() {
         } else {
           toast.error('Gagal memuat fasilitas venue', { description: result.message });
         }
-      } catch (err: any) {
-        toast.error('Error', { description: (err as Error).message });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Terjadi kesalahan saat memuat fasilitas venue.';
+        toast.error('Error', { description: message });
       } finally {
         setLoadingVenueFacilities(false);
       }
     };
 
     loadVenueFacilitiesData();
-  }, [selectedVenueId]); // <-- Berjalan setiap kali selectedVenueId berubah
+  }, [selectedVenueId]); 
 
   const handleCheckboxChange = (facilityId: number, checked: boolean) => {
     setVenueFacilities((prev) => {
@@ -125,8 +119,9 @@ export default function AdminFacilitiesPage() {
       } else {
         toast.error('Gagal menyimpan', { description: result.message });
       }
-    } catch (err: any) {
-      toast.error('Error', { description: (err as Error).message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Terjadi kesalahan saat menyimpan fasilitas venue.';
+      toast.error('Error', { description: message });
     } finally {
       setSaving(false);
     }
@@ -145,15 +140,15 @@ export default function AdminFacilitiesPage() {
           </div>
 
           {loading ? (
-             <div className="text-center p-12">
+            <div className="text-center p-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
                 <p className="text-gray-600">Memuat data master...</p>
-             </div>
+            </div>
           ) : error ? (
             <div className="text-center p-12 text-red-600">
-               <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-               <p className="font-semibold">Gagal Memuat Data</p>
-               <p className="text-sm text-gray-600 mb-4">{error}</p>
+              <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+              <p className="font-semibold">Gagal Memuat Data</p>
+              <p className="text-sm text-gray-600 mb-4">{error}</p>
             </div>
           ) : (
             <Card>
@@ -183,9 +178,9 @@ export default function AdminFacilitiesPage() {
                     </h3>
                     
                     {loadingVenueFacilities ? (
-                       <div className="flex items-center justify-center h-32">
-                         <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
-                       </div>
+                      <div className="flex items-center justify-center h-32">
+                        <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+                      </div>
                     ) : (
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {allFacilities.map((facility) => (
