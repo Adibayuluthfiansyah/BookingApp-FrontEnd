@@ -11,7 +11,6 @@ import {DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuLabel,Drop
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { AdminNav } from './AdminNav';
-import { cn } from '@/lib/utils';
 
 export default function AdminHeader() {
   const { logout, user } = useAuth();

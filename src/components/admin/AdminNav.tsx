@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import {LayoutDashboard,Calendar,MapPin,Settings,Home,RectangleHorizontal,Clock,Sparkles,Icon as LucideIcon,} from 'lucide-react';
+import {LayoutDashboard,Calendar,MapPin,Settings,Home,RectangleHorizontal,Clock,Sparkles} from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface NavItem {

@@ -7,7 +7,7 @@ const LoadingAnimation = ({ isLoading = true, onComplete }: { isLoading?: boolea
     if (!isLoading) {
       const timer = setTimeout(() => {
         setShow(false);
-        onComplete && onComplete();
+        onComplete?.();
       }, 500); // Small delay for smooth transition
       
       return () => clearTimeout(timer);

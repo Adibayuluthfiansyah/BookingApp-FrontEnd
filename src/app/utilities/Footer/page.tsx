@@ -29,7 +29,7 @@ export default function Footer() {
               </a>
               <a href="#" className="text-gray-300 hover:text-white transition-colors">
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                 <Twitter/>
+                <Twitter/>
                 </svg>
               </a>
             </div>

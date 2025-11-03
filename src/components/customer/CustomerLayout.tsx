@@ -69,8 +69,8 @@ export default function CustomerLayout({
   }
   
   if (user.role !== 'customer') {
-     router.push('/'); 
-     return <CustomerLayoutSkeleton />; 
+    router.push('/'); 
+    return <CustomerLayoutSkeleton />; 
   }
 
   return (

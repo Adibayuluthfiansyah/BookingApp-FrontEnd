@@ -52,11 +52,11 @@ export default function UnifiedLoginPage() {
         // Set error lokal untuk ditampilkan di form
         setError('Email atau password tidak valid. Silakan coba lagi.');
       }
-    } catch (err) {
-      const errorMessage = 'Tidak dapat terhubung ke server.';
-      setError(errorMessage);
+    } catch (err:unknown) {
+      const message = err instanceof Error ? err.message : "Gagal keluar";
+      setError(message);
       toast.error('Terjadi Kesalahan', {
-        description: errorMessage,
+        description: message,
         duration: 4000,
         icon: <AlertCircle className="h-5 w-5" />,
       });

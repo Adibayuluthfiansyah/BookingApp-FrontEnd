@@ -6,7 +6,6 @@ import { Mail, Phone, MapPin, Clock, Building2, CheckCircle, ExternalLink, Insta
 import Footer from '../utilities/footer/page';
 import { Card, CardContent, CardHeader } from '@/components/ui/card'; 
 import { Button } from '@/components/ui/button'; 
-import { cn } from '@/lib/utils'; 
 
 const ContactPage = () => {
 

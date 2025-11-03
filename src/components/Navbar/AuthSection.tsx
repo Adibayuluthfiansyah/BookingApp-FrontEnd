@@ -4,15 +4,7 @@ import { useAuth } from '@/app/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuPortal,
-} from '@/components/ui/dropdown-menu';
+import {DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuLabel,DropdownMenuSeparator,DropdownMenuTrigger,DropdownMenuPortal,} from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { User, LogOut, CalendarDays, LayoutDashboard, Loader2, LogIn } from 'lucide-react';
 import { toast } from 'sonner';
@@ -32,8 +24,9 @@ export default function AuthSection({ isScrolled }: AuthSectionProps) {
     setLoggingOut(true);
     try {
       await logout();
-    } catch (error) {
-      toast.error('Logout gagal');
+    } catch (error:unknown) {
+      const message = error instanceof Error ? error.message : 'Logout gagal';
+      toast.error(message);
     } finally {
       setLoggingOut(false);
     }

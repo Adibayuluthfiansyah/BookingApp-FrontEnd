@@ -67,10 +67,16 @@ export default function CreateVenuePage() {
           : result.message || 'Silakan cek kembali data Anda.';
         toast.error('Gagal membuat venue', { description });
       }
-    } catch (error: any) {
-      toast.error('Terjadi Kesalahan', {
-        description: error.message || 'Tidak dapat terhubung ke server.',
-      });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error('Terjadi Kesalahan', {
+          description: error.message || 'Tidak dapat terhubung ke server.',
+        });
+      } else {
+        toast.error('Terjadi Kesalahan', {
+          description: 'Tidak dapat terhubung ke server.',
+        });
+      }
     } finally {
       setLoading(false);
     }

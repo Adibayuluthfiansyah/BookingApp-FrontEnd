@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Eye, EyeOff, UserPlus, ArrowLeft, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, UserPlus, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/app/contexts/AuthContext'; 
@@ -97,10 +97,10 @@ export default function RegisterPage() {
         router.push('/login');
       }, 2000);
 
-    } catch (err: any) {
-      if (!error) setError(err.message || 'Terjadi kesalahan tidak diketahui.');
+    } catch (err: unknown) {
+      if (!error) setError(err instanceof Error ? err.message : 'Terjadi kesalahan tidak diketahui.');
       toast.error('Registrasi Gagal', {
-        description: err.message || 'Tidak dapat membuat akun saat ini.',
+        description: err instanceof Error ? err.message : 'Tidak dapat membuat akun saat ini.',
         duration: 5000,
         icon: <AlertCircle className="h-5 w-5" />,
       });
@@ -153,7 +153,7 @@ export default function RegisterPage() {
          <div className="absolute inset-0 bg-background/50"></div>
       </div>
 
-      <div className="w-full max-w-md relative z-10 my-12">
+      <div className="w-full max-w-md relative z-10 my-12 pt-5">
         <Card className="bg-card border-border shadow-xl rounded-lg">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold text-foreground tracking-tight">Buat Akun Baru</CardTitle>

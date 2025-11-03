@@ -1,27 +1,32 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { getVenue, getAvailableSlots } from '@/lib/api';
-import { Venue, Field, TimeSlotWithStatus } from '@/types';
-import { format, addDays } from 'date-fns';
-import { id as localeId } from 'date-fns/locale';
-import { MapPin, Facebook, Instagram, Clock, CheckCircle, ArrowLeft, XCircle } from 'lucide-react';
-import Image from 'next/image';
+import {useState,useEffect,useCallback, } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { getVenue, getAvailableSlots } from "@/lib/api";
+import { Venue, Field, TimeSlotWithStatus } from "@/types";
+import { format, addDays } from "date-fns";
+import { id as localeId } from "date-fns/locale";
+import {MapPin,Facebook,Instagram,Clock,CheckCircle,XCircle,} from "lucide-react";
+import Image from "next/image";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function VenueDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [venue, setVenue] = useState<Venue | null>(null);
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [selectedField, setSelectedField] = useState<Field | null>(null);
   const [availableSlots, setAvailableSlots] = useState<TimeSlotWithStatus[]>([]);
-  const [selectedSlot, setSelectedSlot] = useState<TimeSlotWithStatus | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<TimeSlotWithStatus | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'schedule' | 'gallery' | 'about'>('schedule');
-  
+  const [activeTab, setActiveTab] = useState<"schedule" | "gallery" | "about">(
+    "schedule",
+  );
+
   const [dates, setDates] = useState<Date[]>([]);
 
   useEffect(() => {
@@ -37,111 +42,117 @@ export default function VenueDetailPage() {
     generateDates();
   }, []);
 
+  // Bungkus dengan useCallback
+  const loadVenue = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const venueId = params.slug as string;
+      console.log("Loading venue with ID:", venueId);
+
+      const result = await getVenue(venueId);
+      console.log("Venue result:", result);
+
+      if (result.success && result.data) {
+        setVenue(result.data);
+
+        if (result.data.fields && result.data.fields.length > 0) {
+          setSelectedField(result.data.fields[0]);
+        }
+      } else {
+        setError(result.message || "Venue tidak ditemukan");
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      console.error("Error loading venue:", message);
+      setError("Gagal memuat data venue");
+    } finally {
+      setLoading(false);
+    }
+  }, [params.slug]); // Dependency untuk useCallback
+
+  // Bungkus dengan useCallback
+  const loadAvailableSlots = useCallback(async () => {
+    if (!venue || !selectedField) return;
+
+    try {
+      setSlotsLoading(true);
+
+      console.log("=== FETCHING SLOTS WITH STATUS ===");
+      console.log("Venue ID:", venue.id);
+      console.log("Field ID:", selectedField.id);
+      console.log("Date:", selectedDate);
+
+      const result = await getAvailableSlots(venue.id, {
+        field_id: selectedField.id,
+        date: selectedDate,
+      });
+
+      console.log("=== API RESULT ===");
+      console.log("Success:", result.success);
+      console.log("Data:", result.data);
+      console.log("Meta:", result.meta);
+
+      if (result.success) {
+        setAvailableSlots(result.data || []);
+      } else {
+        setAvailableSlots([]);
+      }
+    } catch (error: unknown) { 
+      const message = error instanceof Error ? error.message : "Unknown error";
+      console.error("Error loading slots:", message);
+      setAvailableSlots([]);
+    } finally {
+      setSlotsLoading(false);
+    }
+  }, [venue, selectedField, selectedDate]); // Dependencies untuk useCallback
+
   useEffect(() => {
     if (params.slug) {
       loadVenue();
     }
-  }, [params.slug]);
+    // Tambahkan 'loadVenue' ke dependency array
+  }, [params.slug, loadVenue]);
 
   useEffect(() => {
     if (selectedField && selectedDate && venue) {
       loadAvailableSlots();
     }
-  }, [selectedField, selectedDate]);
-
-  const loadVenue = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const venueId = params.slug as string;
-      console.log('Loading venue with ID:', venueId);
-      
-      const result = await getVenue(venueId);
-      console.log('Venue result:', result);
-      
-      if (result.success && result.data) {
-        setVenue(result.data);
-        
-        if (result.data.fields && result.data.fields.length > 0) {
-          setSelectedField(result.data.fields[0]);
-        }
-      } else {
-        setError(result.message || 'Venue tidak ditemukan');
-      }
-    } catch (error) {
-      console.error('Error loading venue:', error);
-      setError('Gagal memuat data venue');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadAvailableSlots = async () => {
-    if (!venue || !selectedField) return;
-
-    try {
-      setSlotsLoading(true);
-      
-      console.log('=== FETCHING SLOTS WITH STATUS ===');
-      console.log('Venue ID:', venue.id);
-      console.log('Field ID:', selectedField.id);
-      console.log('Date:', selectedDate);
-      
-      const result = await getAvailableSlots(venue.id, {
-        field_id: selectedField.id,
-        date: selectedDate,
-      });
-      
-      console.log('=== API RESULT ===');
-      console.log('Success:', result.success);
-      console.log('Data:', result.data);
-      console.log('Meta:', result.meta);
-      
-      if (result.success) {
-        setAvailableSlots(result.data);
-      } else {
-        setAvailableSlots([]);
-      }
-    } catch (error) {
-      console.error('Error loading slots:', error);
-      setAvailableSlots([]);
-    } finally {
-      setSlotsLoading(false);
-    }
-  };
+    //Tambahkan 'loadAvailableSlots' dan 'venue'
+  }, [selectedField, selectedDate, venue, loadAvailableSlots]);
 
   const handleSlotClick = (slot: TimeSlotWithStatus) => {
     if (!slot.is_available) {
-      alert('Slot ini sudah dibooking oleh orang lain');
+      alert("Slot ini sudah dibooking oleh orang lain");
       return;
     }
-    console.log('Selected slot:', slot);
+    console.log("Selected slot:", slot);
     setSelectedSlot(slot);
   };
 
   const handleBooking = () => {
-    console.log('=== HANDLE BOOKING CLICKED ===');
-    
+    console.log("=== HANDLE BOOKING CLICKED ===");
+
     if (!selectedSlot || !selectedField || !venue) {
-      console.error('❌ Missing required data');
-      alert('Silakan pilih slot terlebih dahulu');
+      console.error("❌ Missing required data");
+      alert("Silakan pilih slot terlebih dahulu");
       return;
     }
 
     if (!selectedSlot.is_available) {
-      alert('Slot ini sudah tidak tersedia');
+      alert("Slot ini sudah tidak tersedia");
       return;
     }
 
     const slotId = Number(selectedSlot.id);
     const fieldId = Number(selectedField.id);
-    
-    console.log('Slot ID:', slotId, 'type:', typeof slotId);
-    console.log('Field ID:', fieldId, 'type:', typeof fieldId);
+
+    console.log("Slot ID:", slotId, "type:", typeof slotId);
+    console.log("Field ID:", fieldId, "type:", typeof fieldId);
 
     if (isNaN(slotId) || slotId <= 0) {
-      console.error('❌ INVALID SLOT ID:', slotId);
+      console.error("❌ INVALID SLOT ID:", slotId);
       alert(`Error: ID slot tidak valid. Silakan refresh halaman.`);
       return;
     }
@@ -159,31 +170,31 @@ export default function VenueDetailPage() {
       savedAt: Date.now(),
     };
 
-    console.log('=== BOOKING DATA TO SAVE ===');
+    console.log("=== BOOKING DATA TO SAVE ===");
     console.log(JSON.stringify(bookingData, null, 2));
 
-    sessionStorage.removeItem('bookingData');
-    sessionStorage.setItem('bookingData', JSON.stringify(bookingData));
+    sessionStorage.removeItem("bookingData");
+    sessionStorage.setItem("bookingData", JSON.stringify(bookingData));
 
-    const saved = sessionStorage.getItem('bookingData');
+    const saved = sessionStorage.getItem("bookingData");
     const parsed = saved ? JSON.parse(saved) : null;
-    
-    console.log('✅ Verified saved data:', parsed);
-    
+
+    console.log("✅ Verified saved data:", parsed);
+
     if (!parsed || parsed.timeSlotId !== slotId) {
-      console.error('❌ Data verification FAILED!');
-      alert('Gagal menyimpan data. Silakan coba lagi.');
+      console.error("❌ Data verification FAILED!");
+      alert("Gagal menyimpan data. Silakan coba lagi.");
       return;
     }
 
-    console.log('✅ All validation passed! Navigating to form...');
-    router.push('/booking/form');
+    console.log("✅ All validation passed! Navigating to form...");
+    router.push("/booking/form");
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
     }).format(price);
   };
@@ -194,22 +205,23 @@ export default function VenueDetailPage() {
 
   if (loading) {
     return (
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading ...</p>
-            </div>
-          </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <Spinner className="h-12 w-12 mx-auto mb-4"/>
+        </div>
+      </div>
     );
   }
 
   if (error || !venue) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen">
-        <div className="text-xl text-red-500 mb-4">{error || 'Venue tidak ditemukan'}</div>
-        <button 
-          onClick={() => router.push('/venues')}
-          className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600"
+        <div className="text-xl text-red-500 mb-4">
+          {error || "Venue tidak ditemukan"}
+        </div>
+        <button
+          onClick={() => router.push("/venues")}
+          className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600"
         >
           Kembali ke Daftar Lapangan
         </button>
@@ -219,29 +231,16 @@ export default function VenueDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Back Button */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-3">
-          <button 
-            onClick={() => router.back()}
-            className="flex items-center text-gray-600 hover:text-gray-900"
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Kembali
-          </button>
-        </div>
-      </div>
-
       {/* Header Section */}
       <div className="bg-white shadow">
         <div className="container mx-auto px-4 py-8">
           {venue.image_url && (
             <div className="relative w-full h-64 md:h-96 mb-6 rounded-lg overflow-hidden">
-              <Image 
-                src={venue.image_url} 
+              <Image
+                src={venue.image_url}
                 alt={venue.name}
                 fill
-                className="object-cover"
+                className="object-cover pt-8"
                 priority
               />
             </div>
@@ -249,7 +248,9 @@ export default function VenueDetailPage() {
 
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{venue.name}</h1>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {venue.name}
+              </h1>
               <div className="flex items-center mt-2 text-gray-600">
                 <MapPin className="w-5 h-5 mr-2" />
                 <span>{venue.address}</span>
@@ -258,14 +259,22 @@ export default function VenueDetailPage() {
 
               <div className="flex gap-2 mt-4">
                 {venue.facebook_url && (
-                  <a href={venue.facebook_url} target="_blank" rel="noopener noreferrer"
-                    className="p-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                  <a
+                    href={venue.facebook_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
                     <Facebook className="w-5 h-5" />
                   </a>
                 )}
                 {venue.instagram_url && (
-                  <a href={venue.instagram_url} target="_blank" rel="noopener noreferrer"
-                    className="p-2 bg-pink-600 text-white rounded hover:bg-pink-700">
+                  <a
+                    href={venue.instagram_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 bg-pink-600 text-white rounded hover:bg-pink-700"
+                  >
                     <Instagram className="w-5 h-5" />
                   </a>
                 )}
@@ -279,22 +288,34 @@ export default function VenueDetailPage() {
       <div className="bg-white border-b">
         <div className="container mx-auto px-4">
           <div className="flex gap-8">
-            <button onClick={() => setActiveTab('schedule')}
+            <button
+              onClick={() => setActiveTab("schedule")}
               className={`py-4 px-2 border-b-2 font-medium ${
-                activeTab === 'schedule' ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}>
+                activeTab === "schedule"
+                  ? "border-orange-600 text-orange-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}
+            >
               JADWAL
             </button>
-            <button onClick={() => setActiveTab('gallery')}
+            <button
+              onClick={() => setActiveTab("gallery")}
               className={`py-4 px-2 border-b-2 font-medium ${
-                activeTab === 'gallery' ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}>
+                activeTab === "gallery"
+                  ? "border-orange-600 text-orange-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}
+            >
               GALERI
             </button>
-            <button onClick={() => setActiveTab('about')}
+            <button
+              onClick={() => setActiveTab("about")}
               className={`py-4 px-2 border-b-2 font-medium ${
-                activeTab === 'about' ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}>
+                activeTab === "about"
+                  ? "border-orange-600 text-orange-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}
+            >
               TENTANG
             </button>
           </div>
@@ -306,23 +327,28 @@ export default function VenueDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2">
-            {activeTab === 'schedule' && (
+            {activeTab === "schedule" && (
               <div>
                 {/* Date Selector */}
                 <div className="bg-white rounded-lg shadow p-4 mb-6">
                   <div className="grid grid-cols-7 gap-2">
                     {dates.map((date) => {
-                      const dateStr = format(date, 'yyyy-MM-dd');
+                      const dateStr = format(date, "yyyy-MM-dd");
                       const isSelected = dateStr === selectedDate;
-                      const dayName = format(date, 'EEE', { locale: localeId });
-                      const dayNumber = format(date, 'd');
-                      const month = format(date, 'MMM', { locale: localeId });
+                      const dayName = format(date, "EEE", { locale: localeId });
+                      const dayNumber = format(date, "d");
+                      const month = format(date, "MMM", { locale: localeId });
 
                       return (
-                        <button key={dateStr} onClick={() => setSelectedDate(dateStr)}
+                        <button
+                          key={dateStr}
+                          onClick={() => setSelectedDate(dateStr)}
                           className={`p-3 rounded-lg text-center transition ${
-                            isSelected ? 'bg-orange-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
-                          }`}>
+                            isSelected
+                              ? "bg-orange-600 text-white"
+                              : "bg-gray-100 hover:bg-gray-200"
+                          }`}
+                        >
                           <div className="text-xs">{dayName}</div>
                           <div className="text-lg font-bold">{dayNumber}</div>
                           <div className="text-xs">{month}</div>
@@ -338,10 +364,15 @@ export default function VenueDetailPage() {
                     <h3 className="font-semibold mb-3">Pilih Lapangan:</h3>
                     <div className="flex gap-2 flex-wrap">
                       {venue.fields.map((field) => (
-                        <button key={field.id} onClick={() => setSelectedField(field)}
+                        <button
+                          key={field.id}
+                          onClick={() => setSelectedField(field)}
                           className={`px-4 py-2 rounded-lg transition ${
-                            selectedField?.id === field.id ? 'bg-orange-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
-                          }`}>
+                            selectedField?.id === field.id
+                              ? "bg-orange-600 text-white"
+                              : "bg-gray-100 hover:bg-gray-200"
+                          }`}
+                        >
                           {field.name}
                         </button>
                       ))}
@@ -352,7 +383,7 @@ export default function VenueDetailPage() {
                 {/* Time Slots */}
                 <div className="bg-white rounded-lg shadow p-4">
                   <h3 className="font-semibold mb-4">Jadwal Tersedia:</h3>
-                  
+
                   {slotsLoading ? (
                     <div className="text-center py-8">Memuat jadwal...</div>
                   ) : availableSlots.length === 0 ? (
@@ -369,35 +400,42 @@ export default function VenueDetailPage() {
                             disabled={!slot.is_available}
                             className={`p-4 rounded-lg border-2 transition ${
                               !slot.is_available
-                                ? 'border-gray-300 bg-gray-100 cursor-not-allowed opacity-60'
+                                ? "border-gray-300 bg-gray-100 cursor-not-allowed opacity-60"
                                 : selectedSlot?.id === slot.id
-                                ? 'border-orange-600 bg-orange-50 cursor-pointer'
-                                : 'border-gray-200 hover:border-orange-300 cursor-pointer'
+                                ? "border-orange-600 bg-orange-50 cursor-pointer"
+                                : "border-gray-200 hover:border-orange-300 cursor-pointer"
                             }`}
                           >
                             <div className="flex items-center justify-center mb-2">
                               <Clock className="w-4 h-4 mr-1" />
                               <span className="font-semibold">
-                                {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
+                                {formatTime(slot.start_time)} -{" "}
+                                {formatTime(slot.end_time)}
                               </span>
                             </div>
-                            <div className="text-sm text-gray-600">{formatPrice(slot.price)}</div>
-                            
+                            <div className="text-sm text-gray-600">
+                              {formatPrice(slot.price)}
+                            </div>
+
                             {slot.is_available ? (
                               <div className="flex items-center justify-center mt-2 text-green-600">
                                 <CheckCircle className="w-4 h-4 mr-1" />
-                                <span className="text-xs font-medium">Tersedia</span>
+                                <span className="text-xs font-medium">
+                                  Tersedia
+                                </span>
                               </div>
                             ) : (
                               <div className="flex items-center justify-center mt-2 text-red-600">
                                 <XCircle className="w-4 h-4 mr-1" />
-                                <span className="text-xs font-medium">Terbooking</span>
+                                <span className="text-xs font-medium">
+                                  Terbooking
+                                </span>
                               </div>
                             )}
                           </button>
                         ))}
                       </div>
-                      
+
                       {/* Legend */}
                       <div className="pt-4 border-t flex items-center gap-4 text-sm">
                         <div className="flex items-center gap-2">
@@ -415,41 +453,51 @@ export default function VenueDetailPage() {
               </div>
             )}
 
-            {activeTab === 'gallery' && (
+            {activeTab === "gallery" && (
               <div className="bg-white rounded-lg shadow p-4">
                 <h3 className="font-semibold mb-4">Galeri</h3>
                 {venue.images && venue.images.length > 0 ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {venue.images.map((image) => (
                       <div key={image.id} className="relative h-48">
-                        <Image src={image.image_url} alt={image.caption || venue.name}
-                          fill className="object-cover rounded-lg" />
+                        <Image
+                          src={image.image_url}
+                          alt={image.caption || venue.name}
+                          fill
+                          className="object-cover rounded-lg"
+                        />
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">Belum ada foto galeri</div>
+                  <div className="text-center py-8 text-gray-500">
+                    Belum ada foto galeri
+                  </div>
                 )}
               </div>
             )}
 
-            {activeTab === 'about' && (
+            {activeTab === "about" && (
               <div className="bg-white rounded-lg shadow p-4">
                 <h3 className="font-semibold mb-4">Tentang Venue</h3>
                 <p className="text-gray-700 mb-4">{venue.description}</p>
-                
+
                 <h4 className="font-semibold mb-2">Fasilitas:</h4>
                 {venue.facilities && venue.facilities.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {venue.facilities.map((facility) => (
-                      <span key={facility.id}
-                        className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                      <span
+                        key={facility.id}
+                        className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                      >
                         {facility.name}
                       </span>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500">Tidak ada informasi fasilitas</p>
+                  <p className="text-gray-500">
+                    Tidak ada informasi fasilitas
+                  </p>
                 )}
               </div>
             )}
@@ -470,13 +518,16 @@ export default function VenueDetailPage() {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Tanggal:</span>
                       <span className="font-medium">
-                        {format(new Date(selectedDate), 'dd MMM yyyy', { locale: localeId })}
+                        {format(new Date(selectedDate), "dd MMM yyyy", {
+                          locale: localeId,
+                        })}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Waktu:</span>
                       <span className="font-medium">
-                        {formatTime(selectedSlot.start_time)} - {formatTime(selectedSlot.end_time)}
+                        {formatTime(selectedSlot.start_time)} -{" "}
+                        {formatTime(selectedSlot.end_time)}
                       </span>
                     </div>
                     <div className="flex justify-between pt-3 border-t">
@@ -487,8 +538,10 @@ export default function VenueDetailPage() {
                     </div>
                   </div>
 
-                  <button onClick={handleBooking}
-                    className="w-full mt-6 bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-700 transition font-semibold">
+                  <button
+                    onClick={handleBooking}
+                    className="w-full mt-6 bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-700 transition font-semibold"
+                  >
                     Lanjutkan Booking
                   </button>
                 </>

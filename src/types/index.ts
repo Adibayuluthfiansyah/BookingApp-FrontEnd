@@ -3,7 +3,7 @@ export interface User {
   id: number
   name: string
   email: string
-  role: 'admin' | 'customer'
+  role: 'admin' | 'customer' | 'super_admin'
   phone?: string
   email_verified_at?: string
   created_at: string
@@ -138,14 +138,13 @@ export interface LoginResponse extends ApiResponse {
   } | null;
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   message: string;
-  data?: T;
-  meta?: any;
-  errors?: any;
+  data?: T | null; 
+  meta?: Record<string, unknown>;   
+  errors?: Record<string, unknown>; 
 }
-
 export interface AdminStats {
   total_users: number
   total_venues: number

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getCustomerBookings } from '@/lib/api'; 
 import { Booking } from '@/types'; 
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Card,  CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { AlertCircle, Clock, CheckCircle, XCircle, Search } from 'lucide-react';
 import { format } from 'date-fns'; 
 import { id as indonesianLocale } from 'date-fns/locale';
@@ -34,7 +34,7 @@ const formatTime = (time: string | undefined) => {
 
 // Helper untuk badge status (Menggunakan Shadcn Badge)
 const getStatusBadge = (status: string) => {
-  const statuses: Record<string, { variant: "default" | "destructive" | "outline" | "secondary"; label: string; icon: any }> = {
+  const statuses: Record<string, { variant: "default" | "destructive" | "outline" | "secondary"; label: string; icon: React.ElementType }> = {
     pending: { variant: 'secondary', label: 'Pending', icon: Clock },
     confirmed: { variant: 'default', label: 'Confirmed', icon: CheckCircle }, 
     paid: { variant: 'default', label: 'Paid', icon: CheckCircle },
@@ -113,8 +113,8 @@ export default function MyBookingsPage() {
         setError('Format data booking tidak valid.');
         setBookings([]);
       }
-    } catch (err: any) {
-      setError(err.message || 'Terjadi kesalahan.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Terjadi kesalahan.');
       setBookings([]);
     } finally {
       setLoading(false);
