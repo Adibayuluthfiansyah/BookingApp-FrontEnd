@@ -1,4 +1,4 @@
-# Docker Image For Development 
+# --- FOR DEVELOPMENT ---
 FROM node:20-alpine
 
 WORKDIR /app
@@ -7,10 +7,10 @@ WORKDIR /app
 COPY package.json .
 COPY package-lock.json .
 
-# Install dependencies
+# Install dependensi
 RUN npm install
 
-# Expose port 3000 for running the app
+# Expose port 3000
 EXPOSE 3000
 
 # Perintah default untuk menjalankan server development
