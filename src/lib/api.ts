@@ -1,5 +1,11 @@
 import {ApiResponse,User,LoginResponse,Venue,TimeSlotWithStatus,TimeSlot,SimpleField,Facility,Field,Booking, } from "@/types";
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+const isServer = typeof window === 'undefined';
+
+// Tentukan base URL berdasarkan lingkungan
+const API_BASE_URL = isServer
+  ? process.env.INTERNAL_API_URL    // Ini untuk di dalam kontainer (http://nginx/api)
+  : process.env.NEXT_PUBLIC_API_URL
 
 // ==================== Auth Helper Functions ====================
 
@@ -14,8 +20,8 @@ export const getUser = (): User | null => {
     const userStr = localStorage.getItem("user");
     if (!userStr) return null;
     return JSON.parse(userStr);
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) { 
+    const message = error instanceof Error ? error.message : "Unknown error"; 
     console.error("Error parsing user data:", message);
     localStorage.removeItem("user");
     return null;
@@ -55,8 +61,8 @@ export const login = async (
     }
 
     return data;
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) { 
+    const message = error instanceof Error ? error.message : "Unknown error"; 
     console.error("Login error:", message);
     return {
       success: false,
@@ -84,14 +90,14 @@ export const logout = async (): Promise<ApiResponse> => {
     clearAuthData();
 
     return data;
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Logout error:", message);
     clearAuthData();
     return {
       success: true,
       message: "Logout berhasil",
-      data: null, // PERBAIKAN: Tambahkan data: null
+      data: null, 
     };
   }
 };
