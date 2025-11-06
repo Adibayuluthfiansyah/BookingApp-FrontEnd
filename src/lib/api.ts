@@ -1,11 +1,9 @@
 import {ApiResponse,User,LoginResponse,Venue,TimeSlotWithStatus,TimeSlot,SimpleField,Facility,Field,Booking, } from "@/types";
 // const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
-const isServer = typeof window === 'undefined';
 
-// Tentukan base URL berdasarkan lingkungan
-const API_BASE_URL = isServer
-  ? process.env.INTERNAL_API_URL    // Ini untuk di dalam kontainer (http://nginx/api)
-  : process.env.NEXT_PUBLIC_API_URL
+const API_BASE_URL = typeof window === 'undefined'
+  ? process.env.INTERNAL_API_URL ?? "http://nginx/api"
+  : "http://127.0.0.1:8000/api";  // Tambahkan default fallback
 
 // ==================== Auth Helper Functions ====================
 

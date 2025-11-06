@@ -435,18 +435,6 @@ export default function VenueDetailPage() {
                           </button>
                         ))}
                       </div>
-
-                      {/* Legend */}
-                      <div className="pt-4 border-t flex items-center gap-4 text-sm">
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 bg-green-100 border-2 border-green-600 rounded"></div>
-                          <span className="text-gray-600">Tersedia</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 bg-gray-100 border-2 border-gray-300 rounded"></div>
-                          <span className="text-gray-600">Terbooking</span>
-                        </div>
-                      </div>
                     </>
                   )}
                 </div>
