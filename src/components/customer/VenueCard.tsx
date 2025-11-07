@@ -64,7 +64,7 @@ export function VenueCard({ venue, className }: VenueCardProps) {
       className={cn(
         "w-full overflow-hidden flex flex-col justify-between",
         "transition-all duration-300 hover:shadow-lg hover:shadow-primary/10",
-        "border-border hover:border-primary/20 group",
+        "border-border hover:border-primary/20 group grid",
         className
       )}
     >
@@ -95,7 +95,7 @@ export function VenueCard({ venue, className }: VenueCardProps) {
               <CardTitle className="text-lg font-semibold tracking-tight line-clamp-2">
                 {venue.name}
               </CardTitle>
-              <div className="text-right flex-shrink-0">
+              <div className="text-right">
                 <p className="text-xs text-muted-foreground">Mulai dari</p>
                 <p className="font-bold text-green-600">
                   {minPrice > 0 ? formatCurrency(minPrice) : 'Hubungi'}
@@ -105,7 +105,7 @@ export function VenueCard({ venue, className }: VenueCardProps) {
             
             {/* Alamat */}
             <CardDescription className="flex items-center text-sm text-muted-foreground">
-              <MapPin className="mr-1.5 h-4 w-4 flex-shrink-0" />
+              <MapPin className="mr-1.5 h-4 w-4" />
               <span className="truncate">{venue.address}</span>
             </CardDescription>
 
