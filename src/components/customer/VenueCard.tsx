@@ -97,7 +97,7 @@ export function VenueCard({ venue, className }: VenueCardProps) {
               </CardTitle>
               <div className="text-right flex-shrink-0">
                 <p className="text-xs text-muted-foreground">Mulai dari</p>
-                <p className="font-bold text-primary">
+                <p className="font-bold text-green-600">
                   {minPrice > 0 ? formatCurrency(minPrice) : 'Hubungi'}
                 </p>
               </div>
@@ -118,12 +118,12 @@ export function VenueCard({ venue, className }: VenueCardProps) {
             {facilities.length > 0 && (
               <div className="flex flex-wrap gap-1.5 pt-2">
                 {facilities.slice(0, 3).map((facility: Facility) => (
-                  <Badge key={facility.id} variant="secondary" className="text-xs">
+                  <Badge key={facility.id} variant="secondary" className="bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs">
                     {facility.name}
                   </Badge>
                 ))}
                 {facilities.length > 3 && (
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">
                     +{facilities.length - 3} lainnya
                   </Badge>
                 )}
