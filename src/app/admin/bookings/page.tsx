@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react"; // PERBAIKAN: Impor useCallback
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {Search,Filter,ChevronLeft,ChevronRight,CheckCircle,XCircle,Clock,Calendar,} from "lucide-react";
 import type { LucideIcon } from "lucide-react"; 
 import { getAdminBookings, getAllVenues } from "@/lib/api";
 import { Booking, Venue } from "@/types";
+import { Spinner } from "@/components/ui/spinner";
 
 interface PaginationMeta {
   from: number;
@@ -238,7 +239,7 @@ export default function AdminBookingsPage() {
                   value={search}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   placeholder="Cari booking number, nama, email..."
-                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-black focus:outline-none"
                 />
               </div>
             </div>
@@ -286,7 +287,7 @@ export default function AdminBookingsPage() {
               <select
                 value={venueId}
                 onChange={(e) => setVenueId(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black focus:outline-none"
               >
                 <option value="">Semua Venue</option>
                 {venues.map((venue) => (
@@ -306,7 +307,7 @@ export default function AdminBookingsPage() {
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black focus:outline-none"
               />
             </div>
 
@@ -319,7 +320,7 @@ export default function AdminBookingsPage() {
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black focus:outline-none"
               />
             </div>
 
@@ -327,13 +328,13 @@ export default function AdminBookingsPage() {
             <div className="flex items-end gap-2 md:col-span-2">
               <button
                 onClick={handleFilterChange}
-                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 cursor-pointer transition"
               >
                 Terapkan Filter
               </button>
               <button
                 onClick={clearFilters}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 cursor-pointer transition"
               >
                 Reset
               </button>
@@ -345,7 +346,6 @@ export default function AdminBookingsPage() {
         {meta && (
           <div className="mb-4 flex items-center justify-between">
             <p className="text-gray-600">
-              {/* Error akan hilang karena 'meta' sekarang bertipe 'PaginationMeta' */}
               Menampilkan {meta.from}-{meta.to} dari {meta.total} booking
             </p>
           </div>
@@ -355,8 +355,7 @@ export default function AdminBookingsPage() {
         <div className="bg-white rounded-xl shadow overflow-hidden">
           {loading ? (
             <div className="p-12 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-              <p className="text-gray-600">Memuat data...</p>
+              <Spinner className="h-12 w-12 mx-auto mb-4"/>
             </div>
           ) : bookings.length === 0 ? (
             <div className="p-12 text-center">

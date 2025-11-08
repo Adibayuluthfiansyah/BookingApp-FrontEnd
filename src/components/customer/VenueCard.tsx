@@ -62,81 +62,86 @@ export function VenueCard({ venue, className }: VenueCardProps) {
   return (
     <Card 
       className={cn(
-        "w-full overflow-hidden flex flex-col justify-between",
+        "w-full overflow-hidden flex flex-col",
         "transition-all duration-300 hover:shadow-lg hover:shadow-primary/10",
-        "border-border hover:border-primary/20 group grid",
+        "border-border hover:border-primary/20 group",
         className
       )}
     >
-
       <Link 
         href={`/venues/${venue.slug || venue.id}`} 
-        className="flex flex-col justify-between h-full"
+        className="flex flex-col h-full"
       >
-        <div>
-          {/* Bagian Gambar */}
-          <CardHeader className="pt-0 relative h-40 w-full overflow-hidden">
-            <Image
-              src={imageUrl}
-              alt={venue.name}
-              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              fill
-              priority={false}
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-              onError={(e) => {
-                // Fallback jika URL gambar error
-                e.currentTarget.src = `https://placehold.co/600x400/0a0a0a/999999?text=${venue.name.split(' ').join('+')}`;
-              }}
-            />
-          </CardHeader>
+        {/* Bagian Gambar */}
+        <CardHeader className="p-0 relative h-48 w-full overflow-hidden">
+          <Image
+            src={imageUrl}
+            alt={venue.name}
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            fill
+            loading="lazy"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            onError={(e) => {
+              e.currentTarget.src = `https://placehold.co/600x400/0a0a0a/999999?text=${venue.name.split(' ').join('+')}`;
+            }}
+          />
+        </CardHeader>
 
-          {/* Bagian Konten */}
-          <CardContent className="p-3space-y-1.5">
-            {/* Judul dan Harga */}
-            <div className="flex justify-between items-start gap-2">
-              <CardTitle className="text-base font-semibold tracking-tight line-clamp-2">
-                {venue.name}
-              </CardTitle>
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground">Mulai dari</p>
-                <p className="font-bold text-green-600">
-                  {minPrice > 0 ? formatCurrency(minPrice) : 'Hubungi'}
-                </p>
-              </div>
+        {/* Bagian Konten */}
+        <CardContent className="p-4 space-y-3 flex-1">
+          {/* Judul dan Harga */}
+          <div className="flex justify-between items-start gap-3">
+            <CardTitle className="text-lg font-semibold tracking-tight line-clamp-2 flex-1">
+              {venue.name}
+            </CardTitle>
+            <div className="text-right shrink-0">
+              <p className="text-xs text-muted-foreground whitespace-nowrap">Mulai dari</p>
+              <p className="font-bold text-green-600 text-sm whitespace-nowrap">
+                {minPrice > 0 ? formatCurrency(minPrice) : 'Hubungi'}
+              </p>
             </div>
-            
-            {/* Alamat */}
-            <CardDescription className="flex items-center text-sm text-muted-foreground">
-              <MapPin className="mr-1.5 h-4 w-4" />
-              <span className="truncate">{venue.address}</span>
-            </CardDescription>
+          </div>
+          
+          {/* Alamat */}
+          <CardDescription className="flex items-start gap-1.5 text-sm text-muted-foreground">
+            <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-red-500" />
+            <span className="line-clamp-1">{venue.address}</span>
+          </CardDescription>
 
-            {/* Deskripsi (dari VenuesCard) */}
-            <p className="text-sm text-muted-foreground pt-1 line-clamp-1">
+          {/* Deskripsi */}
+          {venue.description && (
+            <p className="text-sm text-muted-foreground line-clamp-2">
               {venue.description}
             </p>
-            
-            {/* Fasilitas (dari VenuesCard) */}
-            {facilities.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-2">
-                {facilities.slice(0, 3).map((facility: Facility) => (
-                  <Badge key={facility.id} variant="secondary" className="bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs">
-                    {facility.name}
-                  </Badge>
-                ))}
-                {facilities.length > 3 && (
-                  <Badge variant="outline" className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">
-                    +{facilities.length - 3} lainnya
-                  </Badge>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </div>
+          )}
+          
+          {/* Fasilitas */}
+          {facilities.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {facilities.slice(0, 3).map((facility: Facility) => (
+                <Badge 
+                  key={facility.id} 
+                  variant="secondary" 
+                  className="bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs"
+                >
+                  {facility.name}
+                </Badge>
+              ))}
+              {facilities.length > 3 && (
+                <Badge 
+                  variant="outline" 
+                  className="bg-gray-100 text-gray-600 hover:bg-gray-200 text-xs"
+                >
+                  +{facilities.length - 3} lainnya
+                </Badge>
+              )}
+            </div>
+          )}
+        </CardContent>
 
         {/* Bagian Footer */}
-        <CardFooter className="p-3 flex justify-between items-center border-t border-border/20 mt-2">
-          {/* Jumlah Lapangan (dari VenuesCard) */}
+        <CardFooter className="p-4 flex justify-between items-center border-t border-border/20">
+          {/* Jumlah Lapangan */}
           <div className="flex items-center text-sm text-muted-foreground">
             <Layers className="mr-1.5 h-4 w-4" />
             <span>
@@ -144,9 +149,14 @@ export function VenueCard({ venue, className }: VenueCardProps) {
             </span>
           </div>
 
-          {/* Tombol (terlihat saat hover) */}
-          <Button asChild variant="ghost" size="sm" className="text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-            <span>
+          {/* Tombol */}
+          <Button 
+            asChild 
+            variant="ghost" 
+            size="sm" 
+            className="text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <span className="flex items-center">
               Lihat Detail <ArrowRight className="ml-1.5 h-4 w-4" />
             </span>
           </Button>

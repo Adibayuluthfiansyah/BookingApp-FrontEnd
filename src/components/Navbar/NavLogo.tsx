@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 
 interface NavLogoProps {
@@ -19,13 +20,10 @@ export const NavLogo: React.FC<NavLogoProps> = ({ isScrolled }) => {
             "font-bold text-lg tracking-tight transition-colors duration-300",
             isScrolled ? 'text-foreground' : 'text-white'
           )}>
-          O7ONG CORP
-        </span>
-        <span className={cn(
-            "text-[10px] font-medium tracking-wider text-center uppercase transition-colors duration-300",
-            isScrolled ? 'text-muted-foreground' : 'text-white/70'
-          )}>
-          Booking System
+          <Image src="/logobookingapp1.png" alt="Logo" 
+          width={100} 
+          height={40} 
+          />
         </span>
       </div>
     </Link>

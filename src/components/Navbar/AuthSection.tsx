@@ -93,11 +93,11 @@ export default function AuthSection({ isScrolled }: AuthSectionProps) {
             </DropdownMenuItem>
           )}
 
-          <DropdownMenuItem onClick={() => handleNavigate('/profile')} className="cursor-pointer">
+          {/* <DropdownMenuItem onClick={() => handleNavigate('/profile')} className="cursor-pointer">
             <User className="mr-2 h-4 w-4 text-muted-foreground" />
             <span>Profil Saya</span>
           </DropdownMenuItem>
-          <DropdownMenuSeparator className="bg-border" />
+          <DropdownMenuSeparator className="bg-border" /> */}
 
           <DropdownMenuItem
             onClick={handleLogout}
