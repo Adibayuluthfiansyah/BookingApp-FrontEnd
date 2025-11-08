@@ -75,11 +75,13 @@ export function VenueCard({ venue, className }: VenueCardProps) {
       >
         <div>
           {/* Bagian Gambar */}
-          <CardHeader className="p-0 relative h-48 w-full">
+          <CardHeader className="pt-0 relative h-40 w-full overflow-hidden">
             <Image
               src={imageUrl}
               alt={venue.name}
+              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
               fill
+              priority={false}
               className="object-cover transition-transform duration-300 group-hover:scale-105"
               onError={(e) => {
                 // Fallback jika URL gambar error
@@ -89,10 +91,10 @@ export function VenueCard({ venue, className }: VenueCardProps) {
           </CardHeader>
 
           {/* Bagian Konten */}
-          <CardContent className="p-4 space-y-2">
+          <CardContent className="p-3space-y-1.5">
             {/* Judul dan Harga */}
             <div className="flex justify-between items-start gap-2">
-              <CardTitle className="text-lg font-semibold tracking-tight line-clamp-2">
+              <CardTitle className="text-base font-semibold tracking-tight line-clamp-2">
                 {venue.name}
               </CardTitle>
               <div className="text-right">
@@ -110,7 +112,7 @@ export function VenueCard({ venue, className }: VenueCardProps) {
             </CardDescription>
 
             {/* Deskripsi (dari VenuesCard) */}
-            <p className="text-sm text-muted-foreground pt-1 line-clamp-2">
+            <p className="text-sm text-muted-foreground pt-1 line-clamp-1">
               {venue.description}
             </p>
             
@@ -133,7 +135,7 @@ export function VenueCard({ venue, className }: VenueCardProps) {
         </div>
 
         {/* Bagian Footer */}
-        <CardFooter className="p-4 flex justify-between items-center border-t border-border/20 mt-2">
+        <CardFooter className="p-3 flex justify-between items-center border-t border-border/20 mt-2">
           {/* Jumlah Lapangan (dari VenuesCard) */}
           <div className="flex items-center text-sm text-muted-foreground">
             <Layers className="mr-1.5 h-4 w-4" />

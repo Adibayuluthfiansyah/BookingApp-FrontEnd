@@ -29,7 +29,7 @@ export default function Home() {
       console.log('Homepage venues result:', result);
 
       if (result.success && result.data) {
-        setVenues(result.data.slice(0, 4));
+        setVenues(result.data.slice(0, 3));
       } else {
         setError(result.message || 'Gagal memuat data lapangan');
       }
@@ -66,7 +66,7 @@ export default function Home() {
 
     if (venues.length > 0) {
       return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {venues.map((venue) => (
             <VenueCard
               key={venue.id}
