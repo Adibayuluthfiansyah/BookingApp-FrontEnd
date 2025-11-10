@@ -30,26 +30,30 @@ export default function AdminFacilitiesPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
- useEffect(() => {
+  useEffect(() => {
     const loadMasterData = async () => {
       setLoading(true);
       setError(null);
-      try {
+    try {
         const [venuesResult, facilitiesResult] = await Promise.all([
           getMyVenues(),
           getAllFacilities(),
         ]);
+        
         const errorMessages: string[] = [];
-        if (venuesResult.success && venuesResult.data) {
-          setVenues(venuesResult.data);
-        } else {
+        
+        if (!venuesResult.success || !venuesResult.data) {
           errorMessages.push(venuesResult.message || 'Gagal mengambil data venue.');
-        }
-        if (facilitiesResult.success && facilitiesResult.data) {
-          setAllFacilities(facilitiesResult.data);
         } else {
-          errorMessages.push(facilitiesResult.message || 'Gagal mengambil data fasilitas.');
+          setVenues(venuesResult.data);
         }
+        
+        if (!facilitiesResult.success || !facilitiesResult.data) {
+          errorMessages.push(facilitiesResult.message || 'Gagal mengambil data fasilitas.');
+        } else {
+          setAllFacilities(facilitiesResult.data);
+        }
+        
         if (errorMessages.length > 0) {
           setError(errorMessages.join(' '));
         }
@@ -60,13 +64,14 @@ export default function AdminFacilitiesPage() {
         setLoading(false);
       }
     };
+    
     loadMasterData();
   }, []);
 
   useEffect(() => {
     // Load fasilitas milik venue SETELAH venue dipilih
     if (!selectedVenueId) {
-      setVenueFacilities([]); // Kosongkan jika tidak ada venue dipilih
+      setVenueFacilities([]); 
       return;
     }
 
@@ -93,10 +98,8 @@ export default function AdminFacilitiesPage() {
   const handleCheckboxChange = (facilityId: number, checked: boolean) => {
     setVenueFacilities((prev) => {
       if (checked) {
-        // Tambahkan ID ke array jika belum ada
         return [...prev, facilityId];
       } else {
-        // Hapus ID dari array
         return prev.filter((id) => id !== facilityId);
       }
     });

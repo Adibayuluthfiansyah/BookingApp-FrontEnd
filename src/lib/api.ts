@@ -265,7 +265,6 @@ export const createVenue = async (
     const response = await fetch(`${API_BASE_URL}/admin/venues`, {
       method: "POST",
       headers: {
-        Accept: "application/json",
         Authorization: `Bearer ${token}`,
       },
       body: venueData,
@@ -294,7 +293,6 @@ export const updateVenue = async (
     const response = await fetch(`${API_BASE_URL}/admin/venues/${id}`, {
       method: "POST", 
       headers: {
-        Accept: "application/json",
         Authorization: `Bearer ${token}`,
       },
       body: venueData, 
@@ -316,7 +314,7 @@ export const deleteVenue = async (id: number): Promise<ApiResponse> => {
   const token = getToken();
 
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/venues/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/venues/${id}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
