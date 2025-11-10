@@ -43,13 +43,33 @@ const getMinPrice = (venue: Venue) => {
   return minPrice === Infinity ? 0 : minPrice;
 }
 
+
+// Dengan URL backend .
 const getImageUrl = (venue: Venue) => {
+  const BACKEND_STORAGE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000/storage';
+
+  let relativeImagePath: string | null = null;
+
   if (venue.image_url) {
-    return venue.image_url;
+    relativeImagePath = venue.image_url;
+  } else if (venue.images && venue.images.length > 0 && venue.images[0].image_url) {
+    relativeImagePath = venue.images[0].image_url;
   }
-  if (venue.images && venue.images.length > 0 && venue.images[0].image_url) {
-    return venue.images[0].image_url;
+
+  if (relativeImagePath) {
+    if (relativeImagePath.startsWith('http://') || relativeImagePath.startsWith('https://')) {
+      return relativeImagePath;
+    }
+    
+    // Jika path relatif, gabungkan dengan URL storage backend
+    const cleanPath = relativeImagePath.startsWith('/') 
+      ? relativeImagePath.substring(1) 
+      : relativeImagePath;
+      
+    return `${BACKEND_STORAGE_URL}/${cleanPath}`;
   }
+  
+  // Fallback jika venue tidak punya gambar
   return `https://placehold.co/600x400/0a0a0a/999999?text=${venue.name.split(' ').join('+')}`;
 }
 
@@ -64,7 +84,7 @@ export function VenueCard({ venue, className }: VenueCardProps) {
       className={cn(
         "w-full overflow-hidden flex flex-col",
         "transition-all duration-300 hover:shadow-lg hover:shadow-primary/10",
-        "border-border hover:border-primary/20 group",
+        "border-border hover:border-primary/20 group","py-0 gap-0",
         className
       )}
     >
@@ -75,13 +95,14 @@ export function VenueCard({ venue, className }: VenueCardProps) {
         {/* Bagian Gambar */}
         <CardHeader className="p-0 relative h-48 w-full overflow-hidden">
           <Image
-            src={imageUrl}
+            src={imageUrl} 
             alt={venue.name}
             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
             fill
             loading="lazy"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             onError={(e) => {
+              // Fallback jika URL dari backend juga error
               e.currentTarget.src = `https://placehold.co/600x400/0a0a0a/999999?text=${venue.name.split(' ').join('+')}`;
             }}
           />
@@ -96,7 +117,7 @@ export function VenueCard({ venue, className }: VenueCardProps) {
             </CardTitle>
             <div className="text-right shrink-0">
               <p className="text-xs text-muted-foreground whitespace-nowrap">Mulai dari</p>
-              <p className="font-bold text-green-600 text-sm whitespace-nowrap">
+              <p className="font-bold text-green-600 text-xl">
                 {minPrice > 0 ? formatCurrency(minPrice) : 'Hubungi'}
               </p>
             </div>
@@ -104,7 +125,7 @@ export function VenueCard({ venue, className }: VenueCardProps) {
           
           {/* Alamat */}
           <CardDescription className="flex items-start gap-1.5 text-sm text-muted-foreground">
-            <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-red-500" />
+            <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
             <span className="line-clamp-1">{venue.address}</span>
           </CardDescription>
 

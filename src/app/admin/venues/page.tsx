@@ -25,6 +25,16 @@ export default function AdminVenuesPage() {
   const [venueToDelete, setVenueToDelete] = useState<Venue | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Helper untuk mendapatkan URL gambar 
+const getVenueImageUrl = (imageUrl: string | null | undefined): string => {
+  if (!imageUrl) return '/placeholder.jpg';
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+  return `${backendUrl}/storage/${imageUrl}`;
+};
+
   useEffect(() => {
     loadVenues();
   }, []);
@@ -68,7 +78,7 @@ export default function AdminVenuesPage() {
           toast.success(`Venue "${venueToDelete.name}" berhasil dihapus.`);
           setShowDeleteModal(false);
           setVenueToDelete(null);
-          loadVenues(); // Muat ulang daftar venue
+          loadVenues(); 
         } else {
           toast.error(result.message || 'Gagal menghapus venue.');
         }
@@ -140,9 +150,9 @@ export default function AdminVenuesPage() {
                 <TableRow key={venue.id} className="hover:bg-accent/50">
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-md overflow-hidden relative flex-shrink-0 bg-muted">
+                      <div className="h-10 w-10 rounded-md overflow-hidden relative bg-muted">
                         <Image
-                          src={venue.image_url || '/placeholder.jpg'} 
+                          src={getVenueImageUrl(venue.image_url)} 
                           alt={venue.name}
                           fill
                           className="object-cover"
@@ -173,7 +183,6 @@ export default function AdminVenuesPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {/* (Asumsi status, bisa disesuaikan jika ada di API) */}
                     <Badge variant="secondary" className="bg-green-600/10 text-green-700 border-green-600/20">
                       Aktif
                     </Badge>

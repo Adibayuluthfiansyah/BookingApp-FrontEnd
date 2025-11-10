@@ -93,10 +93,10 @@ export default function Home() {
           <div>
             <h2 className="text-3xl font-bold tracking-tight">Pilihan Teratas</h2>
             <p className="text-muted-foreground">
-              Lapangan terbaik yang paling sering dibooking.
+              Lapangan Terbaik Yang Bisa Ditemukan
             </p>
           </div>
-          <Button asChild variant="ghost" className="hidden md:flex">
+          <Button asChild variant="ghost" className="hidden md:flex bg-primary hover:bg-primary/90 text-primary-foreground">
             <Link href="/venues">
               Lihat Semua Lapangan
               <ArrowRight className="ml-2 h-4 w-4" />

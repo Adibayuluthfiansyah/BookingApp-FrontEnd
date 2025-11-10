@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { ArrowLeft, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { getVenueById, updateVenue } from '@/lib/api';
+import Image from 'next/image';
 
 // Komponen Skeleton untuk Form Loading
 function EditVenueSkeleton() {
@@ -72,6 +73,10 @@ export default function EditVenuePage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
+  
+  const BACKEND_STORAGE_URL = process.env.NEXT_PUBLIC_BACKEND_URL
+    ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage`
+    : 'http://localhost:8000/storage';
 
   const [venueName, setVenueName] = useState('');
   const [formData, setFormData] = useState({
@@ -82,10 +87,14 @@ export default function EditVenuePage() {
     province: '',
     phone: '',
     email: '',
-    image_url: '',
+    image_url: '', 
     facebook_url: '',
     instagram_url: '',
   });
+
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true); 
   const [errorLoad, setErrorLoad] = useState<string | null>(null);
@@ -117,6 +126,16 @@ export default function EditVenuePage() {
             facebook_url: venueData.facebook_url || '',
             instagram_url: venueData.instagram_url || '',
           });
+
+          // Set gambar preview awal
+            if (venueData.image_url) {
+              // Cek apakah image_url sudah berupa URL lengkap atau hanya path
+            const imageUrl = venueData.image_url.startsWith('http') 
+              ? venueData.image_url  // Sudah URL lengkap
+              : `${BACKEND_STORAGE_URL}/${venueData.image_url}`; // Path relatif
+            setPreviewImage(imageUrl);
+          }
+
         } else {
           setErrorLoad(result.message || 'Gagal memuat data venue.');
           toast.error('Gagal memuat data venue', { description: result.message });
@@ -130,21 +149,71 @@ export default function EditVenuePage() {
     };
 
     loadVenueData();
-  }, [id, router]); 
+  }, [id, router, BACKEND_STORAGE_URL]); 
 
+  // --- Handle perubahan input ---
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: value,
+    }));
   };
 
+  // --- Handle perubahan input  ---
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImageFile(file); 
+
+      // Buat URL lokal untuk preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+  // Jika user membatalkan pilih file
+          setImageFile(null);
+          setFormData(prevData => {
+            // Cek apakah sudah URL lengkap atau path
+            const imageUrl = prevData.image_url?.startsWith('http')
+              ? prevData.image_url
+              : prevData.image_url 
+                ? `${BACKEND_STORAGE_URL}/${prevData.image_url}` 
+                : null;
+            setPreviewImage(imageUrl);
+            return prevData;
+          });
+        }
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
+    const updateData = new FormData();
+
+    // Tambahkan semua field teks dari 'formData'
+    updateData.append('name', formData.name);
+    updateData.append('description', formData.description);
+    updateData.append('address', formData.address);
+    updateData.append('city', formData.city);
+    updateData.append('province', formData.province);
+    updateData.append('phone', formData.phone || '');
+    updateData.append('email', formData.email || '');
+    updateData.append('facebook_url', formData.facebook_url || '');
+    updateData.append('instagram_url', formData.instagram_url || '');
+
+    // Tambahkan file HANYA JIKA user memilih file baru
+    if (imageFile) {
+      updateData.append('image_file', imageFile);
+    }
+
+    // Method PUT/PATCH via FormData
+    updateData.append('_method', 'PUT'); 
+
     try {
-      const result = await updateVenue(Number(id), formData);
+      const result = await updateVenue(Number(id), updateData);
 
       if (result.success) {
         toast.success('Venue berhasil diupdate!', {
@@ -200,7 +269,7 @@ export default function EditVenuePage() {
             <AlertTriangle className="w-12 h-12 text-destructive mx-auto mb-4" />
             <CardTitle>Gagal Memuat Venue</CardTitle>
             <CardDescription className="text-destructive/80">
-              {errorLoad} {/* Menampilkan pesan "ID Venue tidak valid." */}
+              {errorLoad}
             </CardDescription>
           </CardHeader>
           <CardContent className="pb-8 text-center">
@@ -230,13 +299,13 @@ export default function EditVenuePage() {
           </div>
         </div>
          {/* Tombol aksi di header untuk mobile  */}
-         <div className="flex lg:hidden gap-2 w-full sm:w-auto">
+        <div className="flex lg:hidden gap-2 w-full sm:w-auto">
             <Button type="button" variant="outline" onClick={() => router.push('/admin/venues')} className="w-1/2 sm:w-auto">Batal</Button>
             <Button type="submit" form="venue-form" disabled={loading} className="w-1/2 sm:w-auto">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Simpan
             </Button>
-         </div>
+        </div>
       </div>
 
       <form id="venue-form" onSubmit={handleSubmit}>
@@ -278,7 +347,7 @@ export default function EditVenuePage() {
             <Card className="border-border shadow-sm">
               <CardHeader>
                 <CardTitle>Kontak & Media</CardTitle>
-                <CardDescription>URL untuk gambar utama dan media sosial.</CardDescription>
+                <CardDescription>Upload gambar utama dan media sosial.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -292,8 +361,27 @@ export default function EditVenuePage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="image_url">URL Gambar Utama <span className="text-destructive">*</span></Label>
-                  <Input id="image_url" name="image_url" type="url" value={formData.image_url} onChange={handleChange} required />
+                  <Label htmlFor="image_file">Ganti Gambar Utama (Opsional)</Label>
+                  {previewImage && (
+                    <div className="mt-2 relative w-full h-48 rounded-md overflow-hidden border">
+                      <Image
+                        src={previewImage}
+                        alt="Preview Gambar Venue"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
+                  <Input 
+                    id="image_file" 
+                    name="image_file" 
+                    type="file" 
+                    accept="image/png, image/jpeg, image/webp"
+                    onChange={handleFileChange} 
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Kosongkan jika tidak ingin mengubah gambar. Maks 2MB.
+                  </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">

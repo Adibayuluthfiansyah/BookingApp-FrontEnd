@@ -149,13 +149,13 @@ export const getAllVenues = async (params?: {
     console.log("Venues response:", data);
 
     return data;
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) { 
+    const message = error instanceof Error ? error.message : "Unknown error"; 
     console.error("Error fetching venues:", message);
     return {
       success: false,
       message: "Gagal mengambil data venue",
-      data: [], // data: [] sudah benar
+      data: [], 
     };
   }
 };
@@ -184,13 +184,13 @@ export const getVenue = async (
     console.log("Venue response:", data);
 
     return data;
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Error fetching venue:", message);
     return {
       success: false,
       message: "Gagal mengambil data venue",
-      data: null, // PERBAIKAN: Hapus 'as any'
+      data: null,
     };
   }
 };
@@ -218,8 +218,8 @@ export const getAdminVenues = async (): Promise<ApiResponse<Venue[]>> => {
     }
 
     return await response.json();
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) { 
+    const message = error instanceof Error ? error.message : "Unknown error"; 
     console.error("Error fetching admin venues:", message);
     return {
       success: false,
@@ -229,7 +229,7 @@ export const getAdminVenues = async (): Promise<ApiResponse<Venue[]>> => {
   }
 };
 
-// PERBAIKAN: Ganti tipe Array<...> dengan SimpleField[]
+
 export const getMyVenues = async (): Promise<ApiResponse<SimpleField[]>> => {
   const token = getToken();
 
@@ -244,8 +244,8 @@ export const getMyVenues = async (): Promise<ApiResponse<SimpleField[]>> => {
     });
 
     return await response.json();
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Error fetching my venues:", message);
     return {
       success: false,
@@ -255,9 +255,9 @@ export const getMyVenues = async (): Promise<ApiResponse<SimpleField[]>> => {
   }
 };
 
-// PERBAIKAN: Ganti 'venueData: any' dengan 'venueData: Partial<Venue>'
+// CREATE VENUE ADMIN DASHBOARD
 export const createVenue = async (
-  venueData: Partial<Venue>,
+  venueData: FormData, 
 ): Promise<ApiResponse<Venue>> => {
   const token = getToken();
 
@@ -265,51 +265,49 @@ export const createVenue = async (
     const response = await fetch(`${API_BASE_URL}/admin/venues`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
         Accept: "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(venueData),
+      body: venueData,
     });
 
     return await response.json();
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Error creating venue:", message);
     return {
       success: false,
-      message: "Gagal membuat venue",
-      data: null, // PERBAIKAN: Hapus 'as any'
+      message: "Gagal membuat venue: " + message,
+      data: null,
     };
   }
 };
 
-// PERBAIKAN: Ganti 'venueData: any' dengan 'venueData: Partial<Venue>'
+// UPDATE VENUE DASHBOARD ADMIN
 export const updateVenue = async (
   id: number,
-  venueData: Partial<Venue>,
+  venueData: FormData, 
 ): Promise<ApiResponse<Venue>> => {
   const token = getToken();
 
   try {
     const response = await fetch(`${API_BASE_URL}/admin/venues/${id}`, {
-      method: "PUT",
+      method: "POST", 
       headers: {
-        "Content-Type": "application/json",
         Accept: "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(venueData),
+      body: venueData, 
     });
 
     return await response.json();
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Error updating venue:", message);
     return {
       success: false,
-      message: "Gagal mengupdate venue",
-      data: null, // PERBAIKAN: Hapus 'as any'
+      message: "Gagal mengupdate venue: " + message,
+      data: null,
     };
   }
 };
@@ -328,8 +326,8 @@ export const deleteVenue = async (id: number): Promise<ApiResponse> => {
     });
 
     return await response.json();
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) { 
+    const message = error instanceof Error ? error.message : "Unknown error"; 
     console.error("Error deleting venue:", message);
     return {
       success: false,
@@ -384,9 +382,9 @@ export const getAdminFieldDetail = async (
     });
     if (!response.ok) throw new Error("Gagal mengambil data lapangan");
     return await response.json();
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error: any' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
-    return { success: false, message: message, data: null }; // PERBAIKAN: Tambahkan 'data: null'
+  } catch (error: unknown) { 
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return { success: false, message: message, data: null };
   }
 };
 
@@ -410,9 +408,8 @@ export const createAdminField = async (data: {
     const result = await response.json();
     if (!response.ok) throw new Error(result.message || "Gagal membuat lapangan");
     return result;
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error: any' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
-    // PERBAIKAN: 'error.errors' mungkin tidak ada, kirim 'unknown'
+  } catch (error: unknown) { 
+    const message = error instanceof Error ? error.message : "Unknown error"; 
     return { success: false, message: message, errors: { error } };
   }
 };
@@ -428,7 +425,7 @@ export const updateAdminField = async (
   const token = getToken();
   try {
     const response = await fetch(`${API_BASE_URL}/admin/fields/${id}`, {
-      method: "PUT", // Gunakan PUT (sesuai apiResource)
+      method: "PUT", 
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -440,9 +437,9 @@ export const updateAdminField = async (
     if (!response.ok)
       throw new Error(result.message || "Gagal mengupdate lapangan");
     return result;
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error: any' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
-    return { success: false, message: message, errors: { error } }; // PERBAIKAN: 'error.errors' mungkin tidak ada
+  } catch (error: unknown) { 
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return { success: false, message: message, errors: { error } }; 
   }
 };
 
@@ -460,8 +457,8 @@ export const deleteAdminField = async (id: number): Promise<ApiResponse> => {
     });
 
     return await response.json();
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error"; 
     console.error("Error deleting field:", message);
     return {
       success: false,
@@ -501,8 +498,8 @@ export const getAvailableSlots = async (
     console.log("Slots response:", data);
 
     return data;
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error"; 
     console.error("Error fetching slots:", message);
     return {
       success: false,
@@ -522,22 +519,18 @@ export const createBooking = async (bookingData: {
   customer_phone: string;
   customer_email: string;
   notes?: string;
-  // PERBAIKAN: Ganti 'booking: any' dengan 'booking: Booking'
 }): Promise<ApiResponse<{ booking: Booking; snap_token: string }>> => {
-  // ✅ Ambil token jika ada (optional)
   const token = getToken();
 
   try {
     console.log("Creating booking with data:", bookingData);
-    console.log("User logged in:", !!token); // Log status login
+    console.log("User logged in:", !!token); 
 
-    // ✅ Buat headers dasar
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       Accept: "application/json",
     };
 
-    // ✅ Tambahkan Authorization header HANYA jika user login
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
@@ -555,17 +548,16 @@ export const createBooking = async (bookingData: {
     }
 
     return result;
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error' menjadi 'error: unknown'
+  } catch (error: unknown) { 
     console.error("Create booking error:", error);
     return {
       success: false,
       message: error instanceof Error ? error.message : "Gagal membuat booking",
-      data: null, // PERBAIKAN: Hapus 'as any'
+      data: null, 
     };
   }
 };
 
-// PERBAIKAN: Ganti 'ApiResponse<any>' dengan 'ApiResponse<Booking>'
 export const getBookingStatus = async (
   bookingNumber: string,
 ): Promise<ApiResponse<Booking>> => {
@@ -582,8 +574,8 @@ export const getBookingStatus = async (
     );
 
     return await response.json();
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) { 
+    const message = error instanceof Error ? error.message : "Unknown error"; 
     console.error("Get booking status error:", message);
     return {
       success: false,
@@ -593,7 +585,7 @@ export const getBookingStatus = async (
   }
 };
 
-// PERBAIKAN: Ganti 'ApiResponse<any>' dengan 'ApiResponse<Booking>'
+
 export const cancelBooking = async (
   bookingNumber: string,
 ): Promise<ApiResponse<Booking>> => {
@@ -610,8 +602,8 @@ export const cancelBooking = async (
     );
 
     return await response.json();
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Cancel booking error:", message);
     return {
       success: false,
@@ -650,8 +642,8 @@ export const getAdminDashboardStats = async (
     }
 
     return await response.json();
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Error fetching admin dashboard stats:", message);
     return {
       success: false,
@@ -671,7 +663,7 @@ export const getAdminBookings = async (params?: {
   sort_order?: "asc" | "desc";
   per_page?: number;
   page?: number;
-}): Promise<ApiResponse<Booking[]>> => { // PERBAIKAN: Tambahkan tipe Booking[]
+}): Promise<ApiResponse<Booking[]>> => {
   const token = getToken();
 
   try {
@@ -707,8 +699,8 @@ export const getAdminBookings = async (params?: {
     }
 
     return await response.json();
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Error fetching admin bookings:", message);
     return {
       success: false,
@@ -718,7 +710,6 @@ export const getAdminBookings = async (params?: {
   }
 };
 
-// PERBAIKAN: Ganti ApiResponse dengan ApiResponse<Booking>
 export const getAdminBookingDetail = async (
   id: number,
 ): Promise<ApiResponse<Booking>> => {
@@ -739,18 +730,18 @@ export const getAdminBookingDetail = async (
     }
 
     return await response.json();
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Error fetching booking detail:", message);
     return {
       success: false,
       message: "Gagal mengambil detail booking",
-      data: null, // PERBAIKAN: Tambahkan data: null
+      data: null, 
     };
   }
 };
 
-// PERBAIKAN: Ganti ApiResponse dengan ApiResponse<Booking>
+
 export const updateAdminBookingStatus = async (
   id: number,
   data: { status: string; notes?: string },
@@ -777,13 +768,13 @@ export const updateAdminBookingStatus = async (
     }
 
     return await response.json();
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Gagal mengupdate status booking"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) { 
+    const message = error instanceof Error ? error.message : "Gagal mengupdate status booking"; 
     console.error("Error updating booking status:", message);
     return {
       success: false,
-      message: message, // PERBAIKAN: Gunakan 'message' yang sudah dicek
-      data: null, // PERBAIKAN: Tambahkan data: null
+      message: message, 
+      data: null, 
     };
   }
 };
@@ -804,8 +795,8 @@ export async function getMyFieldsList(): Promise<ApiResponse<SimpleField[]>> {
     });
     if (!response.ok) throw new Error("Gagal mengambil daftar lapangan");
     return await response.json();
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error: any' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) { 
+    const message = error instanceof Error ? error.message : "Unknown error";
     return { success: false, message: message, data: [] };
   }
 }
@@ -831,8 +822,8 @@ export async function getAdminTimeSlots(
     });
     if (!response.ok) throw new Error("Gagal mengambil data time slot");
     return await response.json();
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error: any' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     return { success: false, message: message, data: [] };
   }
 }
@@ -853,9 +844,9 @@ export async function getTimeSlotById(
     });
     if (!response.ok) throw new Error("Gagal mengambil detail time slot");
     return await response.json();
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error: any' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
-    return { success: false, message: message, data: null }; // PERBAIKAN: Tambahkan data: null
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error"; 
+    return { success: false, message: message, data: null };
   }
 }
 
@@ -876,7 +867,6 @@ export async function createTimeSlot(
     });
     const result = await response.json();
     if (!response.ok) {
-      // Kirim error validasi jika ada
       return {
         success: false,
         message: result.message,
@@ -884,9 +874,9 @@ export async function createTimeSlot(
       };
     }
     return result;
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error: any' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
-    return { success: false, message: message, data: null }; // PERBAIKAN: Tambahkan data: null
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return { success: false, message: message, data: null };
   }
 }
 
@@ -908,7 +898,6 @@ export async function updateTimeSlot(
     });
     const result = await response.json();
     if (!response.ok) {
-      // Kirim error validasi jika ada
       return {
         success: false,
         message: result.message,
@@ -916,9 +905,9 @@ export async function updateTimeSlot(
       };
     }
     return result;
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error: any' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
-    return { success: false, message: message, data: null }; // PERBAIKAN: Tambahkan data: null
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return { success: false, message: message, data: null };
   }
 }
 
@@ -935,15 +924,15 @@ export async function deleteTimeSlot(id: number): Promise<ApiResponse<null>> {
       },
     });
     return await response.json();
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error: any' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     return { success: false, message: message, data: null };
   }
 }
 
 // ========= FACILITY API (VERSI FETCH) =========
 
-// Get SEMUA master fasilitas (untuk checkbox)
+// Get all facilities
 export async function getAllFacilities(): Promise<ApiResponse<Facility[]>> {
   const token = getToken();
   try {
@@ -957,8 +946,8 @@ export async function getAllFacilities(): Promise<ApiResponse<Facility[]>> {
     });
     if (!response.ok) throw new Error("Gagal mengambil daftar fasilitas");
     return await response.json();
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error: any' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) { 
+    const message = error instanceof Error ? error.message : "Unknown error"; 
     return { success: false, message: message, data: [] };
   }
 }
@@ -982,14 +971,14 @@ export async function getVenueFacilities(
     );
     if (!response.ok) throw new Error("Gagal mengambil fasilitas venue");
     return await response.json();
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error: any' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) { 
+    const message = error instanceof Error ? error.message : "Unknown error";
     return { success: false, message: message, data: [] };
   }
 }
 
-// Update/sync fasilitas untuk satu venue
-// PERBAIKAN: Ganti 'ApiResponse<any>' dengan 'ApiResponse<unknown>'
+// Sync fasilitas untuk satu venue
+
 export async function syncVenueFacilities(
   venueId: number,
   facilityIds: number[],
@@ -1015,9 +1004,9 @@ export async function syncVenueFacilities(
       return { success: false, message: result.message, errors: result.errors };
     }
     return result;
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error: any' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
-    return { success: false, message: message, data: null }; // PERBAIKAN: Tambahkan data: null
+  } catch (error: unknown) { 
+    const message = error instanceof Error ? error.message : "Unknown error"; 
+    return { success: false, message: message, data: null }; 
   }
 }
 
@@ -1026,7 +1015,6 @@ export async function syncVenueFacilities(
 // Legacy admin functions (for backward compatibility)
 export const getAdminDashboard = getAdminDashboardStats;
 
-// PERBAIKAN: Ganti ApiResponse dengan ApiResponse<Booking[]>
 export const getCustomerBookings = async (): Promise<ApiResponse<Booking[]>> => {
   const token = getToken();
 
@@ -1041,8 +1029,8 @@ export const getCustomerBookings = async (): Promise<ApiResponse<Booking[]>> => 
     });
 
     return await response.json();
-  } catch (error: unknown) { // PERBAIKAN: Ganti 'error' menjadi 'error: unknown'
-    const message = error instanceof Error ? error.message : "Unknown error"; // PERBAIKAN: Cek tipe error
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Error fetching customer bookings:", message);
     return {
       success: false,

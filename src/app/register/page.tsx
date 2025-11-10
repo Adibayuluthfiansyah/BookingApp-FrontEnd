@@ -151,12 +151,29 @@ export default function RegisterPage() {
             className="object-cover object-center w-full h-full opacity-90 dark:opacity-5"
             onError={(e) => { e.currentTarget.style.display = 'none'; }}
         />
-        <div className="absolute inset-0 bg-background/50"></div>
+     <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/50 to-transparent"></div> {/* Gradient overlay */}
       </div>
 
-      <div className="w-full max-w-md relative z-10 my-12 pt-5">
-        <Card className="bg-card border-border shadow-xl rounded-lg">
-          <CardHeader className="text-center">
+        
+      <div className="w-full max-w-md relative z-10 my-12 pt-3">
+        <Card className="bg-card border-border shadow-xl rounded-lg relative">
+              {/* Logo */}
+              <div className="absolute left-1/2 -translate-x-1/2 -top-7 z-10 sm:-top-12 md:-top-16 mt-5 flex ">
+                <div
+                  className="w-[300px] h-[150px] sm:w-[200px] sm:h-[100px] md:w-[400px] md:h-[200px] bg-primary"
+                  style={{
+                    maskImage: 'url(/logobookingapp1.png)',
+                    WebkitMaskImage: 'url(/logobookingapp1.png)',
+                    maskSize: 'contain',
+                    WebkitMaskSize: 'contain',
+                    maskRepeat: 'no-repeat',
+                    WebkitMaskRepeat: 'no-repeat',
+                    maskPosition: 'center',
+                    WebkitMaskPosition: 'center',
+                  }}
+                />
+              </div>
+          <CardHeader className="text-center pt-20">
             <CardTitle className="text-2xl font-bold text-foreground tracking-tight">Buat Akun Baru</CardTitle>
             <CardDescription className="text-muted-foreground">Isi data diri Anda untuk mendaftar.</CardDescription>
           </CardHeader>
@@ -166,7 +183,7 @@ export default function RegisterPage() {
               {error && !Object.keys(apiErrors).length && (
                 <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 text-destructive rounded-md text-sm">
                   <div className="flex items-center gap-2">
-                    <AlertCircle size={16} className="flex-shrink-0" />
+                    <AlertCircle size={16} className="shrink-0" />
                     <span>{error}</span>
                   </div>
                 </div>

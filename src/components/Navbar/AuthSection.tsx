@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import {DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuLabel,DropdownMenuSeparator,DropdownMenuTrigger,DropdownMenuPortal,} from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { User, LogOut, CalendarDays, LayoutDashboard, Loader2, LogIn } from 'lucide-react';
+import { LogOut, CalendarDays, LayoutDashboard, Loader2, LogIn } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { cn } from '@/lib/utils'; 

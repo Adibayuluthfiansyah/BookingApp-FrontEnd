@@ -92,33 +92,50 @@ export default function UnifiedLoginPage() {
             className="object-cover object-center w-full h-full opacity-90 dark:opacity-5"
             onError={(e) => { e.currentTarget.style.display = 'none'; }}
         />
-         <div className="absolute inset-0 bg-background/10"></div> {/* Overlay */}
+      <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/50 to-transparent"></div> {/* Gradient overlay */}
       </div>
 
       <div className="w-full max-w-md relative z-10">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2 tracking-tight">
+        <div className="text-center mb-4 pt-7">
+          <h1 className="text-3xl font-bold text-primary-foreground mb-2 tracking-tight">
             Selamat Datang Kembali
           </h1>
-          <p className=" text-black">Masuk ke akun O7ONG CORP Anda</p>
+          <p className=" text-primary-foreground">Masuk ke akun Anda</p>
         </div>
 
         {/* Card login */}
-        <Card className="bg-card border-border shadow-xl rounded-lg">
-          <CardContent className="p-6 sm:p-8">
+        <Card className="bg-card border-border shadow-xl rounded-lg relative">
+          <CardContent className="p-6 sm:p-6 md:p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
                 <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 text-destructive rounded-md text-sm">
                   <div className="flex items-center gap-2">
-                    <AlertCircle size={16} className="flex-shrink-0" />
+                    <AlertCircle size={16} className="shrink-0" />
                     <span>{error}</span>
                   </div>
                 </div>
               )}
 
+                {/* Logo */}
+              <div className="absolute left-1/2 -translate-x-1/2 -top-12 sm:-top-14 md:-top-16 z-10 mt-8 flex items-center">
+                <div
+                  className="w-[300px] h-[150px] sm:w-[200px] sm:h-[100px] md:w-[400px] md:h-[200px] bg-primary"
+                  style={{
+                    maskImage: 'url(/logobookingapp1.png)',
+                    WebkitMaskImage: 'url(/logobookingapp1.png)',
+                    maskSize: 'contain',
+                    WebkitMaskSize: 'contain',
+                    maskRepeat: 'no-repeat',
+                    WebkitMaskRepeat: 'no-repeat',
+                    maskPosition: 'center',
+                    WebkitMaskPosition: 'center',
+                  }}
+                />
+              </div>
+
               {/* Email */}
-              <div className="space-y-2">
+              <div className="space-y-2 mt-12 sm:mt-14 md:mt-16">
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"

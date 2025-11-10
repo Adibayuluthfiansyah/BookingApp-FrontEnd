@@ -34,7 +34,7 @@ export default function Hero() {
           className="object-cover object-center w-full h-full"
           onError={(e) => { e.currentTarget.src = `https://placehold.co/1920x1080/111827/ffffff?text=Hero+Image`; }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent"></div> {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/50 to-transparent"></div> {/* Gradient overlay */}
       </div>
 
       {/* Konten Hero */}
@@ -65,11 +65,11 @@ export default function Hero() {
           transition={{ duration: 0.5, delay: 0.4, ease: "easeOut" }}
           className="w-full max-w-2xl bg-white/10 backdrop-blur-md p-4 rounded-lg shadow-lg border border-white/20 flex flex-col sm:flex-row items-center gap-3"
         >
-          <div className="relative flex-grow w-full sm:w-auto">
+          <div className="relative grow w-full sm:w-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <Input
               type="text"
-              placeholder="Cari nama venue atau lokasi..."
+              placeholder="Cari nama lapangan atau lokasi..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 h-12 text-black bg-white/90 focus:bg-white border-none focus:ring-2 focus:ring-primary" // Style input
